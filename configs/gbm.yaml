@@ -1,0 +1,34 @@
+# GBM — Glioblastoma Multiforme
+# Encoder: UNI2-h (1536-dim patch embeddings) — gene-only fallback if no embeddings
+# Survival threshold: 1 year (365 days) — GBM median OS ~15 months
+# Patients: ~134 (RNA-seq matched with valid survival labels)
+
+cancer: gbm
+
+# ── Data paths ────────────────────────────────────────────────────────────────
+uni_dir: /nonexistent    # GBM: gene-only mode (no slide embeddings available)
+gene_csv_paths:
+  - /home/ubuntu/tcga_gbm_data/histology_gene_train.csv
+subtype_csv_paths: []
+save_dir: results_singlehead/gbm
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+image_dim:   1536    # UNI2-h
+fusion_type: attention
+dropout:     0.3
+
+# ── Gene preprocessing ────────────────────────────────────────────────────────
+n_top_genes: 20000
+
+# ── Training ──────────────────────────────────────────────────────────────────
+epochs:      200
+batch_size:  16      # smaller batch — only ~90 training patients
+lr:          1.0e-3
+weight_decay: 1.0e-4
+val_fraction:  0.15
+test_fraction: 0.10
+seed:        42
+
+# ── Loss weights ──────────────────────────────────────────────────────────────
+loss_weights:
+  survival: 1.0

@@ -1,0 +1,31 @@
+# Data — never push (too large)
+tangle_data/
+tcga_gbm_data/
+tcga_*/
+download/
+
+# Results — large JSONs and PNGs
+results/
+results_singlehead/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Paper PDFs and figures
+paper/*.pdf
+paper/figures/
+paper/overleaf_sync/
+
+# Misc
+*.log
+logs/
