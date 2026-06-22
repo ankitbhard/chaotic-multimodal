@@ -4,10 +4,6 @@ tcga_gbm_data/
 tcga_*/
 download/
 
-# Results — large JSONs and PNGs
-results/
-results_singlehead/
-
 # Python
 __pycache__/
 *.pyc
@@ -29,3 +25,9 @@ paper/overleaf_sync/
 # Misc
 *.log
 logs/
+
+# Training plots (large PNGs)
+results_singlehead/**/*.png
+
+# Nested duplicate from bad scp
+results_singlehead/results_singlehead/

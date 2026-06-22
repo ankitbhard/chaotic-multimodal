@@ -55,7 +55,7 @@ try:
     from optimizers.chaotic_optimizer     import MultimodalChaoticOptimizer
     from optimizers.chaotic_lr_scheduler  import CosineAnnealingScheduler
     from optimizers.ogm_wrapper           import OGMWrapper
-    from data.dataset                     import build_dataloaders
+    from data.dataset                     import build_dataloaders, build_pancancer_dataloaders
 except ModuleNotFoundError:
     import sys
     sys.path.insert(0, os.path.dirname(__file__))
@@ -63,7 +63,7 @@ except ModuleNotFoundError:
     from optimizers.chaotic_optimizer     import MultimodalChaoticOptimizer
     from optimizers.chaotic_lr_scheduler  import CosineAnnealingScheduler
     from optimizers.ogm_wrapper           import OGMWrapper
-    from data.dataset                     import build_dataloaders
+    from data.dataset                     import build_dataloaders, build_pancancer_dataloaders
 
 
 # ── Loss ──────────────────────────────────────────────────────────────────────
@@ -193,6 +193,12 @@ OPTIMIZER_NAMES = [
     "chaotic",
     # Additional variants
     "chaotic_adadelta", "chaotic_sep_lr",
+    # Adaptive OGM-GE: suppresses only when imbalance is real and persistent
+    "chaotic_adaptive",
+    # Adaptive OGM-GE with lower threshold (0.05) — fires more aggressively
+    "chaotic_adaptive_05",
+    # Adaptive OGM-GE on fixed-LR bases (no chaotic LR)
+    "adam_adaptive", "sgd_mom_adaptive",
 ]
 
 
@@ -331,6 +337,51 @@ def build_optimizer(name: str, model, cfg: dict):
         )
         return chaotic, None, True
 
+    if name == "chaotic_adaptive":
+        base = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
+                                weight_decay=wd)
+        chaotic = MultimodalChaoticOptimizer(
+            base, model,
+            modality_names=["image", "gene"],
+            base_lr=lr,
+            r=3.99, T_max=cfg["epochs"],
+            alpha=0.5, use_ge=True,
+            compute_every=1,
+            imbalance_threshold=0.10,
+            trend_window=10,
+        )
+        return chaotic, None, True
+
+    if name == "chaotic_adaptive_05":
+        base = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
+                                weight_decay=wd)
+        chaotic = MultimodalChaoticOptimizer(
+            base, model,
+            modality_names=["image", "gene"],
+            base_lr=lr,
+            r=3.99, T_max=cfg["epochs"],
+            alpha=0.5, use_ge=True,
+            compute_every=1,
+            imbalance_threshold=0.05,
+            trend_window=10,
+        )
+        return chaotic, None, True
+
+    if name == "adam_adaptive":
+        base = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+        wrapped = OGMWrapper(base, model, modality_names=["image", "gene"],
+                             alpha=0.5, use_ge=True, compute_every=1,
+                             imbalance_threshold=0.10, trend_window=10)
+        return wrapped, None, True
+
+    if name == "sgd_mom_adaptive":
+        base = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
+                               weight_decay=wd)
+        wrapped = OGMWrapper(base, model, modality_names=["image", "gene"],
+                             alpha=0.5, use_ge=True, compute_every=1,
+                             imbalance_threshold=0.10, trend_window=10)
+        return wrapped, None, True
+
     raise ValueError(f"Unknown optimizer: '{name}'. "
                      f"Choose from {OPTIMIZER_NAMES}")
 
@@ -421,18 +472,29 @@ def main(cfg: dict, opt_names: list):
     print(f"Optimizers : {opt_names}")
     print(f"Fusion     : {cfg['fusion_type']}")
 
-    # Data
-    loaders = build_dataloaders(
-        uni_dir           = cfg["uni_dir"],
-        gene_csv_paths    = cfg["gene_csv_paths"],
-        subtype_csv_paths = cfg.get("subtype_csv_paths", []),
-        image_dim         = cfg["image_dim"],
-        n_top_genes       = cfg["n_top_genes"],
-        val_fraction      = cfg["val_fraction"],
-        test_fraction     = cfg["test_fraction"],
-        batch_size        = cfg["batch_size"],
-        seed              = seed,
-    )
+    # Data — pan-cancer or single-cancer
+    if "cancer_configs" in cfg:
+        loaders = build_pancancer_dataloaders(
+            cancer_configs = cfg["cancer_configs"],
+            image_dim      = cfg["image_dim"],
+            n_top_genes    = cfg["n_top_genes"],
+            val_fraction   = cfg["val_fraction"],
+            test_fraction  = cfg["test_fraction"],
+            batch_size     = cfg["batch_size"],
+            seed           = seed,
+        )
+    else:
+        loaders = build_dataloaders(
+            uni_dir           = cfg["uni_dir"],
+            gene_csv_paths    = cfg["gene_csv_paths"],
+            subtype_csv_paths = cfg.get("subtype_csv_paths", []),
+            image_dim         = cfg["image_dim"],
+            n_top_genes       = cfg["n_top_genes"],
+            val_fraction      = cfg["val_fraction"],
+            test_fraction     = cfg["test_fraction"],
+            batch_size        = cfg["batch_size"],
+            seed              = seed,
+        )
 
     n_genes = loaders["n_genes"]
     os.makedirs(cfg["save_dir"], exist_ok=True)

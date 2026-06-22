@@ -353,6 +353,157 @@ def build_dataloaders(
     }
 
 
+# ── Pan-cancer builder ────────────────────────────────────────────────────────
+
+def build_pancancer_dataloaders(
+    cancer_configs:  List[dict],
+    image_dim:       int   = 1536,
+    n_top_genes:     int   = 20000,
+    val_fraction:    float = 0.15,
+    test_fraction:   float = 0.10,
+    batch_size:      int   = 32,
+    num_workers:     int   = 0,
+    seed:            int   = 42,
+) -> dict:
+    """
+    Build combined train/val/test DataLoaders from multiple cancer datasets.
+
+    Each entry in cancer_configs is a dict with:
+        uni_dir         (str)       : path to embedding directory
+        gene_csv_paths  (List[str]) : gene CSV paths for this cancer
+
+    Gene columns are intersected across all cancers so that the gene matrix
+    is consistent. Top-K genes are selected by variance on the combined
+    training set.
+
+    Returns same dict structure as build_dataloaders.
+    """
+    NON_GENE = {
+        "sample_id", "patient_barcode", "label", "survival_label",
+        "subtype_label", "uni_path", "image_path", "OS_months",
+        "vital_status", "subtype_raw", "patient_id", "magnification",
+    }
+
+    all_records  = []
+    all_gene_rows = []   # raw (unprocessed) per patient
+    common_cols  = None  # gene column intersection
+
+    for cfg in cancer_configs:
+        uni_dir       = cfg["uni_dir"]
+        gene_csv_paths = cfg["gene_csv_paths"]
+
+        # Load gene CSVs
+        frames = [pd.read_csv(p) for p in gene_csv_paths if os.path.exists(p)]
+        if not frames:
+            print(f"  [pan-cancer] WARNING: no gene CSVs found for {uni_dir}, skipping")
+            continue
+        gene_df = pd.concat(frames, ignore_index=True)
+        gene_df["patient_barcode"] = gene_df["sample_id"].str[:12]
+        gene_df = gene_df.drop_duplicates(subset="patient_barcode").reset_index(drop=True)
+
+        gene_cols = [c for c in gene_df.columns
+                     if c not in NON_GENE
+                     and pd.api.types.is_numeric_dtype(gene_df[c])]
+
+        # Accumulate common gene column intersection
+        if common_cols is None:
+            common_cols = set(gene_cols)
+        else:
+            common_cols &= set(gene_cols)
+
+        # Discover embedding files
+        emb_files = {}
+        try:
+            emb_dir = _discover_uni_dir(uni_dir)
+            for fname in os.listdir(emb_dir):
+                if fname.endswith((".pt", ".h5")):
+                    barcode = os.path.splitext(fname)[0][:12]
+                    emb_files[barcode] = os.path.join(emb_dir, fname)
+        except (FileNotFoundError, OSError):
+            pass
+
+        surv_col = "survival_label" if "survival_label" in gene_df.columns else "label"
+
+        for barcode, fpath in emb_files.items():
+            row = gene_df[gene_df["patient_barcode"] == barcode]
+            if row.empty:
+                continue
+            row = row.iloc[0]
+            all_records.append({
+                "uni_path":        fpath,
+                "patient_barcode": barcode,
+                "surv_label":      int(row.get(surv_col, 0)),
+                "subtype_label":   -1,
+            })
+            all_gene_rows.append((gene_df, row, gene_cols))
+
+        print(f"  [{uni_dir.split('/')[-1]}] matched {len(emb_files)} patients")
+
+    if not all_records:
+        raise RuntimeError("Pan-cancer: no patients matched across any cancer config.")
+
+    # Finalise common gene columns (sorted for reproducibility)
+    common_cols = sorted(common_cols)
+    print(f"  Pan-cancer total: {len(all_records)} patients | {len(common_cols)} common genes")
+
+    # Build aligned gene matrix
+    gene_matrix = np.stack([
+        row[common_cols].infer_objects(copy=False).fillna(0).values.astype(np.float32)
+        for (_, row, _) in all_gene_rows
+    ], axis=0)
+
+    # Train/val/test split
+    rng = random.Random(seed)
+    indices = list(range(len(all_records)))
+    rng.shuffle(indices)
+
+    n_test = int(len(indices) * test_fraction)
+    n_val  = int(len(indices) * val_fraction)
+    test_idx  = indices[:n_test]
+    val_idx   = indices[n_test:n_test + n_val]
+    train_idx = indices[n_test + n_val:]
+
+    train_gene, top_gene_idx, scaler = _preprocess_genes(
+        gene_matrix[train_idx], n_top_genes, is_train=True
+    )
+    val_gene,  _, _ = _preprocess_genes(
+        gene_matrix[val_idx],  n_top_genes, is_train=False,
+        top_gene_idx=top_gene_idx, scaler=scaler
+    )
+    test_gene, _, _ = _preprocess_genes(
+        gene_matrix[test_idx], n_top_genes, is_train=False,
+        top_gene_idx=top_gene_idx, scaler=scaler
+    )
+
+    train_recs = [all_records[i] for i in train_idx]
+    val_recs   = [all_records[i] for i in val_idx]
+    test_recs  = [all_records[i] for i in test_idx]
+    n_genes    = train_gene.shape[1]
+
+    emb_cache: Dict[str, torch.Tensor] = {}
+
+    def _loader(recs, genes, shuffle):
+        ds = TCGAMultimodalDataset(recs, genes, image_dim, emb_cache)
+        return DataLoader(ds, batch_size=batch_size, shuffle=shuffle,
+                          num_workers=num_workers, pin_memory=False)
+
+    print(f"  Split: {len(train_recs)} train / {len(val_recs)} val / "
+          f"{len(test_recs)} test  |  n_genes={n_genes}")
+
+    return {
+        "train":        _loader(train_recs, train_gene, shuffle=True),
+        "val":          _loader(val_recs,   val_gene,   shuffle=False),
+        "test":         _loader(test_recs,  test_gene,  shuffle=False),
+        "n_genes":      n_genes,
+        "image_dim":    image_dim,
+        "scaler":       scaler,
+        "top_gene_idx": top_gene_idx,
+        "train_size":   len(train_recs),
+        "val_size":     len(val_recs),
+        "test_size":    len(test_recs),
+    }
+
+
 # ── Self-test (synthetic data — no real files needed) ─────────────────────────
 
 if __name__ == "__main__":

@@ -1,0 +1,49 @@
+# Pan-cancer — LUAD + KIRC + LUSC + STAD (all UNI2-h 1536-dim)
+# BRCA excluded: uses UNI 1024-dim (different encoder dimension)
+
+cancer: pancancer_4
+
+# ── Per-cancer data ────────────────────────────────────────────────────────────
+cancer_configs:
+  - uni_dir: /home/ubuntu/tangle_data/luad
+    gene_csv_paths:
+      - /home/ubuntu/tcga_luad_data/histology_gene_train.csv
+      - /home/ubuntu/tcga_luad_data/histology_gene_val.csv
+
+  - uni_dir: /home/ubuntu/tangle_data/kirc
+    gene_csv_paths:
+      - /home/ubuntu/tcga_kirc_data/histology_gene_train.csv
+      - /home/ubuntu/tcga_kirc_data/histology_gene_val.csv
+
+  - uni_dir: /home/ubuntu/tangle_data/lusc
+    gene_csv_paths:
+      - /home/ubuntu/tcga_lusc_data/histology_gene_train.csv
+      - /home/ubuntu/tcga_lusc_data/histology_gene_val.csv
+
+  - uni_dir: /home/ubuntu/chaotic-multimodal-v2/tangle_data
+    gene_csv_paths:
+      - /home/ubuntu/tcga_stad_data/histology_gene_train.csv
+      - /home/ubuntu/tcga_stad_data/histology_gene_val.csv
+
+save_dir: results_singlehead/pancancer_4
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+image_dim:   1536
+fusion_type: attention
+dropout:     0.3
+
+# ── Gene preprocessing ────────────────────────────────────────────────────────
+n_top_genes: 20000
+
+# ── Training ──────────────────────────────────────────────────────────────────
+epochs:      200
+batch_size:  32
+lr:          1.0e-3
+weight_decay: 1.0e-4
+val_fraction:  0.15
+test_fraction: 0.10
+seed:        42
+
+# ── Loss weights ──────────────────────────────────────────────────────────────
+loss_weights:
+  survival: 1.0

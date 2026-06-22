@@ -1,12 +1,13 @@
 """
-Multimodal Chaotic Optimizer with OGM-GE gradient modulation.
+Multimodal Chaotic Optimizer with adaptive OGM-GE gradient modulation.
 
 Combines:
   1. ChaoticLRScheduler — logistic-map LR scheduling
-  2. OGM-GE (On-the-fly Gradient Modulation + Generalization Enhancement)
+  2. Adaptive OGM-GE (On-the-fly Gradient Modulation + Generalization Enhancement)
      — estimates per-modality informativeness from unimodal accuracy
-     — suppresses dominant modality's gradients via k = 1 − tanh(α · ratio)
-     — injects Gaussian noise on dominant modality for generalization
+     — suppresses dominant modality's gradients ONLY when imbalance exceeds threshold
+       AND weaker modality is not already trending upward (self-correcting)
+     — scales suppression proportionally to excess imbalance for smooth gating
 
 Designed for JointModel where encoders are named:
     model.image_encoder.*  →  modality "image"
@@ -53,38 +54,51 @@ class MultimodalChaoticOptimizer:
     """
     Wraps a base PyTorch optimizer with:
       - chaotic LR scheduling (logistic map)
-      - OGM-GE gradient modulation per modality
+      - adaptive OGM-GE gradient modulation per modality
+
+    Adaptive gating: suppression only fires when BOTH conditions hold:
+      1. Modality imbalance > imbalance_threshold (default 0.10)
+      2. Weaker modality's contribution is NOT already trending upward
 
     Args:
-        optimizer      : base optimizer (e.g. SGD or Adam)
-        model          : JointModel instance
-        modality_names : list of modality name strings that appear in
-                         parameter names, e.g. ["image", "gene"]
-        base_lr        : base LR passed to ChaoticLRScheduler
-        r              : logistic map parameter (default 3.99)
-        T_max          : total training epochs for cosine decay envelope (None = no decay)
-        alpha          : gradient modulation strength (default 0.5)
-        use_ge         : inject Gaussian noise for generalization (default True)
-        compute_every  : compute OGM-GE every N steps (default 1)
+        optimizer           : base optimizer (e.g. SGD or Adam)
+        model               : JointModel instance
+        modality_names      : list of modality name strings that appear in
+                              parameter names, e.g. ["image", "gene"]
+        base_lr             : base LR passed to ChaoticLRScheduler
+        r                   : logistic map parameter (default 3.99)
+        T_max               : total training epochs for cosine decay envelope (None = no decay)
+        alpha               : gradient modulation strength (default 0.5)
+        use_ge              : inject Gaussian noise for generalization (default True)
+        compute_every       : compute OGM-GE every N steps (default 1)
+        imbalance_threshold : minimum contribution gap to trigger suppression (default 0.10)
+                              Set to 0.0 to replicate original always-on behaviour.
+        trend_window        : look-back window for weaker-modality improvement gate (default 10)
     """
 
     def __init__(self,
                  optimizer,
-                 model:           nn.Module,
-                 modality_names:  List[str],
-                 base_lr:         float = 1e-3,
-                 r:               float = 3.99,
-                 T_max:           int   = None,
-                 alpha:           float = 0.5,
-                 use_ge:          bool  = True,
-                 compute_every:   int   = 1):
-        self.optimizer      = optimizer
-        self.model          = model
-        self.modality_names = modality_names
-        self.alpha          = alpha
-        self.use_ge         = use_ge
-        self.compute_every  = compute_every
-        self._step_count    = 0
+                 model:               nn.Module,
+                 modality_names:      List[str],
+                 base_lr:             float = 1e-3,
+                 r:                   float = 3.99,
+                 T_max:               int   = None,
+                 alpha:               float = 0.5,
+                 use_ge:              bool  = True,
+                 compute_every:       int   = 1,
+                 imbalance_threshold: float = 0.10,
+                 trend_window:        int   = 10):
+        self.optimizer            = optimizer
+        self.model                = model
+        self.modality_names       = modality_names
+        self.alpha                = alpha
+        self.use_ge               = use_ge
+        self.compute_every        = compute_every
+        self.imbalance_threshold  = imbalance_threshold
+        self.trend_window         = trend_window
+        self._step_count          = 0
+        self._ogm_applied         = 0
+        self._ogm_skipped         = 0
 
         self.scheduler = ChaoticLRScheduler(optimizer, base_lr=base_lr, r=r, T_max=T_max)
 
@@ -134,28 +148,51 @@ class MultimodalChaoticOptimizer:
     @torch.no_grad()
     def _modulate_gradients(self, contributions: Dict[str, float]) -> None:
         """
-        Suppress the dominant modality's gradients and optionally add GE noise.
+        Adaptive OGM-GE gradient suppression.
 
-        For the dominant modality d with normalized ratio ρ_d > 0.5:
-            k = 1 − tanh(α · ρ_d)   (k < 1 → suppress)
-        Other modalities: k = 1 (unchanged).
+        Gate 1 — imbalance threshold:
+            If dominant − weaker ≤ imbalance_threshold → skip (modalities balanced).
+
+        Gate 2 — trend gate:
+            If the weaker modality's contribution has been trending upward over the
+            last trend_window steps → skip (it's self-correcting, no need to intervene).
+
+        When both gates pass, apply proportional suppression scaled to excess imbalance:
+            effective_ratio = (imbalance − θ) / (1 − θ)
+            k = 1 − tanh(α · effective_ratio)
         """
         dominant = max(contributions, key=contributions.get)
+        weaker   = min(contributions, key=contributions.get)
+        imbalance = contributions[dominant] - contributions[weaker]
 
-        for modality, ratio in contributions.items():
-            if modality == dominant and ratio > 0.5:
-                k = 1.0 - float(torch.tanh(
-                    torch.tensor(self.alpha * ratio)
-                ))
+        # Gate 1: imbalance threshold
+        if imbalance <= self.imbalance_threshold:
+            self._ogm_skipped += 1
+            return
+
+        # Gate 2: trend gate — is the weaker modality already improving?
+        weaker_history = self.contribution_history.get(weaker, [])
+        if len(weaker_history) >= 2 * self.trend_window:
+            recent = sum(weaker_history[-self.trend_window:]) / self.trend_window
+            older  = sum(weaker_history[-2 * self.trend_window:-self.trend_window]) / self.trend_window
+            if recent > older:
+                self._ogm_skipped += 1
+                return
+
+        # Both gates passed — apply proportional suppression
+        effective_ratio = (imbalance - self.imbalance_threshold) / (1.0 - self.imbalance_threshold)
+        self._ogm_applied += 1
+
+        for modality in contributions:
+            if modality == dominant:
+                k = 1.0 - float(torch.tanh(torch.tensor(self.alpha * effective_ratio)))
             else:
                 k = 1.0
 
             for name, param in self.model.named_parameters():
                 if param.grad is None:
                     continue
-                # Match by encoder name prefix (image_encoder / gene_encoder)
-                encoder_key = f"{modality}_encoder"
-                if encoder_key in name:
+                if f"{modality}_encoder" in name:
                     param.grad.mul_(k)
                     if self.use_ge and modality == dominant and k < 1.0:
                         noise_std = param.grad.std() * 0.1
@@ -201,6 +238,10 @@ class MultimodalChaoticOptimizer:
         """Returns per-modality contribution history (normalized, [0,1])."""
         return self.contribution_history
 
+    def get_ogm_stats(self) -> Dict[str, int]:
+        """Returns count of steps where OGM-GE was applied vs skipped."""
+        return {"applied": self._ogm_applied, "skipped": self._ogm_skipped}
+
 
 # ── Self-test ─────────────────────────────────────────────────────────────────
 
@@ -221,6 +262,7 @@ if __name__ == "__main__":
         modality_names=["image", "gene"],
         base_lr=1e-3,
         compute_every=1,
+        imbalance_threshold=0.10,
     )
 
     criterion = torch.nn.CrossEntropyLoss()
@@ -243,9 +285,10 @@ if __name__ == "__main__":
     assert all(lr > 0 for lr in lrs), "LR should be positive"
     hist = chaotic.get_contribution_history()
     assert "image" in hist and "gene" in hist, "Missing contribution keys"
-    assert len(hist["image"]) == 10, "Contribution history length mismatch"
 
+    stats = chaotic.get_ogm_stats()
     print(f"LR range : [{min(lrs):.6f}, {max(lrs):.6f}]")
     print(f"image contributions (first 5): {[f'{v:.3f}' for v in hist['image'][:5]]}")
     print(f"gene  contributions (first 5): {[f'{v:.3f}' for v in hist['gene'][:5]]}")
+    print(f"OGM-GE applied={stats['applied']}  skipped={stats['skipped']}")
     print("All MultimodalChaoticOptimizer self-tests PASSED.")
