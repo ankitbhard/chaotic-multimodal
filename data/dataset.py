@@ -187,6 +187,8 @@ def build_dataloaders(
     num_workers:        int             = 0,
     seed:               int             = 42,
     precache:           bool            = False,
+    fold:               int             = None,
+    n_folds:            int             = 5,
 ) -> dict:
     """
     Build train / val / test DataLoaders from raw files.
@@ -289,15 +291,32 @@ def build_dataloaders(
     print(f"  Matched patients      : {len(records)}")
 
     # ── Train / val / test split ──────────────────────────────────────────────
-    rng = random.Random(seed)
-    indices = list(range(len(records)))
-    rng.shuffle(indices)
-
-    n_test = int(len(indices) * test_fraction)
-    n_val  = int(len(indices) * val_fraction)
-    test_idx  = indices[:n_test]
-    val_idx   = indices[n_test:n_test + n_val]
-    train_idx = indices[n_test + n_val:]
+    if fold is not None:
+        # k-fold CV: fold k is test; remaining 4/5 split 85/15 into train/val
+        from sklearn.model_selection import StratifiedKFold
+        surv_labels = [rec["surv_label"] for rec in records]
+        skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=seed)
+        all_folds = list(skf.split(range(len(records)), surv_labels))
+        trainval_idx, test_idx = all_folds[fold]
+        trainval_idx = list(trainval_idx)
+        test_idx     = list(test_idx)
+        # split trainval into train/val (85/15 of trainval)
+        rng = random.Random(seed)
+        rng.shuffle(trainval_idx)
+        n_val   = int(len(trainval_idx) * 0.15)
+        val_idx   = trainval_idx[:n_val]
+        train_idx = trainval_idx[n_val:]
+        print(f"  Fold {fold}/{n_folds}: {len(train_idx)} train / "
+              f"{len(val_idx)} val / {len(test_idx)} test")
+    else:
+        rng = random.Random(seed)
+        indices = list(range(len(records)))
+        rng.shuffle(indices)
+        n_test = int(len(indices) * test_fraction)
+        n_val  = int(len(indices) * val_fraction)
+        test_idx  = indices[:n_test]
+        val_idx   = indices[n_test:n_test + n_val]
+        train_idx = indices[n_test + n_val:]
 
     gene_matrix = np.stack(gene_rows, axis=0)
 

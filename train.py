@@ -199,6 +199,7 @@ OPTIMIZER_NAMES = [
     "chaotic_adaptive_05",
     # Adaptive OGM-GE on fixed-LR bases (no chaotic LR)
     "adam_adaptive", "sgd_mom_adaptive",
+    "adadelta_adaptive", "cosine_adaptive",
 ]
 
 
@@ -382,6 +383,23 @@ def build_optimizer(name: str, model, cfg: dict):
                              imbalance_threshold=0.10, trend_window=10)
         return wrapped, None, True
 
+    if name == "adadelta_adaptive":
+        base = torch.optim.Adadelta(model.parameters(), lr=1.0, weight_decay=wd)
+        wrapped = OGMWrapper(base, model, modality_names=["image", "gene"],
+                             alpha=0.5, use_ge=True, compute_every=1,
+                             imbalance_threshold=0.10, trend_window=10)
+        return wrapped, None, True
+
+    if name == "cosine_adaptive":
+        base = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9,
+                               weight_decay=wd)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            base, T_max=cfg["epochs"])
+        wrapped = OGMWrapper(base, model, modality_names=["image", "gene"],
+                             alpha=0.5, use_ge=True, compute_every=1,
+                             imbalance_threshold=0.10, trend_window=10)
+        return wrapped, scheduler, True
+
     raise ValueError(f"Unknown optimizer: '{name}'. "
                      f"Choose from {OPTIMIZER_NAMES}")
 
@@ -494,6 +512,8 @@ def main(cfg: dict, opt_names: list):
             test_fraction     = cfg["test_fraction"],
             batch_size        = cfg["batch_size"],
             seed              = seed,
+            fold              = cfg.get("fold", None),
+            n_folds           = cfg.get("n_folds", 5),
         )
 
     n_genes = loaders["n_genes"]
@@ -621,6 +641,10 @@ if __name__ == "__main__":
     parser.add_argument("--n_top_genes",  type=int,   default=None)
     parser.add_argument("--save_dir",     type=str,   default=None)
     parser.add_argument("--seed",         type=int,   default=None)
+    parser.add_argument("--fold",         type=int,   default=None,
+                        help="k-fold CV fold index (0-based). Requires --n_folds.")
+    parser.add_argument("--n_folds",      type=int,   default=5,
+                        help="Total number of folds for k-fold CV (default: 5).")
 
     args = parser.parse_args()
 
@@ -636,6 +660,8 @@ if __name__ == "__main__":
     if args.n_top_genes is not None: cfg["n_top_genes"]  = args.n_top_genes
     if args.save_dir    is not None: cfg["save_dir"]     = args.save_dir
     if args.seed        is not None: cfg["seed"]         = args.seed
+    if args.fold        is not None: cfg["fold"]         = args.fold
+    if args.n_folds     is not None: cfg["n_folds"]      = args.n_folds
 
     # Expand "all"
     opt_names = OPTIMIZER_NAMES if "all" in args.optimizers else args.optimizers

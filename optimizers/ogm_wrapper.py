@@ -28,8 +28,11 @@ class OGMWrapper:
     No chaotic LR — fixed/standard LR only.
 
     Adaptive gating (new): suppression only fires when BOTH conditions hold:
-      1. Modality imbalance > imbalance_threshold (default 0.10)
+      1. Modality imbalance > imbalance_threshold (default 0.0)
       2. Weaker modality's contribution is NOT already trending upward
+
+    When imbalance_threshold == 0.0, both gates are disabled and OGM-GE is
+    always-on (replicating the original Pan et al. behaviour).
 
     This prevents OGM-GE from interfering when modalities are naturally balanced
     or when the weaker modality is self-correcting.
@@ -41,9 +44,10 @@ class OGMWrapper:
         alpha               : gradient modulation strength (default 0.5)
         use_ge              : inject Gaussian noise for generalization (default True)
         compute_every       : apply OGM-GE every N steps (default 1)
-        imbalance_threshold : minimum contribution gap to trigger suppression (default 0.10)
+        imbalance_threshold : minimum contribution gap to trigger suppression (default 0.0)
                               Set to 0.0 to replicate original always-on behaviour.
         trend_window        : look-back window for weaker-modality improvement gate (default 10)
+                              Only active when imbalance_threshold > 0.
     """
 
     def __init__(self,
@@ -53,7 +57,7 @@ class OGMWrapper:
                  alpha:               float = 0.5,
                  use_ge:              bool  = True,
                  compute_every:       int   = 1,
-                 imbalance_threshold: float = 0.10,
+                 imbalance_threshold: float = 0.0,
                  trend_window:        int   = 10):
         self.optimizer            = optimizer
         self.model                = model
@@ -129,13 +133,16 @@ class OGMWrapper:
             return
 
         # Gate 2: trend gate — is the weaker modality already improving?
-        weaker_history = self.contribution_history.get(weaker, [])
-        if len(weaker_history) >= 2 * self.trend_window:
-            recent = sum(weaker_history[-self.trend_window:]) / self.trend_window
-            older  = sum(weaker_history[-2 * self.trend_window:-self.trend_window]) / self.trend_window
-            if recent > older:
-                self._ogm_skipped += 1
-                return
+        # Only active when imbalance_threshold > 0 (adaptive mode).
+        # When threshold == 0 this is always-on OGM-GE, no trend gating.
+        if self.imbalance_threshold > 0:
+            weaker_history = self.contribution_history.get(weaker, [])
+            if len(weaker_history) >= 2 * self.trend_window:
+                recent = sum(weaker_history[-self.trend_window:]) / self.trend_window
+                older  = sum(weaker_history[-2 * self.trend_window:-self.trend_window]) / self.trend_window
+                if recent > older:
+                    self._ogm_skipped += 1
+                    return
 
         # Both gates passed — apply proportional suppression
         effective_ratio = (imbalance - self.imbalance_threshold) / (1.0 - self.imbalance_threshold)
