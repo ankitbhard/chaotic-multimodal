@@ -379,7 +379,7 @@ def train_one_optimizer(opt_name, model_factory, loaders, cfg, device):
         )
         val_loss, val_ci, _, _, _ = evaluate(model, loaders["val"], device)
 
-        if scheduler and not is_chaotic:
+        if scheduler:
             scheduler.step()
 
         history["train_loss"].append(tr_loss)
