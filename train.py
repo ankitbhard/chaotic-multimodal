@@ -400,6 +400,19 @@ def build_optimizer(name: str, model, cfg: dict):
                              imbalance_threshold=0.10, trend_window=10)
         return wrapped, scheduler, True
 
+    # ── Sensitivity sweep: adam_sens_t{theta}_w{window}_a{alpha} ──
+    import re
+    m = re.match(r"adam_sens_t([\d.]+)_w(\d+)_a([\d.]+)", name)
+    if m:
+        theta_val = float(m.group(1))
+        window_val = int(m.group(2))
+        alpha_val = float(m.group(3))
+        base = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=wd)
+        wrapped = OGMWrapper(base, model, modality_names=["image", "gene"],
+                             alpha=alpha_val, use_ge=True, compute_every=1,
+                             imbalance_threshold=theta_val, trend_window=window_val)
+        return wrapped, None, True
+
     raise ValueError(f"Unknown optimizer: '{name}'. "
                      f"Choose from {OPTIMIZER_NAMES}")
 
@@ -562,8 +575,8 @@ def main(cfg: dict, opt_names: list):
                 model, loaders["val"], criterion, device
             )
 
-            # Cosine-SGD / cosine_ge: step external scheduler
-            if scheduler is not None and not is_chaotic:
+            # Step external scheduler (cosine, cosine_ge, cosine_adaptive)
+            if scheduler is not None:
                 scheduler.step()
 
             history["train_loss"].append(float(train_loss))
