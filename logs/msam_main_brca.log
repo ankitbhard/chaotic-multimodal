@@ -1,0 +1,554 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+
+#################################################################
+  FOLD 0/5
+#################################################################
+Device: cuda
+  Matched patients: 1052  (events=146)
+  Fold 0/5: 715 train / 126 val / 211 test
+  Split: 715 / 126 / 211  n_genes=1000
+
+============================================================
+  cosine_ge | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2719  val_loss=0.3842  val_ci=0.5037  lr=0.000976  (best=0.5037 @ ep20)
+    ep  40/200  tr_loss=0.2270  val_loss=0.3843  val_ci=0.5547  lr=0.000905  (best=0.5547 @ ep40)
+    ep  60/200  tr_loss=0.1388  val_loss=0.3988  val_ci=0.5827  lr=0.000794  (best=0.5860 @ ep54)
+    ep  80/200  tr_loss=0.0968  val_loss=0.4510  val_ci=0.5704  lr=0.000655  (best=0.5885 @ ep66)
+    ep 100/200  tr_loss=0.0714  val_loss=0.4492  val_ci=0.5877  lr=0.000500  (best=0.5967 @ ep89)
+    ep 120/200  tr_loss=0.0637  val_loss=0.4977  val_ci=0.5728  lr=0.000345  (best=0.5967 @ ep89)
+    ep 140/200  tr_loss=0.0671  val_loss=0.5157  val_ci=0.5687  lr=0.000206  (best=0.5967 @ ep89)
+    ep 160/200  tr_loss=0.0621  val_loss=0.5161  val_ci=0.5720  lr=0.000095  (best=0.5967 @ ep89)
+    ep 180/200  tr_loss=0.0533  val_loss=0.5316  val_ci=0.5695  lr=0.000024  (best=0.5967 @ ep89)
+    ep 200/200  tr_loss=0.0688  val_loss=0.5304  val_ci=0.5720  lr=0.000000  (best=0.5967 @ ep89)
+  >> cosine_ge: test C-index = 0.6354  (val best = 0.5967 @ ep89)
+  [cosine_ge] elapsed: 7.0 min
+
+============================================================
+  sam | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2874  val_loss=0.3839  val_ci=0.5119  lr=0.000976  (best=0.5342 @ ep2)
+    ep  40/200  tr_loss=0.2661  val_loss=0.3839  val_ci=0.5045  lr=0.000905  (best=0.5342 @ ep2)
+    ep  60/200  tr_loss=0.2205  val_loss=0.3880  val_ci=0.5547  lr=0.000794  (best=0.5547 @ ep60)
+    ep  80/200  tr_loss=0.1712  val_loss=0.3916  val_ci=0.5852  lr=0.000655  (best=0.5852 @ ep80)
+    ep 100/200  tr_loss=0.1206  val_loss=0.4184  val_ci=0.5860  lr=0.000500  (best=0.5868 @ ep89)
+    ep 120/200  tr_loss=0.1041  val_loss=0.4479  val_ci=0.5802  lr=0.000345  (best=0.6025 @ ep106)
+    ep 140/200  tr_loss=0.0919  val_loss=0.4432  val_ci=0.5975  lr=0.000206  (best=0.6025 @ ep106)
+    ep 160/200  tr_loss=0.0938  val_loss=0.4498  val_ci=0.5951  lr=0.000095  (best=0.6025 @ ep106)
+    ep 180/200  tr_loss=0.0824  val_loss=0.4547  val_ci=0.5967  lr=0.000024  (best=0.6025 @ ep106)
+    ep 200/200  tr_loss=0.0946  val_loss=0.4537  val_ci=0.5975  lr=0.000000  (best=0.6025 @ ep106)
+  >> sam: test C-index = 0.6409  (val best = 0.6025 @ ep106)
+  [sam] elapsed: 0.8 min
+
+============================================================
+  msam | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2832  val_loss=0.3842  val_ci=0.4988  lr=0.000976  (best=0.5309 @ ep17)
+    ep  40/200  tr_loss=0.2698  val_loss=0.3848  val_ci=0.4955  lr=0.000905  (best=0.5309 @ ep17)
+    ep  60/200  tr_loss=0.2124  val_loss=0.3884  val_ci=0.5424  lr=0.000794  (best=0.5424 @ ep60)
+    ep  80/200  tr_loss=0.1402  val_loss=0.3938  val_ci=0.5663  lr=0.000655  (best=0.5663 @ ep80)
+    ep 100/200  tr_loss=0.1188  val_loss=0.4247  val_ci=0.5720  lr=0.000500  (best=0.5802 @ ep86)
+    ep 120/200  tr_loss=0.0927  val_loss=0.4376  val_ci=0.5786  lr=0.000345  (best=0.6000 @ ep104)
+    ep 140/200  tr_loss=0.0695  val_loss=0.4373  val_ci=0.5942  lr=0.000206  (best=0.6025 @ ep135)
+    ep 160/200  tr_loss=0.0802  val_loss=0.4504  val_ci=0.5975  lr=0.000095  (best=0.6033 @ ep154)
+    ep 180/200  tr_loss=0.0778  val_loss=0.4589  val_ci=0.5926  lr=0.000024  (best=0.6041 @ ep175)
+    ep 200/200  tr_loss=0.0744  val_loss=0.4511  val_ci=0.5959  lr=0.000000  (best=0.6041 @ ep175)
+  >> msam: test C-index = 0.6740  (val best = 0.6041 @ ep175)
+  [msam] elapsed: 1.0 min
+
+============================================================
+  msam_chaotic | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2973  val_loss=0.3837  val_ci=0.4798  lr=0.000313  (best=0.4798 @ ep20)
+    ep  40/200  tr_loss=0.2845  val_loss=0.3832  val_ci=0.4782  lr=0.000700  (best=0.4988 @ ep37)
+    ep  60/200  tr_loss=0.2779  val_loss=0.3826  val_ci=0.4872  lr=0.000170  (best=0.5070 @ ep54)
+    ep  80/200  tr_loss=0.2755  val_loss=0.3821  val_ci=0.5062  lr=0.000015  (best=0.5160 @ ep75)
+    ep 100/200  tr_loss=0.2632  val_loss=0.3822  val_ci=0.5136  lr=0.000345  (best=0.5235 @ ep98)
+    ep 120/200  tr_loss=0.2424  val_loss=0.3835  val_ci=0.5235  lr=0.000177  (best=0.5325 @ ep116)
+    ep 140/200  tr_loss=0.2419  val_loss=0.3837  val_ci=0.5300  lr=0.000010  (best=0.5358 @ ep139)
+    ep 160/200  tr_loss=0.2346  val_loss=0.3846  val_ci=0.5366  lr=0.000017  (best=0.5366 @ ep144)
+    ep 180/200  tr_loss=0.2336  val_loss=0.3847  val_ci=0.5350  lr=0.000001  (best=0.5407 @ ep173)
+    ep 200/200  tr_loss=0.2334  val_loss=0.3850  val_ci=0.5342  lr=0.000000  (best=0.5407 @ ep173)
+  >> msam_chaotic: test C-index = 0.5835  (val best = 0.5407 @ ep173)
+  [msam_chaotic] elapsed: 1.1 min
+
+#################################################################
+  FOLD 1/5
+#################################################################
+Device: cuda
+  Matched patients: 1052  (events=146)
+  Fold 1/5: 715 train / 126 val / 211 test
+  Split: 715 / 126 / 211  n_genes=1000
+
+============================================================
+  cosine_ge | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2737  val_loss=0.3658  val_ci=0.6076  lr=0.000976  (best=0.6139 @ ep15)
+    ep  40/200  tr_loss=0.2417  val_loss=0.3465  val_ci=0.6212  lr=0.000905  (best=0.6212 @ ep40)
+    ep  60/200  tr_loss=0.1573  val_loss=0.3252  val_ci=0.7288  lr=0.000794  (best=0.7369 @ ep59)
+    ep  80/200  tr_loss=0.0970  val_loss=0.3410  val_ci=0.7342  lr=0.000655  (best=0.7523 @ ep75)
+    ep 100/200  tr_loss=0.0718  val_loss=0.3677  val_ci=0.7315  lr=0.000500  (best=0.7523 @ ep75)
+    ep 120/200  tr_loss=0.0655  val_loss=0.3887  val_ci=0.7278  lr=0.000345  (best=0.7523 @ ep75)
+    ep 140/200  tr_loss=0.0523  val_loss=0.3995  val_ci=0.7315  lr=0.000206  (best=0.7523 @ ep75)
+    ep 160/200  tr_loss=0.0384  val_loss=0.3928  val_ci=0.7360  lr=0.000095  (best=0.7523 @ ep75)
+    ep 180/200  tr_loss=0.0511  val_loss=0.3899  val_ci=0.7396  lr=0.000024  (best=0.7523 @ ep75)
+    ep 200/200  tr_loss=0.0518  val_loss=0.3949  val_ci=0.7396  lr=0.000000  (best=0.7523 @ ep75)
+  >> cosine_ge: test C-index = 0.5818  (val best = 0.7523 @ ep75)
+  [cosine_ge] elapsed: 6.4 min
+
+============================================================
+  sam | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2924  val_loss=0.3711  val_ci=0.5154  lr=0.000976  (best=0.5298 @ ep18)
+    ep  40/200  tr_loss=0.2580  val_loss=0.3643  val_ci=0.5696  lr=0.000905  (best=0.5778 @ ep39)
+    ep  60/200  tr_loss=0.2285  val_loss=0.3493  val_ci=0.6356  lr=0.000794  (best=0.6356 @ ep60)
+    ep  80/200  tr_loss=0.1860  val_loss=0.3316  val_ci=0.6781  lr=0.000655  (best=0.6835 @ ep74)
+    ep 100/200  tr_loss=0.1525  val_loss=0.3253  val_ci=0.6745  lr=0.000500  (best=0.6881 @ ep84)
+    ep 120/200  tr_loss=0.1250  val_loss=0.3337  val_ci=0.6528  lr=0.000345  (best=0.6881 @ ep84)
+    ep 140/200  tr_loss=0.1016  val_loss=0.3336  val_ci=0.6438  lr=0.000206  (best=0.6881 @ ep84)
+    ep 160/200  tr_loss=0.1122  val_loss=0.3367  val_ci=0.6483  lr=0.000095  (best=0.6881 @ ep84)
+    ep 180/200  tr_loss=0.1097  val_loss=0.3439  val_ci=0.6329  lr=0.000024  (best=0.6881 @ ep84)
+    ep 200/200  tr_loss=0.0907  val_loss=0.3327  val_ci=0.6474  lr=0.000000  (best=0.6881 @ ep84)
+  >> sam: test C-index = 0.5707  (val best = 0.6881 @ ep84)
+  [sam] elapsed: 0.8 min
+
+============================================================
+  msam | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2846  val_loss=0.3717  val_ci=0.5515  lr=0.000976  (best=0.5515 @ ep20)
+    ep  40/200  tr_loss=0.2685  val_loss=0.3685  val_ci=0.5488  lr=0.000905  (best=0.5515 @ ep20)
+    ep  60/200  tr_loss=0.2310  val_loss=0.3592  val_ci=0.5940  lr=0.000794  (best=0.5940 @ ep60)
+    ep  80/200  tr_loss=0.1826  val_loss=0.3457  val_ci=0.6519  lr=0.000655  (best=0.6555 @ ep78)
+    ep 100/200  tr_loss=0.1399  val_loss=0.3426  val_ci=0.6817  lr=0.000500  (best=0.6926 @ ep91)
+    ep 120/200  tr_loss=0.1084  val_loss=0.3379  val_ci=0.6926  lr=0.000345  (best=0.6989 @ ep118)
+    ep 140/200  tr_loss=0.0851  val_loss=0.3320  val_ci=0.7025  lr=0.000206  (best=0.7080 @ ep135)
+    ep 160/200  tr_loss=0.0985  val_loss=0.3319  val_ci=0.6989  lr=0.000095  (best=0.7080 @ ep135)
+    ep 180/200  tr_loss=0.0915  val_loss=0.3359  val_ci=0.6989  lr=0.000024  (best=0.7089 @ ep178)
+    ep 200/200  tr_loss=0.0912  val_loss=0.3383  val_ci=0.6935  lr=0.000000  (best=0.7098 @ ep188)
+  >> msam: test C-index = 0.6063  (val best = 0.7098 @ ep188)
+  [msam] elapsed: 1.1 min
+
+============================================================
+  msam_chaotic | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2834  val_loss=0.3740  val_ci=0.4123  lr=0.000313  (best=0.4204 @ ep19)
+    ep  40/200  tr_loss=0.2960  val_loss=0.3729  val_ci=0.4684  lr=0.000700  (best=0.4684 @ ep40)
+    ep  60/200  tr_loss=0.2690  val_loss=0.3715  val_ci=0.4729  lr=0.000170  (best=0.4756 @ ep42)
+    ep  80/200  tr_loss=0.2619  val_loss=0.3694  val_ci=0.5009  lr=0.000015  (best=0.5009 @ ep80)
+    ep 100/200  tr_loss=0.2523  val_loss=0.3666  val_ci=0.5253  lr=0.000345  (best=0.5253 @ ep100)
+    ep 120/200  tr_loss=0.2376  val_loss=0.3655  val_ci=0.5362  lr=0.000177  (best=0.5488 @ ep118)
+    ep 140/200  tr_loss=0.2272  val_loss=0.3641  val_ci=0.5561  lr=0.000010  (best=0.5588 @ ep133)
+    ep 160/200  tr_loss=0.2246  val_loss=0.3628  val_ci=0.5678  lr=0.000017  (best=0.5732 @ ep153)
+    ep 180/200  tr_loss=0.2173  val_loss=0.3628  val_ci=0.5723  lr=0.000001  (best=0.5787 @ ep174)
+    ep 200/200  tr_loss=0.2229  val_loss=0.3628  val_ci=0.5714  lr=0.000000  (best=0.5841 @ ep188)
+  >> msam_chaotic: test C-index = 0.4881  (val best = 0.5841 @ ep188)
+  [msam_chaotic] elapsed: 1.0 min
+
+#################################################################
+  FOLD 2/5
+#################################################################
+Device: cuda
+  Matched patients: 1052  (events=146)
+  Fold 2/5: 716 train / 126 val / 210 test
+  Split: 716 / 126 / 210  n_genes=1000
+
+============================================================
+  cosine_ge | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3013  val_loss=0.2467  val_ci=0.6305  lr=0.000976  (best=0.6473 @ ep17)
+    ep  40/200  tr_loss=0.2525  val_loss=0.2369  val_ci=0.6534  lr=0.000905  (best=0.6534 @ ep40)
+    ep  60/200  tr_loss=0.1549  val_loss=0.2463  val_ci=0.6748  lr=0.000794  (best=0.6916 @ ep47)
+    ep  80/200  tr_loss=0.1111  val_loss=0.2886  val_ci=0.6840  lr=0.000655  (best=0.6962 @ ep69)
+    ep 100/200  tr_loss=0.0913  val_loss=0.3254  val_ci=0.6947  lr=0.000500  (best=0.7084 @ ep98)
+    ep 120/200  tr_loss=0.0666  val_loss=0.3632  val_ci=0.6962  lr=0.000345  (best=0.7160 @ ep103)
+    ep 140/200  tr_loss=0.0689  val_loss=0.3723  val_ci=0.6931  lr=0.000206  (best=0.7160 @ ep103)
+    ep 160/200  tr_loss=0.0570  val_loss=0.3800  val_ci=0.7069  lr=0.000095  (best=0.7221 @ ep147)
+    ep 180/200  tr_loss=0.0673  val_loss=0.3797  val_ci=0.7069  lr=0.000024  (best=0.7221 @ ep147)
+    ep 200/200  tr_loss=0.0571  val_loss=0.3776  val_ci=0.7115  lr=0.000000  (best=0.7221 @ ep147)
+  >> cosine_ge: test C-index = 0.5587  (val best = 0.7221 @ ep147)
+  [cosine_ge] elapsed: 6.4 min
+
+============================================================
+  sam | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3188  val_loss=0.2495  val_ci=0.5313  lr=0.000976  (best=0.5313 @ ep20)
+    ep  40/200  tr_loss=0.3063  val_loss=0.2452  val_ci=0.5695  lr=0.000905  (best=0.5924 @ ep39)
+    ep  60/200  tr_loss=0.2538  val_loss=0.2428  val_ci=0.6336  lr=0.000794  (best=0.6443 @ ep59)
+    ep  80/200  tr_loss=0.1953  val_loss=0.2474  val_ci=0.6626  lr=0.000655  (best=0.6733 @ ep76)
+    ep 100/200  tr_loss=0.1552  val_loss=0.2580  val_ci=0.6550  lr=0.000500  (best=0.6733 @ ep76)
+    ep 120/200  tr_loss=0.1209  val_loss=0.2657  val_ci=0.6718  lr=0.000345  (best=0.6824 @ ep116)
+    ep 140/200  tr_loss=0.1203  val_loss=0.2726  val_ci=0.6748  lr=0.000206  (best=0.6824 @ ep116)
+    ep 160/200  tr_loss=0.1257  val_loss=0.2816  val_ci=0.6687  lr=0.000095  (best=0.6824 @ ep116)
+    ep 180/200  tr_loss=0.1163  val_loss=0.2798  val_ci=0.6672  lr=0.000024  (best=0.6840 @ ep167)
+    ep 200/200  tr_loss=0.0971  val_loss=0.2849  val_ci=0.6702  lr=0.000000  (best=0.6840 @ ep167)
+  >> sam: test C-index = 0.6205  (val best = 0.6840 @ ep167)
+  [sam] elapsed: 0.8 min
+
+============================================================
+  msam | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3135  val_loss=0.2486  val_ci=0.4733  lr=0.000976  (best=0.4824 @ ep11)
+    ep  40/200  tr_loss=0.2996  val_loss=0.2461  val_ci=0.5160  lr=0.000905  (best=0.5176 @ ep39)
+    ep  60/200  tr_loss=0.2313  val_loss=0.2401  val_ci=0.5832  lr=0.000794  (best=0.5832 @ ep60)
+    ep  80/200  tr_loss=0.1525  val_loss=0.2451  val_ci=0.5756  lr=0.000655  (best=0.5924 @ ep64)
+    ep 100/200  tr_loss=0.1252  val_loss=0.2638  val_ci=0.5817  lr=0.000500  (best=0.6000 @ ep86)
+    ep 120/200  tr_loss=0.1040  val_loss=0.2768  val_ci=0.5939  lr=0.000345  (best=0.6153 @ ep105)
+    ep 140/200  tr_loss=0.0973  val_loss=0.2868  val_ci=0.6046  lr=0.000206  (best=0.6336 @ ep138)
+    ep 160/200  tr_loss=0.0849  val_loss=0.2870  val_ci=0.6290  lr=0.000095  (best=0.6336 @ ep138)
+    ep 180/200  tr_loss=0.0965  val_loss=0.2900  val_ci=0.6153  lr=0.000024  (best=0.6336 @ ep138)
+    ep 200/200  tr_loss=0.1181  val_loss=0.2906  val_ci=0.6107  lr=0.000000  (best=0.6336 @ ep138)
+  >> msam: test C-index = 0.6185  (val best = 0.6336 @ ep138)
+  [msam] elapsed: 1.1 min
+
+============================================================
+  msam_chaotic | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3168  val_loss=0.2506  val_ci=0.4794  lr=0.000313  (best=0.4962 @ ep18)
+    ep  40/200  tr_loss=0.3189  val_loss=0.2505  val_ci=0.5099  lr=0.000700  (best=0.5359 @ ep36)
+    ep  60/200  tr_loss=0.3110  val_loss=0.2496  val_ci=0.5450  lr=0.000170  (best=0.5450 @ ep60)
+    ep  80/200  tr_loss=0.2982  val_loss=0.2486  val_ci=0.5481  lr=0.000015  (best=0.5603 @ ep69)
+    ep 100/200  tr_loss=0.2810  val_loss=0.2471  val_ci=0.5664  lr=0.000345  (best=0.5710 @ ep95)
+    ep 120/200  tr_loss=0.2653  val_loss=0.2460  val_ci=0.5847  lr=0.000177  (best=0.5924 @ ep115)
+    ep 140/200  tr_loss=0.2496  val_loss=0.2460  val_ci=0.5954  lr=0.000010  (best=0.6015 @ ep138)
+    ep 160/200  tr_loss=0.2492  val_loss=0.2455  val_ci=0.5985  lr=0.000017  (best=0.6107 @ ep153)
+    ep 180/200  tr_loss=0.2501  val_loss=0.2467  val_ci=0.5969  lr=0.000001  (best=0.6198 @ ep165)
+    ep 200/200  tr_loss=0.2450  val_loss=0.2462  val_ci=0.6046  lr=0.000000  (best=0.6198 @ ep165)
+  >> msam_chaotic: test C-index = 0.5828  (val best = 0.6198 @ ep165)
+  [msam_chaotic] elapsed: 1.1 min
+
+#################################################################
+  FOLD 3/5
+#################################################################
+Device: cuda
+  Matched patients: 1052  (events=146)
+  Fold 3/5: 716 train / 126 val / 210 test
+  Split: 716 / 126 / 210  n_genes=1000
+
+============================================================
+  cosine_ge | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2946  val_loss=0.3082  val_ci=0.5102  lr=0.000976  (best=0.5102 @ ep20)
+    ep  40/200  tr_loss=0.2747  val_loss=0.3043  val_ci=0.5766  lr=0.000905  (best=0.5766 @ ep40)
+    ep  60/200  tr_loss=0.2009  val_loss=0.3049  val_ci=0.6066  lr=0.000794  (best=0.6066 @ ep60)
+    ep  80/200  tr_loss=0.1224  val_loss=0.3314  val_ci=0.6238  lr=0.000655  (best=0.6313 @ ep72)
+    ep 100/200  tr_loss=0.0808  val_loss=0.3679  val_ci=0.6431  lr=0.000500  (best=0.6431 @ ep100)
+    ep 120/200  tr_loss=0.0696  val_loss=0.3909  val_ci=0.6292  lr=0.000345  (best=0.6431 @ ep100)
+    ep 140/200  tr_loss=0.0549  val_loss=0.4025  val_ci=0.6377  lr=0.000206  (best=0.6506 @ ep134)
+    ep 160/200  tr_loss=0.0613  val_loss=0.3979  val_ci=0.6388  lr=0.000095  (best=0.6527 @ ep142)
+    ep 180/200  tr_loss=0.0591  val_loss=0.4011  val_ci=0.6474  lr=0.000024  (best=0.6527 @ ep142)
+    ep 200/200  tr_loss=0.0517  val_loss=0.4074  val_ci=0.6474  lr=0.000000  (best=0.6527 @ ep142)
+  >> cosine_ge: test C-index = 0.6939  (val best = 0.6527 @ ep142)
+  [cosine_ge] elapsed: 6.4 min
+
+============================================================
+  sam | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3009  val_loss=0.3108  val_ci=0.3987  lr=0.000976  (best=0.4180 @ ep18)
+    ep  40/200  tr_loss=0.2914  val_loss=0.3095  val_ci=0.4759  lr=0.000905  (best=0.4759 @ ep40)
+    ep  60/200  tr_loss=0.2808  val_loss=0.3073  val_ci=0.5423  lr=0.000794  (best=0.5445 @ ep58)
+    ep  80/200  tr_loss=0.2358  val_loss=0.3022  val_ci=0.6056  lr=0.000655  (best=0.6056 @ ep80)
+    ep 100/200  tr_loss=0.1760  val_loss=0.2915  val_ci=0.6602  lr=0.000500  (best=0.6602 @ ep100)
+    ep 120/200  tr_loss=0.1282  val_loss=0.3014  val_ci=0.6409  lr=0.000345  (best=0.6624 @ ep106)
+    ep 140/200  tr_loss=0.1166  val_loss=0.3027  val_ci=0.6409  lr=0.000206  (best=0.6624 @ ep106)
+    ep 160/200  tr_loss=0.1104  val_loss=0.3122  val_ci=0.6420  lr=0.000095  (best=0.6624 @ ep106)
+    ep 180/200  tr_loss=0.1075  val_loss=0.3101  val_ci=0.6452  lr=0.000024  (best=0.6624 @ ep106)
+    ep 200/200  tr_loss=0.0990  val_loss=0.3093  val_ci=0.6452  lr=0.000000  (best=0.6624 @ ep106)
+  >> sam: test C-index = 0.7189  (val best = 0.6624 @ ep106)
+  [sam] elapsed: 0.8 min
+
+============================================================
+  msam | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3027  val_loss=0.3101  val_ci=0.4598  lr=0.000976  (best=0.4598 @ ep20)
+    ep  40/200  tr_loss=0.2917  val_loss=0.3077  val_ci=0.5005  lr=0.000905  (best=0.5102 @ ep37)
+    ep  60/200  tr_loss=0.2749  val_loss=0.2987  val_ci=0.5991  lr=0.000794  (best=0.6120 @ ep59)
+    ep  80/200  tr_loss=0.2288  val_loss=0.2798  val_ci=0.6774  lr=0.000655  (best=0.6774 @ ep80)
+    ep 100/200  tr_loss=0.1556  val_loss=0.2890  val_ci=0.6517  lr=0.000500  (best=0.6860 @ ep85)
+    ep 120/200  tr_loss=0.1205  val_loss=0.3034  val_ci=0.6463  lr=0.000345  (best=0.6860 @ ep85)
+    ep 140/200  tr_loss=0.1097  val_loss=0.3167  val_ci=0.6184  lr=0.000206  (best=0.6860 @ ep85)
+    ep 160/200  tr_loss=0.0909  val_loss=0.3255  val_ci=0.6249  lr=0.000095  (best=0.6860 @ ep85)
+    ep 180/200  tr_loss=0.0880  val_loss=0.3255  val_ci=0.6302  lr=0.000024  (best=0.6860 @ ep85)
+    ep 200/200  tr_loss=0.0900  val_loss=0.3302  val_ci=0.6270  lr=0.000000  (best=0.6860 @ ep85)
+  >> msam: test C-index = 0.7049  (val best = 0.6860 @ ep85)
+  [msam] elapsed: 1.1 min
+
+============================================================
+  msam_chaotic | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3107  val_loss=0.3096  val_ci=0.4459  lr=0.000313  (best=0.4662 @ ep18)
+    ep  40/200  tr_loss=0.3082  val_loss=0.3090  val_ci=0.5188  lr=0.000700  (best=0.5188 @ ep40)
+    ep  60/200  tr_loss=0.3024  val_loss=0.3079  val_ci=0.5252  lr=0.000170  (best=0.5359 @ ep59)
+    ep  80/200  tr_loss=0.2924  val_loss=0.3066  val_ci=0.5541  lr=0.000015  (best=0.5659 @ ep65)
+    ep 100/200  tr_loss=0.2824  val_loss=0.3048  val_ci=0.5691  lr=0.000345  (best=0.5874 @ ep98)
+    ep 120/200  tr_loss=0.2931  val_loss=0.3026  val_ci=0.5874  lr=0.000177  (best=0.6066 @ ep118)
+    ep 140/200  tr_loss=0.2818  val_loss=0.3003  val_ci=0.6088  lr=0.000010  (best=0.6206 @ ep131)
+    ep 160/200  tr_loss=0.2819  val_loss=0.3000  val_ci=0.6163  lr=0.000017  (best=0.6217 @ ep155)
+    ep 180/200  tr_loss=0.2797  val_loss=0.2994  val_ci=0.6099  lr=0.000001  (best=0.6388 @ ep175)
+    ep 200/200  tr_loss=0.2793  val_loss=0.2987  val_ci=0.6174  lr=0.000000  (best=0.6388 @ ep175)
+  >> msam_chaotic: test C-index = 0.7164  (val best = 0.6388 @ ep175)
+  [msam_chaotic] elapsed: 1.0 min
+
+#################################################################
+  FOLD 4/5
+#################################################################
+Device: cuda
+  Matched patients: 1052  (events=146)
+  Fold 4/5: 716 train / 126 val / 210 test
+  Split: 716 / 126 / 210  n_genes=1000
+
+============================================================
+  cosine_ge | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.2974  val_loss=0.3367  val_ci=0.6395  lr=0.000976  (best=0.6501 @ ep10)
+    ep  40/200  tr_loss=0.2407  val_loss=0.3184  val_ci=0.6268  lr=0.000905  (best=0.6501 @ ep10)
+    ep  60/200  tr_loss=0.1605  val_loss=0.3126  val_ci=0.6482  lr=0.000794  (best=0.6540 @ ep59)
+    ep  80/200  tr_loss=0.1082  val_loss=0.3196  val_ci=0.6346  lr=0.000655  (best=0.6599 @ ep61)
+    ep 100/200  tr_loss=0.0809  val_loss=0.3601  val_ci=0.6229  lr=0.000500  (best=0.6599 @ ep61)
+    ep 120/200  tr_loss=0.0807  val_loss=0.3877  val_ci=0.6327  lr=0.000345  (best=0.6618 @ ep109)
+    ep 140/200  tr_loss=0.0613  val_loss=0.3832  val_ci=0.6433  lr=0.000206  (best=0.6618 @ ep109)
+    ep 160/200  tr_loss=0.0627  val_loss=0.3942  val_ci=0.6365  lr=0.000095  (best=0.6618 @ ep109)
+    ep 180/200  tr_loss=0.0590  val_loss=0.3924  val_ci=0.6365  lr=0.000024  (best=0.6618 @ ep109)
+    ep 200/200  tr_loss=0.0644  val_loss=0.3884  val_ci=0.6433  lr=0.000000  (best=0.6618 @ ep109)
+  >> cosine_ge: test C-index = 0.6006  (val best = 0.6618 @ ep109)
+  [cosine_ge] elapsed: 6.3 min
+
+============================================================
+  sam | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3083  val_loss=0.3407  val_ci=0.6006  lr=0.000976  (best=0.6006 @ ep20)
+    ep  40/200  tr_loss=0.2966  val_loss=0.3334  val_ci=0.6297  lr=0.000905  (best=0.6307 @ ep38)
+    ep  60/200  tr_loss=0.2643  val_loss=0.3170  val_ci=0.6395  lr=0.000794  (best=0.6492 @ ep56)
+    ep  80/200  tr_loss=0.2241  val_loss=0.3080  val_ci=0.6579  lr=0.000655  (best=0.6579 @ ep80)
+    ep 100/200  tr_loss=0.1717  val_loss=0.3011  val_ci=0.6706  lr=0.000500  (best=0.6706 @ ep100)
+    ep 120/200  tr_loss=0.1344  val_loss=0.3064  val_ci=0.6618  lr=0.000345  (best=0.6754 @ ep105)
+    ep 140/200  tr_loss=0.1149  val_loss=0.3092  val_ci=0.6618  lr=0.000206  (best=0.6764 @ ep133)
+    ep 160/200  tr_loss=0.0990  val_loss=0.3069  val_ci=0.6667  lr=0.000095  (best=0.6764 @ ep133)
+    ep 180/200  tr_loss=0.1178  val_loss=0.3052  val_ci=0.6667  lr=0.000024  (best=0.6764 @ ep133)
+    ep 200/200  tr_loss=0.1047  val_loss=0.3084  val_ci=0.6774  lr=0.000000  (best=0.6774 @ ep200)
+  >> sam: test C-index = 0.6757  (val best = 0.6774 @ ep200)
+  [sam] elapsed: 0.8 min
+
+============================================================
+  msam | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3022  val_loss=0.3394  val_ci=0.6307  lr=0.000976  (best=0.6385 @ ep19)
+    ep  40/200  tr_loss=0.2867  val_loss=0.3319  val_ci=0.6501  lr=0.000905  (best=0.6667 @ ep34)
+    ep  60/200  tr_loss=0.2374  val_loss=0.3120  val_ci=0.7075  lr=0.000794  (best=0.7172 @ ep57)
+    ep  80/200  tr_loss=0.1700  val_loss=0.2865  val_ci=0.7638  lr=0.000655  (best=0.7638 @ ep80)
+    ep 100/200  tr_loss=0.1318  val_loss=0.2813  val_ci=0.7405  lr=0.000500  (best=0.7638 @ ep80)
+    ep 120/200  tr_loss=0.1041  val_loss=0.2971  val_ci=0.7133  lr=0.000345  (best=0.7638 @ ep80)
+    ep 140/200  tr_loss=0.0975  val_loss=0.3040  val_ci=0.7153  lr=0.000206  (best=0.7638 @ ep80)
+    ep 160/200  tr_loss=0.1087  val_loss=0.3090  val_ci=0.7104  lr=0.000095  (best=0.7638 @ ep80)
+    ep 180/200  tr_loss=0.0711  val_loss=0.3073  val_ci=0.7133  lr=0.000024  (best=0.7638 @ ep80)
+    ep 200/200  tr_loss=0.0806  val_loss=0.3104  val_ci=0.7046  lr=0.000000  (best=0.7638 @ ep80)
+  >> msam: test C-index = 0.6673  (val best = 0.7638 @ ep80)
+  [msam] elapsed: 1.1 min
+
+============================================================
+  msam_chaotic | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1024 | n_genes=1000]
+  SlideEmbeddingEncoder :    525,824
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,451,523
+  Trainable             :  1,451,523
+    ep  20/200  tr_loss=0.3105  val_loss=0.3432  val_ci=0.4606  lr=0.000313  (best=0.4606 @ ep20)
+    ep  40/200  tr_loss=0.2893  val_loss=0.3414  val_ci=0.5491  lr=0.000700  (best=0.5491 @ ep40)
+    ep  60/200  tr_loss=0.2959  val_loss=0.3394  val_ci=0.5724  lr=0.000170  (best=0.5928 @ ep59)
+    ep  80/200  tr_loss=0.3067  val_loss=0.3361  val_ci=0.6181  lr=0.000015  (best=0.6190 @ ep79)
+    ep 100/200  tr_loss=0.2847  val_loss=0.3317  val_ci=0.6278  lr=0.000345  (best=0.6297 @ ep99)
+    ep 120/200  tr_loss=0.2827  val_loss=0.3276  val_ci=0.6317  lr=0.000177  (best=0.6433 @ ep116)
+    ep 140/200  tr_loss=0.2626  val_loss=0.3244  val_ci=0.6375  lr=0.000010  (best=0.6511 @ ep136)
+    ep 160/200  tr_loss=0.2672  val_loss=0.3222  val_ci=0.6511  lr=0.000017  (best=0.6579 @ ep159)
+    ep 180/200  tr_loss=0.2524  val_loss=0.3217  val_ci=0.6482  lr=0.000001  (best=0.6638 @ ep163)
+    ep 200/200  tr_loss=0.2561  val_loss=0.3202  val_ci=0.6531  lr=0.000000  (best=0.6638 @ ep163)
+  >> msam_chaotic: test C-index = 0.6677  (val best = 0.6638 @ ep163)
+  [msam_chaotic] elapsed: 1.1 min
+
+#################################################################
+  5-FOLD CROSS-VALIDATION SUMMARY
+#################################################################
+Optimizer             Mean CI      Std  Folds
+-----------------------------------------------------------------
+cosine_ge              0.6141   0.0471  0.6354  0.5818  0.5587  0.6939  0.6006
+sam                    0.6453   0.0501  0.6409  0.5707  0.6205  0.7189  0.6757
+msam                   0.6542   0.0366  0.6740  0.6063  0.6185  0.7049  0.6673
+msam_chaotic           0.6077   0.0786  0.5835  0.4881  0.5828  0.7164  0.6677
+=================================================================
+Saved CV summary: results_msam_paper/brca/cv_summary.json

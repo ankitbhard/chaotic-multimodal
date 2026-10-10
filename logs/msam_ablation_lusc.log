@@ -1,0 +1,477 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+
+#################################################################
+  FOLD 0/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 0/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  msam_no_ogm | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0794  val_loss=1.0909  val_ci=0.5058  lr=0.000976  (best=0.5159 @ ep12)
+    ep  40/200  tr_loss=1.0654  val_loss=1.0896  val_ci=0.5072  lr=0.000905  (best=0.5159 @ ep12)
+    ep  60/200  tr_loss=0.9404  val_loss=1.1174  val_ci=0.4754  lr=0.000794  (best=0.5159 @ ep12)
+    ep  80/200  tr_loss=0.7081  val_loss=1.2556  val_ci=0.4493  lr=0.000655  (best=0.5159 @ ep12)
+    ep 100/200  tr_loss=0.5599  val_loss=1.4326  val_ci=0.4507  lr=0.000500  (best=0.5159 @ ep12)
+    ep 120/200  tr_loss=0.4785  val_loss=1.5530  val_ci=0.4594  lr=0.000345  (best=0.5159 @ ep12)
+    ep 140/200  tr_loss=0.4840  val_loss=1.6395  val_ci=0.4739  lr=0.000206  (best=0.5159 @ ep12)
+    ep 160/200  tr_loss=0.4450  val_loss=1.6386  val_ci=0.4623  lr=0.000095  (best=0.5159 @ ep12)
+    ep 180/200  tr_loss=0.4154  val_loss=1.7126  val_ci=0.4638  lr=0.000024  (best=0.5159 @ ep12)
+    ep 200/200  tr_loss=0.4276  val_loss=1.6893  val_ci=0.4623  lr=0.000000  (best=0.5159 @ ep12)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  >> msam_no_ogm: test C-index = 0.5922  (val best = 0.5159 @ ep12)
+  [msam_no_ogm] elapsed: 4.3 min
+
+============================================================
+  msam_uniform | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1063  val_loss=1.0856  val_ci=0.5232  lr=0.000976  (best=0.5362 @ ep9)
+    ep  40/200  tr_loss=1.0499  val_loss=1.0803  val_ci=0.5319  lr=0.000905  (best=0.5377 @ ep31)
+    ep  60/200  tr_loss=0.9399  val_loss=1.1041  val_ci=0.5290  lr=0.000794  (best=0.5478 @ ep43)
+    ep  80/200  tr_loss=0.6574  val_loss=1.2147  val_ci=0.4913  lr=0.000655  (best=0.5478 @ ep43)
+    ep 100/200  tr_loss=0.5137  val_loss=1.4714  val_ci=0.4536  lr=0.000500  (best=0.5478 @ ep43)
+    ep 120/200  tr_loss=0.4969  val_loss=1.6983  val_ci=0.4609  lr=0.000345  (best=0.5478 @ ep43)
+    ep 140/200  tr_loss=0.4134  val_loss=1.7009  val_ci=0.4594  lr=0.000206  (best=0.5478 @ ep43)
+    ep 160/200  tr_loss=0.3946  val_loss=1.7730  val_ci=0.4638  lr=0.000095  (best=0.5478 @ ep43)
+    ep 180/200  tr_loss=0.4187  val_loss=1.7691  val_ci=0.4710  lr=0.000024  (best=0.5478 @ ep43)
+    ep 200/200  tr_loss=0.4200  val_loss=1.7408  val_ci=0.4739  lr=0.000000  (best=0.5478 @ ep43)
+  >> msam_uniform: test C-index = 0.6043  (val best = 0.5478 @ ep43)
+  [msam_uniform] elapsed: 0.3 min
+
+#################################################################
+  FOLD 1/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 1/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  msam_no_ogm | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0345  val_loss=1.2958  val_ci=0.4658  lr=0.000976  (best=0.4867 @ ep2)
+    ep  40/200  tr_loss=0.9704  val_loss=1.2968  val_ci=0.4832  lr=0.000905  (best=0.4867 @ ep2)
+    ep  60/200  tr_loss=0.8243  val_loss=1.3296  val_ci=0.4959  lr=0.000794  (best=0.5064 @ ep59)
+    ep  80/200  tr_loss=0.5733  val_loss=1.4963  val_ci=0.4658  lr=0.000655  (best=0.5064 @ ep59)
+    ep 100/200  tr_loss=0.4583  val_loss=1.6594  val_ci=0.4647  lr=0.000500  (best=0.5064 @ ep59)
+    ep 120/200  tr_loss=0.4429  val_loss=1.8203  val_ci=0.4577  lr=0.000345  (best=0.5064 @ ep59)
+    ep 140/200  tr_loss=0.3846  val_loss=1.8795  val_ci=0.4519  lr=0.000206  (best=0.5064 @ ep59)
+    ep 160/200  tr_loss=0.3709  val_loss=1.8705  val_ci=0.4461  lr=0.000095  (best=0.5064 @ ep59)
+    ep 180/200  tr_loss=0.3378  val_loss=1.8985  val_ci=0.4496  lr=0.000024  (best=0.5064 @ ep59)
+    ep 200/200  tr_loss=0.3209  val_loss=1.8962  val_ci=0.4392  lr=0.000000  (best=0.5064 @ ep59)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  >> msam_no_ogm: test C-index = 0.5017  (val best = 0.5064 @ ep59)
+  [msam_no_ogm] elapsed: 4.2 min
+
+============================================================
+  msam_uniform | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0528  val_loss=1.2895  val_ci=0.5191  lr=0.000976  (best=0.5840 @ ep6)
+    ep  40/200  tr_loss=0.9797  val_loss=1.2886  val_ci=0.5133  lr=0.000905  (best=0.5840 @ ep6)
+    ep  60/200  tr_loss=0.8551  val_loss=1.2826  val_ci=0.5365  lr=0.000794  (best=0.5840 @ ep6)
+    ep  80/200  tr_loss=0.6086  val_loss=1.3750  val_ci=0.4913  lr=0.000655  (best=0.5840 @ ep6)
+    ep 100/200  tr_loss=0.4934  val_loss=1.5230  val_ci=0.4983  lr=0.000500  (best=0.5840 @ ep6)
+    ep 120/200  tr_loss=0.4607  val_loss=1.6890  val_ci=0.4994  lr=0.000345  (best=0.5840 @ ep6)
+    ep 140/200  tr_loss=0.3617  val_loss=1.6920  val_ci=0.4809  lr=0.000206  (best=0.5840 @ ep6)
+    ep 160/200  tr_loss=0.4236  val_loss=1.6784  val_ci=0.4971  lr=0.000095  (best=0.5840 @ ep6)
+    ep 180/200  tr_loss=0.3307  val_loss=1.6844  val_ci=0.4925  lr=0.000024  (best=0.5840 @ ep6)
+    ep 200/200  tr_loss=0.3842  val_loss=1.6681  val_ci=0.4913  lr=0.000000  (best=0.5840 @ ep6)
+  >> msam_uniform: test C-index = 0.4705  (val best = 0.5840 @ ep6)
+  [msam_uniform] elapsed: 0.3 min
+
+#################################################################
+  FOLD 2/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 2/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  msam_no_ogm | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0927  val_loss=1.0328  val_ci=0.4681  lr=0.000976  (best=0.5007 @ ep1)
+    ep  40/200  tr_loss=1.0394  val_loss=1.0440  val_ci=0.4904  lr=0.000905  (best=0.5007 @ ep1)
+    ep  60/200  tr_loss=0.8862  val_loss=1.1207  val_ci=0.4681  lr=0.000794  (best=0.5007 @ ep1)
+    ep  80/200  tr_loss=0.6245  val_loss=1.2954  val_ci=0.4370  lr=0.000655  (best=0.5007 @ ep1)
+    ep 100/200  tr_loss=0.5212  val_loss=1.4917  val_ci=0.4489  lr=0.000500  (best=0.5007 @ ep1)
+    ep 120/200  tr_loss=0.4564  val_loss=1.5706  val_ci=0.4741  lr=0.000345  (best=0.5007 @ ep1)
+    ep 140/200  tr_loss=0.4531  val_loss=1.7322  val_ci=0.4533  lr=0.000206  (best=0.5007 @ ep1)
+    ep 160/200  tr_loss=0.4347  val_loss=1.7184  val_ci=0.4681  lr=0.000095  (best=0.5007 @ ep1)
+    ep 180/200  tr_loss=0.3548  val_loss=1.7518  val_ci=0.4563  lr=0.000024  (best=0.5007 @ ep1)
+    ep 200/200  tr_loss=0.4125  val_loss=1.7278  val_ci=0.4667  lr=0.000000  (best=0.5007 @ ep1)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  >> msam_no_ogm: test C-index = 0.3841  (val best = 0.5007 @ ep1)
+  [msam_no_ogm] elapsed: 4.2 min
+
+============================================================
+  msam_uniform | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1027  val_loss=1.0320  val_ci=0.4933  lr=0.000976  (best=0.5570 @ ep1)
+    ep  40/200  tr_loss=1.0484  val_loss=1.0380  val_ci=0.4652  lr=0.000905  (best=0.5570 @ ep1)
+    ep  60/200  tr_loss=0.8911  val_loss=1.1086  val_ci=0.4281  lr=0.000794  (best=0.5570 @ ep1)
+    ep  80/200  tr_loss=0.5763  val_loss=1.3878  val_ci=0.3867  lr=0.000655  (best=0.5570 @ ep1)
+    ep 100/200  tr_loss=0.5052  val_loss=1.5298  val_ci=0.4000  lr=0.000500  (best=0.5570 @ ep1)
+    ep 120/200  tr_loss=0.5078  val_loss=1.6364  val_ci=0.3793  lr=0.000345  (best=0.5570 @ ep1)
+    ep 140/200  tr_loss=0.4301  val_loss=1.8268  val_ci=0.3763  lr=0.000206  (best=0.5570 @ ep1)
+    ep 160/200  tr_loss=0.4058  val_loss=1.8390  val_ci=0.3852  lr=0.000095  (best=0.5570 @ ep1)
+    ep 180/200  tr_loss=0.4146  val_loss=1.8734  val_ci=0.3822  lr=0.000024  (best=0.5570 @ ep1)
+    ep 200/200  tr_loss=0.4099  val_loss=1.8488  val_ci=0.3867  lr=0.000000  (best=0.5570 @ ep1)
+  >> msam_uniform: test C-index = 0.4975  (val best = 0.5570 @ ep1)
+  [msam_uniform] elapsed: 0.3 min
+
+#################################################################
+  FOLD 3/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 3/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  msam_no_ogm | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0408  val_loss=1.2990  val_ci=0.5867  lr=0.000976  (best=0.5974 @ ep13)
+    ep  40/200  tr_loss=1.0129  val_loss=1.2788  val_ci=0.5855  lr=0.000905  (best=0.5974 @ ep13)
+    ep  60/200  tr_loss=0.8852  val_loss=1.2951  val_ci=0.5629  lr=0.000794  (best=0.5974 @ ep13)
+    ep  80/200  tr_loss=0.6557  val_loss=1.3773  val_ci=0.5819  lr=0.000655  (best=0.5974 @ ep13)
+    ep 100/200  tr_loss=0.4989  val_loss=1.5460  val_ci=0.5618  lr=0.000500  (best=0.5974 @ ep13)
+    ep 120/200  tr_loss=0.4585  val_loss=1.6635  val_ci=0.5796  lr=0.000345  (best=0.5986 @ ep116)
+    ep 140/200  tr_loss=0.4381  val_loss=1.7438  val_ci=0.5879  lr=0.000206  (best=0.6069 @ ep125)
+    ep 160/200  tr_loss=0.4061  val_loss=1.8054  val_ci=0.5796  lr=0.000095  (best=0.6069 @ ep125)
+    ep 180/200  tr_loss=0.4111  val_loss=1.8218  val_ci=0.5796  lr=0.000024  (best=0.6069 @ ep125)
+    ep 200/200  tr_loss=0.3738  val_loss=1.8323  val_ci=0.5665  lr=0.000000  (best=0.6069 @ ep125)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  >> msam_no_ogm: test C-index = 0.4905  (val best = 0.6069 @ ep125)
+  [msam_no_ogm] elapsed: 4.2 min
+
+============================================================
+  msam_uniform | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0616  val_loss=1.3015  val_ci=0.5962  lr=0.000976  (best=0.5962 @ ep20)
+    ep  40/200  tr_loss=1.0006  val_loss=1.2823  val_ci=0.6010  lr=0.000905  (best=0.6045 @ ep26)
+    ep  60/200  tr_loss=0.8096  val_loss=1.2984  val_ci=0.5974  lr=0.000794  (best=0.6105 @ ep58)
+    ep  80/200  tr_loss=0.5407  val_loss=1.4721  val_ci=0.6200  lr=0.000655  (best=0.6200 @ ep80)
+    ep 100/200  tr_loss=0.4550  val_loss=1.6093  val_ci=0.5903  lr=0.000500  (best=0.6283 @ ep95)
+    ep 120/200  tr_loss=0.4372  val_loss=1.7388  val_ci=0.6223  lr=0.000345  (best=0.6283 @ ep95)
+    ep 140/200  tr_loss=0.3868  val_loss=1.8832  val_ci=0.5772  lr=0.000206  (best=0.6283 @ ep95)
+    ep 160/200  tr_loss=0.3671  val_loss=1.9594  val_ci=0.5760  lr=0.000095  (best=0.6283 @ ep95)
+    ep 180/200  tr_loss=0.3475  val_loss=1.9508  val_ci=0.5986  lr=0.000024  (best=0.6283 @ ep95)
+    ep 200/200  tr_loss=0.3764  val_loss=1.9793  val_ci=0.5867  lr=0.000000  (best=0.6283 @ ep95)
+  >> msam_uniform: test C-index = 0.4654  (val best = 0.6283 @ ep95)
+  [msam_uniform] elapsed: 0.3 min
+
+#################################################################
+  FOLD 4/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 4/5: 313 train / 55 val / 91 test
+  Split: 313 / 55 / 91  n_genes=1000
+
+============================================================
+  msam_no_ogm | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0607  val_loss=1.1743  val_ci=0.4893  lr=0.000976  (best=0.4946 @ ep17)
+    ep  40/200  tr_loss=1.0068  val_loss=1.1649  val_ci=0.5335  lr=0.000905  (best=0.5335 @ ep40)
+    ep  60/200  tr_loss=0.8468  val_loss=1.1515  val_ci=0.5737  lr=0.000794  (best=0.5737 @ ep60)
+    ep  80/200  tr_loss=0.6322  val_loss=1.2178  val_ci=0.5603  lr=0.000655  (best=0.5831 @ ep62)
+    ep 100/200  tr_loss=0.5156  val_loss=1.3746  val_ci=0.5563  lr=0.000500  (best=0.5831 @ ep62)
+    ep 120/200  tr_loss=0.4373  val_loss=1.4962  val_ci=0.5576  lr=0.000345  (best=0.5831 @ ep62)
+    ep 140/200  tr_loss=0.4024  val_loss=1.5389  val_ci=0.5643  lr=0.000206  (best=0.5831 @ ep62)
+    ep 160/200  tr_loss=0.4188  val_loss=1.6079  val_ci=0.5724  lr=0.000095  (best=0.5831 @ ep62)
+    ep 180/200  tr_loss=0.3714  val_loss=1.6012  val_ci=0.5643  lr=0.000024  (best=0.5831 @ ep62)
+    ep 200/200  tr_loss=0.3787  val_loss=1.6351  val_ci=0.5684  lr=0.000000  (best=0.5831 @ ep62)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  >> msam_no_ogm: test C-index = 0.5845  (val best = 0.5831 @ ep62)
+  [msam_no_ogm] elapsed: 4.2 min
+
+============================================================
+  msam_uniform | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0643  val_loss=1.1717  val_ci=0.5402  lr=0.000976  (best=0.5402 @ ep18)
+    ep  40/200  tr_loss=1.0133  val_loss=1.1667  val_ci=0.5590  lr=0.000905  (best=0.5617 @ ep34)
+    ep  60/200  tr_loss=0.8883  val_loss=1.1651  val_ci=0.5402  lr=0.000794  (best=0.5630 @ ep42)
+    ep  80/200  tr_loss=0.6452  val_loss=1.2931  val_ci=0.5335  lr=0.000655  (best=0.5630 @ ep42)
+    ep 100/200  tr_loss=0.4931  val_loss=1.4384  val_ci=0.5067  lr=0.000500  (best=0.5630 @ ep42)
+    ep 120/200  tr_loss=0.4474  val_loss=1.5609  val_ci=0.4960  lr=0.000345  (best=0.5630 @ ep42)
+    ep 140/200  tr_loss=0.4214  val_loss=1.6403  val_ci=0.5188  lr=0.000206  (best=0.5630 @ ep42)
+    ep 160/200  tr_loss=0.3867  val_loss=1.6809  val_ci=0.4973  lr=0.000095  (best=0.5630 @ ep42)
+    ep 180/200  tr_loss=0.4154  val_loss=1.6660  val_ci=0.5067  lr=0.000024  (best=0.5630 @ ep42)
+    ep 200/200  tr_loss=0.3690  val_loss=1.7007  val_ci=0.5067  lr=0.000000  (best=0.5630 @ ep42)
+  >> msam_uniform: test C-index = 0.6096  (val best = 0.5630 @ ep42)
+  [msam_uniform] elapsed: 0.3 min
+
+#################################################################
+  5-FOLD CROSS-VALIDATION SUMMARY
+#################################################################
+Optimizer             Mean CI      Std  Folds
+-----------------------------------------------------------------
+msam_no_ogm            0.5106   0.0756  0.5922  0.5017  0.3841  0.4905  0.5845
+msam_uniform           0.5295   0.0643  0.6043  0.4705  0.4975  0.4654  0.6096
+=================================================================
+Saved CV summary: results_msam_paper/lusc/cv_summary.json

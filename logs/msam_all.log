@@ -1,0 +1,152 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Device     : cuda
+Cancer     : LUAD
+Optimizers : ['msam']
+Fusion     : attention
+  Embedding files found : 468
+  Matched patients      : 463
+  Split: 348 train / 69 val / 46 test  |  n_genes=1000
+
+────────────────────────────────────────────────────────────
+  Optimizer: MSAM
+────────────────────────────────────────────────────────────
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000 | n_subtypes=3]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + heads        :     67,077
+  ─────────────────────────────────
+  Total                 :  1,714,438
+  Trainable             :  1,714,438
+  ep   1/200  loss=2.3220  surv=73.9%  sub_f1=0.396
+  ep  20/200  loss=1.8758  surv=72.5%  sub_f1=0.676
+  ep  40/200  loss=1.5892  surv=73.9%  sub_f1=0.791
+  ep  60/200  loss=1.6139  surv=75.4%  sub_f1=0.791
+  ep  80/200  loss=1.6826  surv=71.0%  sub_f1=0.791
+  ep 100/200  loss=1.7146  surv=68.1%  sub_f1=0.831
+  ep 120/200  loss=2.0725  surv=71.0%  sub_f1=0.746
+  ep 140/200  loss=2.1723  surv=72.5%  sub_f1=0.791
+  ep 160/200  loss=2.3664  surv=72.5%  sub_f1=0.791
+  ep 180/200  loss=2.5532  surv=72.5%  sub_f1=0.791
+  ep 200/200  loss=2.6512  surv=71.0%  sub_f1=0.791
+  [TEST] surv=67.39%  sub_f1=0.665
+  Saved : results/luad/msam/msam_history.json
+Saved plot : results/luad/msam/training_msam.png
+
+Done. Results in: results/luad/msam
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Device     : cuda
+Cancer     : KIRC
+Optimizers : ['msam']
+Fusion     : attention
+  Embedding files found : 513
+  Matched patients      : 510
+  Split: 383 train / 76 val / 51 test  |  n_genes=1000
+
+────────────────────────────────────────────────────────────
+  Optimizer: MSAM
+────────────────────────────────────────────────────────────
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000 | n_subtypes=4]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + heads        :     67,334
+  ─────────────────────────────────
+  Total                 :  1,714,695
+  Trainable             :  1,714,695
+  ep   1/200  loss=2.7303  surv=80.3%  sub_f1=0.146
+  ep  20/200  loss=2.2403  surv=80.3%  sub_f1=0.276
+  ep  40/200  loss=2.2155  surv=84.2%  sub_f1=0.359
+  ep  60/200  loss=2.3235  surv=78.9%  sub_f1=0.347
+  ep  80/200  loss=2.6864  surv=81.6%  sub_f1=0.411
+  ep 100/200  loss=3.2906  surv=81.6%  sub_f1=0.411
+  ep 120/200  loss=3.6627  surv=80.3%  sub_f1=0.428
+  ep 140/200  loss=4.0789  surv=78.9%  sub_f1=0.439
+  ep 160/200  loss=4.2583  surv=80.3%  sub_f1=0.424
+  ep 180/200  loss=4.5597  surv=81.6%  sub_f1=0.423
+  ep 200/200  loss=4.8419  surv=80.3%  sub_f1=0.372
+  [TEST] surv=88.24%  sub_f1=0.284
+  Saved : results/kirc/msam/msam_history.json
+Saved plot : results/kirc/msam/training_msam.png
+
+Done. Results in: results/kirc/msam
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Device     : cuda
+Cancer     : STAD
+Optimizers : ['msam']
+Fusion     : attention
+  Embedding files found : 375
+  Matched patients      : 355
+  Split: 267 train / 53 val / 35 test  |  n_genes=1000
+
+────────────────────────────────────────────────────────────
+  Optimizer: MSAM
+────────────────────────────────────────────────────────────
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000 | n_subtypes=4]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + heads        :     67,334
+  ─────────────────────────────────
+  Total                 :  1,714,695
+  Trainable             :  1,714,695
+  ep   1/200  loss=2.7390  surv=62.3%  sub_f1=0.162
+  ep  20/200  loss=2.3696  surv=62.3%  sub_f1=0.219
+  ep  40/200  loss=2.2362  surv=60.4%  sub_f1=0.364
+  ep  60/200  loss=2.3420  surv=52.8%  sub_f1=0.415
+  ep  80/200  loss=2.8784  surv=47.2%  sub_f1=0.407
+  ep 100/200  loss=3.3822  surv=54.7%  sub_f1=0.481
+  ep 120/200  loss=4.0921  surv=60.4%  sub_f1=0.470
+  ep 140/200  loss=4.3333  surv=58.5%  sub_f1=0.448
+  ep 160/200  loss=4.7493  surv=58.5%  sub_f1=0.486
+  ep 180/200  loss=5.0711  surv=60.4%  sub_f1=0.474
+  ep 200/200  loss=5.2486  surv=58.5%  sub_f1=0.459
+  [TEST] surv=51.43%  sub_f1=0.268
+  Saved : results/stad/msam/msam_history.json
+Saved plot : results/stad/msam/training_msam.png
+
+Done. Results in: results/stad/msam
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+Device     : cuda
+Cancer     : LUSC
+Optimizers : ['msam']
+Fusion     : attention
+  Embedding files found : 478
+  Matched patients      : 476
+  Split: 358 train / 71 val / 47 test  |  n_genes=1000
+
+────────────────────────────────────────────────────────────
+  Optimizer: MSAM
+────────────────────────────────────────────────────────────
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000 | n_subtypes=4]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + heads        :     67,334
+  ─────────────────────────────────
+  Total                 :  1,714,695
+  Trainable             :  1,714,695
+  ep   1/200  loss=2.7300  surv=73.2%  sub_f1=0.124
+  ep  20/200  loss=2.1868  surv=73.2%  sub_f1=0.213
+  ep  40/200  loss=2.1080  surv=73.2%  sub_f1=0.322
+  ep  60/200  loss=2.2823  surv=73.2%  sub_f1=0.415
+  ep  80/200  loss=2.7945  surv=70.4%  sub_f1=0.395
+  ep 100/200  loss=3.1934  surv=69.0%  sub_f1=0.416
+  ep 120/200  loss=3.4878  surv=64.8%  sub_f1=0.418
+  ep 140/200  loss=3.8505  surv=66.2%  sub_f1=0.416
+  ep 160/200  loss=4.2063  surv=69.0%  sub_f1=0.384
+  ep 180/200  loss=4.1828  surv=64.8%  sub_f1=0.418
+  ep 200/200  loss=4.4172  surv=63.4%  sub_f1=0.388
+  [TEST] surv=63.83%  sub_f1=0.370
+  Saved : results/lusc/msam/msam_history.json
+Saved plot : results/lusc/msam/training_msam.png
+
+Done. Results in: results/lusc/msam

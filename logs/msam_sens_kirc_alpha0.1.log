@@ -1,0 +1,35 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+
+#################################################################
+  FOLD 0/5
+#################################################################
+Device: cuda
+  Matched patients: 510  (events=169)
+  Fold 0/5: 347 train / 61 val / 102 test
+  Split: 347 / 61 / 102  n_genes=1000
+
+============================================================
+  msam | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=0.9054  val_loss=0.6594  val_ci=0.6578  lr=0.000976  (best=0.6595 @ ep8)
+    ep  40/200  tr_loss=0.7867  val_loss=0.5996  val_ci=0.6970  lr=0.000905  (best=0.6970 @ ep40)
+    ep  60/200  tr_loss=0.6300  val_loss=0.6163  val_ci=0.6952  lr=0.000794  (best=0.7023 @ ep44)
+    ep  80/200  tr_loss=0.4525  val_loss=0.7233  val_ci=0.6863  lr=0.000655  (best=0.7023 @ ep44)
+    ep 100/200  tr_loss=0.4142  val_loss=0.8170  val_ci=0.6881  lr=0.000500  (best=0.7023 @ ep44)
+    ep 120/200  tr_loss=0.3419  val_loss=0.7646  val_ci=0.6952  lr=0.000345  (best=0.7166 @ ep103)
+    ep 140/200  tr_loss=0.3701  val_loss=0.8329  val_ci=0.7077  lr=0.000206  (best=0.7166 @ ep103)
+    ep 160/200  tr_loss=0.3383  val_loss=0.8919  val_ci=0.6934  lr=0.000095  (best=0.7166 @ ep103)
+    ep 180/200  tr_loss=0.2775  val_loss=0.9065  val_ci=0.7041  lr=0.000024  (best=0.7166 @ ep103)
+    ep 200/200  tr_loss=0.3170  val_loss=0.9067  val_ci=0.7005  lr=0.000000  (best=0.7166 @ ep103)
+  >> msam: test C-index = 0.7325  (val best = 0.7166 @ ep103)
+  [msam] elapsed: 4.6 min

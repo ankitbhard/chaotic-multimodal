@@ -1,0 +1,729 @@
+/opt/pytorch/lib/python3.13/site-packages/torch/cuda/__init__.py:65: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+
+#################################################################
+  FOLD 0/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 0/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  cosine_ge | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0611  val_loss=1.0922  val_ci=0.5043  lr=0.000976  (best=0.5101 @ ep8)
+    ep  40/200  tr_loss=1.0037  val_loss=1.1077  val_ci=0.4696  lr=0.000905  (best=0.5101 @ ep8)
+    ep  60/200  tr_loss=0.7308  val_loss=1.2354  val_ci=0.4826  lr=0.000794  (best=0.5101 @ ep8)
+    ep  80/200  tr_loss=0.5181  val_loss=1.5355  val_ci=0.5000  lr=0.000655  (best=0.5101 @ ep8)
+    ep 100/200  tr_loss=0.4390  val_loss=1.7057  val_ci=0.5072  lr=0.000500  (best=0.5101 @ ep8)
+    ep 120/200  tr_loss=0.3617  val_loss=2.0225  val_ci=0.4957  lr=0.000345  (best=0.5101 @ ep8)
+    ep 140/200  tr_loss=0.3986  val_loss=2.0973  val_ci=0.4986  lr=0.000206  (best=0.5101 @ ep8)
+    ep 160/200  tr_loss=0.3377  val_loss=2.1552  val_ci=0.5130  lr=0.000095  (best=0.5130 @ ep153)
+    ep 180/200  tr_loss=0.3270  val_loss=2.2205  val_ci=0.5087  lr=0.000024  (best=0.5130 @ ep153)
+    ep 200/200  tr_loss=0.3450  val_loss=2.2147  val_ci=0.5072  lr=0.000000  (best=0.5130 @ ep153)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  >> cosine_ge: test C-index = 0.7135  (val best = 0.5130 @ ep153)
+  [cosine_ge] elapsed: 4.2 min
+
+============================================================
+  sam | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1066  val_loss=1.0863  val_ci=0.5217  lr=0.000976  (best=0.5275 @ ep16)
+    ep  40/200  tr_loss=1.0491  val_loss=1.0819  val_ci=0.5304  lr=0.000905  (best=0.5304 @ ep29)
+    ep  60/200  tr_loss=0.9648  val_loss=1.1091  val_ci=0.5406  lr=0.000794  (best=0.5580 @ ep54)
+    ep  80/200  tr_loss=0.7935  val_loss=1.2002  val_ci=0.5377  lr=0.000655  (best=0.5580 @ ep54)
+    ep 100/200  tr_loss=0.6287  val_loss=1.3264  val_ci=0.5232  lr=0.000500  (best=0.5580 @ ep54)
+    ep 120/200  tr_loss=0.5395  val_loss=1.4682  val_ci=0.5130  lr=0.000345  (best=0.5580 @ ep54)
+    ep 140/200  tr_loss=0.5212  val_loss=1.5180  val_ci=0.5261  lr=0.000206  (best=0.5580 @ ep54)
+    ep 160/200  tr_loss=0.4759  val_loss=1.5324  val_ci=0.5203  lr=0.000095  (best=0.5580 @ ep54)
+    ep 180/200  tr_loss=0.4605  val_loss=1.5553  val_ci=0.5232  lr=0.000024  (best=0.5580 @ ep54)
+    ep 200/200  tr_loss=0.4727  val_loss=1.5320  val_ci=0.5232  lr=0.000000  (best=0.5580 @ ep54)
+  >> sam: test C-index = 0.6096  (val best = 0.5580 @ ep54)
+  [sam] elapsed: 0.4 min
+
+============================================================
+  msam | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0931  val_loss=1.0878  val_ci=0.5232  lr=0.000976  (best=0.5232 @ ep20)
+    ep  40/200  tr_loss=1.0193  val_loss=1.0783  val_ci=0.5464  lr=0.000905  (best=0.5464 @ ep40)
+    ep  60/200  tr_loss=0.8952  val_loss=1.1112  val_ci=0.5478  lr=0.000794  (best=0.5580 @ ep51)
+    ep  80/200  tr_loss=0.6449  val_loss=1.2141  val_ci=0.5478  lr=0.000655  (best=0.5652 @ ep76)
+    ep 100/200  tr_loss=0.5426  val_loss=1.3968  val_ci=0.5333  lr=0.000500  (best=0.5652 @ ep76)
+    ep 120/200  tr_loss=0.4764  val_loss=1.4844  val_ci=0.5551  lr=0.000345  (best=0.5652 @ ep76)
+    ep 140/200  tr_loss=0.4561  val_loss=1.5786  val_ci=0.5449  lr=0.000206  (best=0.5768 @ ep126)
+    ep 160/200  tr_loss=0.4119  val_loss=1.5927  val_ci=0.5594  lr=0.000095  (best=0.5768 @ ep126)
+    ep 180/200  tr_loss=0.4182  val_loss=1.5942  val_ci=0.5594  lr=0.000024  (best=0.5768 @ ep126)
+    ep 200/200  tr_loss=0.4250  val_loss=1.5867  val_ci=0.5609  lr=0.000000  (best=0.5768 @ ep126)
+  >> msam: test C-index = 0.7082  (val best = 0.5768 @ ep126)
+  [msam] elapsed: 0.5 min
+
+============================================================
+  msam_chaotic | fold 0/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1007  val_loss=1.0879  val_ci=0.5783  lr=0.000803  (best=0.6014 @ ep5)
+    ep  40/200  tr_loss=1.0836  val_loss=1.0852  val_ci=0.5652  lr=0.000901  (best=0.6014 @ ep5)
+    ep  60/200  tr_loss=1.0810  val_loss=1.0815  val_ci=0.5652  lr=0.000271  (best=0.6014 @ ep5)
+    ep  80/200  tr_loss=1.0619  val_loss=1.0815  val_ci=0.5478  lr=0.000457  (best=0.6014 @ ep5)
+    ep 100/200  tr_loss=1.0298  val_loss=1.0823  val_ci=0.5377  lr=0.000462  (best=0.6014 @ ep5)
+    ep 120/200  tr_loss=0.9994  val_loss=1.0852  val_ci=0.5275  lr=0.000306  (best=0.6014 @ ep5)
+    ep 140/200  tr_loss=0.9709  val_loss=1.0908  val_ci=0.5246  lr=0.000007  (best=0.6014 @ ep5)
+    ep 160/200  tr_loss=0.9741  val_loss=1.0950  val_ci=0.5246  lr=0.000094  (best=0.6014 @ ep5)
+    ep 180/200  tr_loss=0.9541  val_loss=1.0967  val_ci=0.5203  lr=0.000011  (best=0.6014 @ ep5)
+    ep 200/200  tr_loss=0.9605  val_loss=1.0990  val_ci=0.5188  lr=0.000000  (best=0.6014 @ ep5)
+  >> msam_chaotic: test C-index = 0.6266  (val best = 0.6014 @ ep5)
+  [msam_chaotic] elapsed: 0.4 min
+
+#################################################################
+  FOLD 1/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 1/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  cosine_ge | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0197  val_loss=1.2973  val_ci=0.4635  lr=0.000976  (best=0.4762 @ ep16)
+    ep  40/200  tr_loss=0.8882  val_loss=1.3048  val_ci=0.5017  lr=0.000905  (best=0.5017 @ ep40)
+    ep  60/200  tr_loss=0.6151  val_loss=1.4435  val_ci=0.4751  lr=0.000794  (best=0.5017 @ ep40)
+    ep  80/200  tr_loss=0.4327  val_loss=1.7119  val_ci=0.4728  lr=0.000655  (best=0.5017 @ ep40)
+    ep 100/200  tr_loss=0.3814  val_loss=1.9606  val_ci=0.4577  lr=0.000500  (best=0.5017 @ ep40)
+    ep 120/200  tr_loss=0.3392  val_loss=2.1774  val_ci=0.4542  lr=0.000345  (best=0.5017 @ ep40)
+    ep 140/200  tr_loss=0.3213  val_loss=2.1756  val_ci=0.4705  lr=0.000206  (best=0.5017 @ ep40)
+    ep 160/200  tr_loss=0.3208  val_loss=2.2708  val_ci=0.4739  lr=0.000095  (best=0.5017 @ ep40)
+    ep 180/200  tr_loss=0.2920  val_loss=2.2835  val_ci=0.4681  lr=0.000024  (best=0.5017 @ ep40)
+    ep 200/200  tr_loss=0.3239  val_loss=2.2852  val_ci=0.4693  lr=0.000000  (best=0.5017 @ ep40)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  >> cosine_ge: test C-index = 0.4968  (val best = 0.5017 @ ep40)
+  [cosine_ge] elapsed: 3.9 min
+
+============================================================
+  sam | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0517  val_loss=1.2887  val_ci=0.5295  lr=0.000976  (best=0.5921 @ ep7)
+    ep  40/200  tr_loss=0.9807  val_loss=1.2840  val_ci=0.4959  lr=0.000905  (best=0.5921 @ ep7)
+    ep  60/200  tr_loss=0.8758  val_loss=1.3079  val_ci=0.4948  lr=0.000794  (best=0.5921 @ ep7)
+    ep  80/200  tr_loss=0.6778  val_loss=1.3911  val_ci=0.4774  lr=0.000655  (best=0.5921 @ ep7)
+    ep 100/200  tr_loss=0.5321  val_loss=1.4730  val_ci=0.4936  lr=0.000500  (best=0.5921 @ ep7)
+    ep 120/200  tr_loss=0.5123  val_loss=1.6162  val_ci=0.5017  lr=0.000345  (best=0.5921 @ ep7)
+    ep 140/200  tr_loss=0.4189  val_loss=1.6379  val_ci=0.4948  lr=0.000206  (best=0.5921 @ ep7)
+    ep 160/200  tr_loss=0.4716  val_loss=1.7072  val_ci=0.4983  lr=0.000095  (best=0.5921 @ ep7)
+    ep 180/200  tr_loss=0.4139  val_loss=1.7084  val_ci=0.5075  lr=0.000024  (best=0.5921 @ ep7)
+    ep 200/200  tr_loss=0.4232  val_loss=1.6959  val_ci=0.5017  lr=0.000000  (best=0.5921 @ ep7)
+  >> sam: test C-index = 0.4788  (val best = 0.5921 @ ep7)
+  [sam] elapsed: 0.4 min
+
+============================================================
+  msam | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0255  val_loss=1.2904  val_ci=0.5272  lr=0.000976  (best=0.5423 @ ep11)
+    ep  40/200  tr_loss=0.9740  val_loss=1.2889  val_ci=0.5075  lr=0.000905  (best=0.5423 @ ep11)
+    ep  60/200  tr_loss=0.8301  val_loss=1.2883  val_ci=0.5226  lr=0.000794  (best=0.5423 @ ep11)
+    ep  80/200  tr_loss=0.5668  val_loss=1.4047  val_ci=0.4983  lr=0.000655  (best=0.5423 @ ep11)
+    ep 100/200  tr_loss=0.4607  val_loss=1.5024  val_ci=0.5133  lr=0.000500  (best=0.5423 @ ep11)
+    ep 120/200  tr_loss=0.4556  val_loss=1.6292  val_ci=0.4983  lr=0.000345  (best=0.5423 @ ep11)
+    ep 140/200  tr_loss=0.4265  val_loss=1.7044  val_ci=0.5064  lr=0.000206  (best=0.5423 @ ep11)
+    ep 160/200  tr_loss=0.3954  val_loss=1.7305  val_ci=0.4994  lr=0.000095  (best=0.5423 @ ep11)
+    ep 180/200  tr_loss=0.3799  val_loss=1.7527  val_ci=0.4983  lr=0.000024  (best=0.5423 @ ep11)
+    ep 200/200  tr_loss=0.3804  val_loss=1.7381  val_ci=0.5029  lr=0.000000  (best=0.5423 @ ep11)
+  >> msam: test C-index = 0.5002  (val best = 0.5423 @ ep11)
+  [msam] elapsed: 0.4 min
+
+============================================================
+  msam_chaotic | fold 1/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0416  val_loss=1.2827  val_ci=0.6477  lr=0.000803  (best=0.6790 @ ep2)
+    ep  40/200  tr_loss=1.0553  val_loss=1.2785  val_ci=0.6385  lr=0.000901  (best=0.6790 @ ep2)
+    ep  60/200  tr_loss=1.0127  val_loss=1.2728  val_ci=0.6037  lr=0.000271  (best=0.6790 @ ep2)
+    ep  80/200  tr_loss=0.9878  val_loss=1.2669  val_ci=0.5956  lr=0.000457  (best=0.6790 @ ep2)
+    ep 100/200  tr_loss=0.9634  val_loss=1.2614  val_ci=0.5794  lr=0.000462  (best=0.6790 @ ep2)
+    ep 120/200  tr_loss=0.9463  val_loss=1.2565  val_ci=0.5771  lr=0.000306  (best=0.6790 @ ep2)
+    ep 140/200  tr_loss=0.9161  val_loss=1.2541  val_ci=0.5840  lr=0.000007  (best=0.6790 @ ep2)
+    ep 160/200  tr_loss=0.8946  val_loss=1.2514  val_ci=0.5910  lr=0.000094  (best=0.6790 @ ep2)
+    ep 180/200  tr_loss=0.9076  val_loss=1.2511  val_ci=0.5910  lr=0.000011  (best=0.6790 @ ep2)
+    ep 200/200  tr_loss=0.8880  val_loss=1.2508  val_ci=0.5933  lr=0.000000  (best=0.6790 @ ep2)
+  >> msam_chaotic: test C-index = 0.5442  (val best = 0.6790 @ ep2)
+  [msam_chaotic] elapsed: 0.4 min
+
+#################################################################
+  FOLD 2/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 2/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  cosine_ge | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0856  val_loss=1.0332  val_ci=0.4711  lr=0.000976  (best=0.5096 @ ep8)
+    ep  40/200  tr_loss=0.9602  val_loss=1.0734  val_ci=0.4948  lr=0.000905  (best=0.5096 @ ep8)
+    ep  60/200  tr_loss=0.6752  val_loss=1.2835  val_ci=0.4652  lr=0.000794  (best=0.5096 @ ep8)
+    ep  80/200  tr_loss=0.4998  val_loss=1.4550  val_ci=0.5052  lr=0.000655  (best=0.5259 @ ep78)
+    ep 100/200  tr_loss=0.3991  val_loss=1.7146  val_ci=0.4978  lr=0.000500  (best=0.5274 @ ep92)
+    ep 120/200  tr_loss=0.3337  val_loss=1.7283  val_ci=0.5215  lr=0.000345  (best=0.5481 @ ep118)
+    ep 140/200  tr_loss=0.3177  val_loss=1.7932  val_ci=0.5244  lr=0.000206  (best=0.5481 @ ep118)
+    ep 160/200  tr_loss=0.3195  val_loss=1.8380  val_ci=0.5274  lr=0.000095  (best=0.5481 @ ep118)
+    ep 180/200  tr_loss=0.3191  val_loss=1.8780  val_ci=0.5259  lr=0.000024  (best=0.5481 @ ep118)
+    ep 200/200  tr_loss=0.2994  val_loss=1.8782  val_ci=0.5200  lr=0.000000  (best=0.5481 @ ep118)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  >> cosine_ge: test C-index = 0.5677  (val best = 0.5481 @ ep118)
+  [cosine_ge] elapsed: 3.8 min
+
+============================================================
+  sam | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1067  val_loss=1.0307  val_ci=0.5096  lr=0.000976  (best=0.5644 @ ep1)
+    ep  40/200  tr_loss=1.0600  val_loss=1.0349  val_ci=0.5007  lr=0.000905  (best=0.5644 @ ep1)
+    ep  60/200  tr_loss=0.9383  val_loss=1.0949  val_ci=0.4578  lr=0.000794  (best=0.5644 @ ep1)
+    ep  80/200  tr_loss=0.6922  val_loss=1.2457  val_ci=0.4533  lr=0.000655  (best=0.5644 @ ep1)
+    ep 100/200  tr_loss=0.6063  val_loss=1.3703  val_ci=0.4489  lr=0.000500  (best=0.5644 @ ep1)
+    ep 120/200  tr_loss=0.5525  val_loss=1.4121  val_ci=0.4711  lr=0.000345  (best=0.5644 @ ep1)
+    ep 140/200  tr_loss=0.4328  val_loss=1.4808  val_ci=0.4667  lr=0.000206  (best=0.5644 @ ep1)
+    ep 160/200  tr_loss=0.4870  val_loss=1.4941  val_ci=0.4652  lr=0.000095  (best=0.5644 @ ep1)
+    ep 180/200  tr_loss=0.4760  val_loss=1.5279  val_ci=0.4696  lr=0.000024  (best=0.5644 @ ep1)
+    ep 200/200  tr_loss=0.4809  val_loss=1.5205  val_ci=0.4681  lr=0.000000  (best=0.5644 @ ep1)
+  >> sam: test C-index = 0.4980  (val best = 0.5644 @ ep1)
+  [sam] elapsed: 0.4 min
+
+============================================================
+  msam | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0921  val_loss=1.0333  val_ci=0.4607  lr=0.000976  (best=0.4607 @ ep20)
+    ep  40/200  tr_loss=1.0215  val_loss=1.0450  val_ci=0.4844  lr=0.000905  (best=0.4844 @ ep38)
+    ep  60/200  tr_loss=0.8291  val_loss=1.1323  val_ci=0.4859  lr=0.000794  (best=0.4933 @ ep47)
+    ep  80/200  tr_loss=0.5687  val_loss=1.3043  val_ci=0.5022  lr=0.000655  (best=0.5126 @ ep78)
+    ep 100/200  tr_loss=0.4750  val_loss=1.4655  val_ci=0.5170  lr=0.000500  (best=0.5289 @ ep97)
+    ep 120/200  tr_loss=0.4606  val_loss=1.5530  val_ci=0.5141  lr=0.000345  (best=0.5333 @ ep114)
+    ep 140/200  tr_loss=0.4257  val_loss=1.5927  val_ci=0.5096  lr=0.000206  (best=0.5333 @ ep114)
+    ep 160/200  tr_loss=0.3800  val_loss=1.6885  val_ci=0.5259  lr=0.000095  (best=0.5333 @ ep114)
+    ep 180/200  tr_loss=0.4108  val_loss=1.6871  val_ci=0.5230  lr=0.000024  (best=0.5333 @ ep114)
+    ep 200/200  tr_loss=0.4544  val_loss=1.6834  val_ci=0.5215  lr=0.000000  (best=0.5333 @ ep114)
+  >> msam: test C-index = 0.5609  (val best = 0.5333 @ ep114)
+  [msam] elapsed: 0.5 min
+
+============================================================
+  msam_chaotic | fold 2/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.1081  val_loss=1.0246  val_ci=0.6163  lr=0.000803  (best=0.6370 @ ep8)
+    ep  40/200  tr_loss=1.0962  val_loss=1.0247  val_ci=0.5763  lr=0.000901  (best=0.6370 @ ep8)
+    ep  60/200  tr_loss=1.0850  val_loss=1.0252  val_ci=0.5452  lr=0.000271  (best=0.6370 @ ep8)
+    ep  80/200  tr_loss=1.0658  val_loss=1.0262  val_ci=0.5393  lr=0.000457  (best=0.6370 @ ep8)
+    ep 100/200  tr_loss=1.0288  val_loss=1.0351  val_ci=0.5215  lr=0.000462  (best=0.6370 @ ep8)
+    ep 120/200  tr_loss=1.0155  val_loss=1.0471  val_ci=0.5200  lr=0.000306  (best=0.6370 @ ep8)
+    ep 140/200  tr_loss=0.9943  val_loss=1.0567  val_ci=0.5215  lr=0.000007  (best=0.6370 @ ep8)
+    ep 160/200  tr_loss=0.9634  val_loss=1.0656  val_ci=0.5126  lr=0.000094  (best=0.6370 @ ep8)
+    ep 180/200  tr_loss=0.9563  val_loss=1.0691  val_ci=0.5111  lr=0.000011  (best=0.6370 @ ep8)
+    ep 200/200  tr_loss=0.9658  val_loss=1.0728  val_ci=0.5052  lr=0.000000  (best=0.6370 @ ep8)
+  >> msam_chaotic: test C-index = 0.5462  (val best = 0.6370 @ ep8)
+  [msam_chaotic] elapsed: 0.4 min
+
+#################################################################
+  FOLD 3/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 3/5: 312 train / 55 val / 92 test
+  Split: 312 / 55 / 92  n_genes=1000
+
+============================================================
+  cosine_ge | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0263  val_loss=1.2957  val_ci=0.5760  lr=0.000976  (best=0.5843 @ ep15)
+    ep  40/200  tr_loss=0.9267  val_loss=1.2870  val_ci=0.5606  lr=0.000905  (best=0.5843 @ ep15)
+    ep  60/200  tr_loss=0.6636  val_loss=1.4246  val_ci=0.5629  lr=0.000794  (best=0.5843 @ ep15)
+    ep  80/200  tr_loss=0.4662  val_loss=1.7036  val_ci=0.5903  lr=0.000655  (best=0.6033 @ ep77)
+    ep 100/200  tr_loss=0.4230  val_loss=1.9396  val_ci=0.5986  lr=0.000500  (best=0.6152 @ ep92)
+    ep 120/200  tr_loss=0.3400  val_loss=1.9586  val_ci=0.6164  lr=0.000345  (best=0.6223 @ ep113)
+    ep 140/200  tr_loss=0.3508  val_loss=2.1780  val_ci=0.6069  lr=0.000206  (best=0.6223 @ ep113)
+    ep 160/200  tr_loss=0.3139  val_loss=2.2911  val_ci=0.6021  lr=0.000095  (best=0.6223 @ ep113)
+    ep 180/200  tr_loss=0.3191  val_loss=2.3502  val_ci=0.5998  lr=0.000024  (best=0.6223 @ ep113)
+    ep 200/200  tr_loss=0.2856  val_loss=2.3341  val_ci=0.5986  lr=0.000000  (best=0.6223 @ ep113)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  >> cosine_ge: test C-index = 0.5162  (val best = 0.6223 @ ep113)
+  [cosine_ge] elapsed: 3.8 min
+
+============================================================
+  sam | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0591  val_loss=1.3020  val_ci=0.5724  lr=0.000976  (best=0.5819 @ ep16)
+    ep  40/200  tr_loss=1.0008  val_loss=1.2902  val_ci=0.5808  lr=0.000905  (best=0.5867 @ ep29)
+    ep  60/200  tr_loss=0.8529  val_loss=1.3234  val_ci=0.5831  lr=0.000794  (best=0.5879 @ ep42)
+    ep  80/200  tr_loss=0.6239  val_loss=1.4643  val_ci=0.5879  lr=0.000655  (best=0.5879 @ ep42)
+    ep 100/200  tr_loss=0.5324  val_loss=1.5593  val_ci=0.6010  lr=0.000500  (best=0.6010 @ ep100)
+    ep 120/200  tr_loss=0.4821  val_loss=1.6841  val_ci=0.5926  lr=0.000345  (best=0.6057 @ ep111)
+    ep 140/200  tr_loss=0.4440  val_loss=1.7757  val_ci=0.5986  lr=0.000206  (best=0.6057 @ ep111)
+    ep 160/200  tr_loss=0.4419  val_loss=1.8594  val_ci=0.6033  lr=0.000095  (best=0.6105 @ ep148)
+    ep 180/200  tr_loss=0.3942  val_loss=1.8498  val_ci=0.6140  lr=0.000024  (best=0.6140 @ ep180)
+    ep 200/200  tr_loss=0.3788  val_loss=1.8762  val_ci=0.5998  lr=0.000000  (best=0.6140 @ ep180)
+  >> sam: test C-index = 0.5061  (val best = 0.6140 @ ep180)
+  [sam] elapsed: 0.4 min
+
+============================================================
+  msam | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0397  val_loss=1.2967  val_ci=0.5879  lr=0.000976  (best=0.5938 @ ep14)
+    ep  40/200  tr_loss=0.9851  val_loss=1.2827  val_ci=0.5974  lr=0.000905  (best=0.6045 @ ep27)
+    ep  60/200  tr_loss=0.7976  val_loss=1.3310  val_ci=0.5796  lr=0.000794  (best=0.6045 @ ep27)
+    ep  80/200  tr_loss=0.5431  val_loss=1.5507  val_ci=0.5772  lr=0.000655  (best=0.6045 @ ep27)
+    ep 100/200  tr_loss=0.5005  val_loss=1.7719  val_ci=0.5736  lr=0.000500  (best=0.6045 @ ep27)
+    ep 120/200  tr_loss=0.4137  val_loss=1.9271  val_ci=0.5713  lr=0.000345  (best=0.6045 @ ep27)
+    ep 140/200  tr_loss=0.3633  val_loss=2.0595  val_ci=0.5772  lr=0.000206  (best=0.6045 @ ep27)
+    ep 160/200  tr_loss=0.4169  val_loss=2.1495  val_ci=0.5760  lr=0.000095  (best=0.6045 @ ep27)
+    ep 180/200  tr_loss=0.3537  val_loss=2.1457  val_ci=0.5736  lr=0.000024  (best=0.6045 @ ep27)
+    ep 200/200  tr_loss=0.3646  val_loss=2.1879  val_ci=0.5713  lr=0.000000  (best=0.6045 @ ep27)
+  >> msam: test C-index = 0.4537  (val best = 0.6045 @ ep27)
+  [msam] elapsed: 0.4 min
+
+============================================================
+  msam_chaotic | fold 3/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0717  val_loss=1.2985  val_ci=0.6390  lr=0.000803  (best=0.6449 @ ep8)
+    ep  40/200  tr_loss=1.0361  val_loss=1.2898  val_ci=0.6330  lr=0.000901  (best=0.6449 @ ep8)
+    ep  60/200  tr_loss=1.0222  val_loss=1.2814  val_ci=0.6259  lr=0.000271  (best=0.6449 @ ep8)
+    ep  80/200  tr_loss=0.9974  val_loss=1.2724  val_ci=0.6211  lr=0.000457  (best=0.6449 @ ep8)
+    ep 100/200  tr_loss=0.9718  val_loss=1.2665  val_ci=0.6188  lr=0.000462  (best=0.6449 @ ep8)
+    ep 120/200  tr_loss=0.9208  val_loss=1.2700  val_ci=0.6057  lr=0.000306  (best=0.6449 @ ep8)
+    ep 140/200  tr_loss=0.9080  val_loss=1.2769  val_ci=0.5903  lr=0.000007  (best=0.6449 @ ep8)
+    ep 160/200  tr_loss=0.8567  val_loss=1.2822  val_ci=0.5914  lr=0.000094  (best=0.6449 @ ep8)
+    ep 180/200  tr_loss=0.8532  val_loss=1.2839  val_ci=0.5831  lr=0.000011  (best=0.6449 @ ep8)
+    ep 200/200  tr_loss=0.8451  val_loss=1.2846  val_ci=0.5879  lr=0.000000  (best=0.6449 @ ep8)
+  >> msam_chaotic: test C-index = 0.4883  (val best = 0.6449 @ ep8)
+  [msam_chaotic] elapsed: 0.4 min
+
+#################################################################
+  FOLD 4/5
+#################################################################
+Device: cuda
+  Matched patients: 459  (events=195)
+  Fold 4/5: 313 train / 55 val / 91 test
+  Split: 313 / 55 / 91  n_genes=1000
+
+============================================================
+  cosine_ge | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+  [WARN] skipping bad h5 file TCGA-85-7844-01Z-00-DX1.9035209b-75ae-4c9b-8edf-5851af490f29.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1083-01Z-00-DX1.8288ca92-b611-4acf-986e-0b8a3f620b94.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-7138-01Z-00-DX1.8c912762-0829-4692-92a2-545fea2b3e48.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1082-01Z-00-DX1.cae5bbaa-76f5-416d-b532-16cf773e017e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-AASI-01Z-00-DX1.71BC119D-9916-4214-9294-26301F2E430F.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8145-01Z-00-DX1.9d76de05-3cb7-4cd8-879b-11ea7f88d583.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-A4ZK-01Z-00-DX1.D6B1AC68-BF70-4C49-A5A1-233D6DA4AE27.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-68-7756-01Z-00-DX1.15BEAECF-8C36-4761-85A8-EC9E54B61A0C.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-43-A56U-01Z-00-DX1.B60C921A-4EE4-4CAE-9E55-311C7D2DA9E4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-18-3417-01Z-00-DX1.B424DA03-9007-4FD0-9A92-BCB40319711C.h5: Unable to synchronously open file (truncated file: eof = 21807104, sblock->base_addr = 0, stored_eof = 110357048)
+  [WARN] skipping bad h5 file TCGA-46-6025-01Z-00-DX1.05600f09-0b48-448c-b305-cb881970fc52.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-0944-01Z-00-DX1.3DC7624F-2D59-40D5-9E1F-95FCCD80D0C4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HL-01Z-00-DX1.E40E17C1-42BA-4C02-AA01-0E2891B3174A.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5M9-01Z-00-DX1.4E04AC12-6DAC-4DA2-A991-AFCD42FA1CF2.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-A510-01Z-00-DX1.F51CBC2D-EAD4-48B8-9444-C864012562F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-52-7809-01Z-00-DX1.91f184ce-e4e1-42da-bdbc-36d6781bbf31.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1079-01Z-00-DX1.fb8e44cd-f73f-48a4-82d2-34f334d79f53.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5474-01Z-00-DX1.8736FB24-7E65-4ACB-9325-382D7F864F62.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-22-5479-01Z-00-DX1.3DCD4654-459D-4046-87C3-E59C61A1E7FA.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-NC-A5HR-01Z-00-DX1.B8B85EDD-96A6-40DF-B3BF-C97311A7E552.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8479-01Z-00-DX1.28fef288-9691-47dd-ad51-b2dc0cd84832.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MH-01Z-00-DX1.596077FF-9CE1-4EA7-9BB6-222C69872CA4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2722-01Z-00-DX1.f3781266-e8dc-4386-9702-5b29e6f2cfa3.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-77-8144-01Z-00-DX1.5194d537-c942-45f3-967b-eb213646ff24.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-85-8666-01Z-00-DX1.d856233a-beef-4da2-a724-759fe23e6227.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-33-4538-01Z-00-DX9.f05eb71e-b511-4326-9097-5ca191f0100e.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-60-2726-01Z-00-DX1.3c30934b-c93a-4dad-9c44-b417eae17137.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-39-5030-01Z-00-DX1.09d96fb6-9a19-40ae-967e-49f378340f9b.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-66-2756-01Z-00-DX1.e6bda67d-2647-4751-9c16-b711933a1d6c.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-21-1078-01Z-00-DX1.12d4a290-04fa-413e-b274-7c143d42c266.h5: Unable to synchronously open file (file signature not found)
+    ep  20/200  tr_loss=1.0462  val_loss=1.1719  val_ci=0.5134  lr=0.000976  (best=0.5134 @ ep20)
+    ep  40/200  tr_loss=0.9382  val_loss=1.1556  val_ci=0.5402  lr=0.000905  (best=0.5402 @ ep38)
+    ep  60/200  tr_loss=0.6491  val_loss=1.2287  val_ci=0.5871  lr=0.000794  (best=0.6113 @ ep52)
+    ep  80/200  tr_loss=0.4601  val_loss=1.4453  val_ci=0.5845  lr=0.000655  (best=0.6113 @ ep52)
+    ep 100/200  tr_loss=0.4051  val_loss=1.7034  val_ci=0.5965  lr=0.000500  (best=0.6113 @ ep52)
+    ep 120/200  tr_loss=0.3497  val_loss=1.9553  val_ci=0.5898  lr=0.000345  (best=0.6153 @ ep104)
+    ep 140/200  tr_loss=0.2759  val_loss=2.0825  val_ci=0.6005  lr=0.000206  (best=0.6153 @ ep104)
+    ep 160/200  tr_loss=0.3018  val_loss=2.1598  val_ci=0.6019  lr=0.000095  (best=0.6153 @ ep104)
+    ep 180/200  tr_loss=0.2787  val_loss=2.2108  val_ci=0.5898  lr=0.000024  (best=0.6153 @ ep104)
+    ep 200/200  tr_loss=0.2712  val_loss=2.2463  val_ci=0.5912  lr=0.000000  (best=0.6153 @ ep104)
+  [WARN] skipping bad h5 file TCGA-85-7710-01Z-00-DX1.8bcfe326-1c19-4ebe-879d-83e77739f006.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-63-A5MR-01Z-00-DX1.CCF83112-AEEA-4F76-A43F-2AADE321CE68.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-56-7221-01Z-00-DX1.f897f1ee-2796-4183-9312-f47871383327.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-XC-AA0X-01Z-00-DX1.61A34BE0-F16B-4EC1-8E7F-7BF94F6629F4.h5: Unable to synchronously open file (file signature not found)
+  [WARN] skipping bad h5 file TCGA-92-8065-01Z-00-DX1.cfadb520-1653-4082-9fc3-0680bf39253b.h5: Unable to synchronously open file (file signature not found)
+  >> cosine_ge: test C-index = 0.5808  (val best = 0.6153 @ ep104)
+  [cosine_ge] elapsed: 3.8 min
+
+============================================================
+  sam | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0640  val_loss=1.1718  val_ci=0.5402  lr=0.000976  (best=0.5496 @ ep15)
+    ep  40/200  tr_loss=1.0018  val_loss=1.1637  val_ci=0.5670  lr=0.000905  (best=0.5670 @ ep40)
+    ep  60/200  tr_loss=0.9118  val_loss=1.1620  val_ci=0.5536  lr=0.000794  (best=0.5670 @ ep40)
+    ep  80/200  tr_loss=0.7239  val_loss=1.2049  val_ci=0.5804  lr=0.000655  (best=0.5885 @ ep67)
+    ep 100/200  tr_loss=0.5634  val_loss=1.3126  val_ci=0.5576  lr=0.000500  (best=0.5885 @ ep67)
+    ep 120/200  tr_loss=0.4741  val_loss=1.4379  val_ci=0.5697  lr=0.000345  (best=0.5885 @ ep67)
+    ep 140/200  tr_loss=0.4547  val_loss=1.5064  val_ci=0.5550  lr=0.000206  (best=0.5885 @ ep67)
+    ep 160/200  tr_loss=0.4364  val_loss=1.5510  val_ci=0.5523  lr=0.000095  (best=0.5885 @ ep67)
+    ep 180/200  tr_loss=0.4548  val_loss=1.5704  val_ci=0.5617  lr=0.000024  (best=0.5885 @ ep67)
+    ep 200/200  tr_loss=0.4593  val_loss=1.5762  val_ci=0.5563  lr=0.000000  (best=0.5885 @ ep67)
+  >> sam: test C-index = 0.5850  (val best = 0.5885 @ ep67)
+  [sam] elapsed: 0.4 min
+
+============================================================
+  msam | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0611  val_loss=1.1737  val_ci=0.4946  lr=0.000976  (best=0.5590 @ ep2)
+    ep  40/200  tr_loss=0.9943  val_loss=1.1640  val_ci=0.5389  lr=0.000905  (best=0.5590 @ ep2)
+    ep  60/200  tr_loss=0.8181  val_loss=1.1724  val_ci=0.5617  lr=0.000794  (best=0.5617 @ ep55)
+    ep  80/200  tr_loss=0.5929  val_loss=1.3042  val_ci=0.5670  lr=0.000655  (best=0.5697 @ ep71)
+    ep 100/200  tr_loss=0.4714  val_loss=1.4991  val_ci=0.5831  lr=0.000500  (best=0.5831 @ ep100)
+    ep 120/200  tr_loss=0.4566  val_loss=1.7373  val_ci=0.5804  lr=0.000345  (best=0.5871 @ ep119)
+    ep 140/200  tr_loss=0.4400  val_loss=1.7450  val_ci=0.5804  lr=0.000206  (best=0.5912 @ ep136)
+    ep 160/200  tr_loss=0.4279  val_loss=1.8953  val_ci=0.5845  lr=0.000095  (best=0.5912 @ ep136)
+    ep 180/200  tr_loss=0.3823  val_loss=1.8960  val_ci=0.5845  lr=0.000024  (best=0.5912 @ ep136)
+    ep 200/200  tr_loss=0.4245  val_loss=1.8726  val_ci=0.5845  lr=0.000000  (best=0.5912 @ ep136)
+  >> msam: test C-index = 0.6065  (val best = 0.5912 @ ep136)
+  [msam] elapsed: 0.5 min
+
+============================================================
+  msam_chaotic | fold 4/5
+============================================================
+
+JointModel  [fusion=attention | image_dim=1536 | n_genes=1000]
+  SlideEmbeddingEncoder :    787,968
+  GeneEncoder           :    678,528
+  Fusion (attention)  :    180,865
+  Shared + head         :     66,306
+  ─────────────────────────────────
+  Total                 :  1,713,667
+  Trainable             :  1,713,667
+    ep  20/200  tr_loss=1.0741  val_loss=1.1746  val_ci=0.5013  lr=0.000803  (best=0.5161 @ ep9)
+    ep  40/200  tr_loss=1.0666  val_loss=1.1712  val_ci=0.5188  lr=0.000901  (best=0.5268 @ ep33)
+    ep  60/200  tr_loss=1.0419  val_loss=1.1674  val_ci=0.5349  lr=0.000271  (best=0.5389 @ ep54)
+    ep  80/200  tr_loss=1.0098  val_loss=1.1654  val_ci=0.5456  lr=0.000457  (best=0.5523 @ ep77)
+    ep 100/200  tr_loss=0.9773  val_loss=1.1620  val_ci=0.5523  lr=0.000462  (best=0.5563 @ ep84)
+    ep 120/200  tr_loss=0.9473  val_loss=1.1608  val_ci=0.5670  lr=0.000306  (best=0.5670 @ ep116)
+    ep 140/200  tr_loss=0.9165  val_loss=1.1596  val_ci=0.5858  lr=0.000007  (best=0.5871 @ ep139)
+    ep 160/200  tr_loss=0.8990  val_loss=1.1624  val_ci=0.5804  lr=0.000094  (best=0.5912 @ ep147)
+    ep 180/200  tr_loss=0.9054  val_loss=1.1627  val_ci=0.5791  lr=0.000011  (best=0.5912 @ ep147)
+    ep 200/200  tr_loss=0.8807  val_loss=1.1616  val_ci=0.5818  lr=0.000000  (best=0.5912 @ ep147)
+  >> msam_chaotic: test C-index = 0.6023  (val best = 0.5912 @ ep147)
+  [msam_chaotic] elapsed: 0.5 min
+
+#################################################################
+  5-FOLD CROSS-VALIDATION SUMMARY
+#################################################################
+Optimizer             Mean CI      Std  Folds
+-----------------------------------------------------------------
+cosine_ge              0.5750   0.0759  0.7135  0.4968  0.5677  0.5162  0.5808
+sam                    0.5355   0.0518  0.6096  0.4788  0.4980  0.5061  0.5850
+msam                   0.5659   0.0881  0.7082  0.5002  0.5609  0.4537  0.6065
+msam_chaotic           0.5615   0.0486  0.6266  0.5442  0.5462  0.4883  0.6023
+=================================================================
+Saved CV summary: results_msam_paper/lusc/cv_summary.json
