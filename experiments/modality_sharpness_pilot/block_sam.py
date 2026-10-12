@@ -11,7 +11,8 @@ class BlockSAM:
     """
     def __init__(self, model, lr=1e-3, weight_decay=1e-4,
                  rho_image=0.05, rho_gene=0.05, adaptive=False,
-                 probe_every=20, ema=0.9, min_scale=0.5, max_scale=2.0):
+                 probe_every=20, ema=0.9, min_scale=0.5, max_scale=2.0,
+                 match_global_budget=True):
         self.model=model
         self.base=torch.optim.SGD(model.parameters(),lr=lr,momentum=0.9,weight_decay=weight_decay)
         self.rhos={"image":float(rho_image),"gene":float(rho_gene)}
@@ -23,6 +24,7 @@ class BlockSAM:
         self.sensitivity={}
         self.steps=0
         self.history=[]
+        self.match_global_budget=bool(match_global_budget)
         if self.probe_every<1: raise ValueError("probe_every must be >=1")
 
     def groups(self):
@@ -49,14 +51,27 @@ class BlockSAM:
         with torch.no_grad():
             for p,e in changed: p.sub_(e)
 
+    @staticmethod
+    def _rng_state():
+        return (torch.get_rng_state().clone(),
+                [x.clone() for x in torch.cuda.get_rng_state_all()] if torch.cuda.is_available() else None)
+
+    @staticmethod
+    def _set_rng_state(state):
+        torch.set_rng_state(state[0])
+        if state[1] is not None:
+            torch.cuda.set_rng_state_all(state[1])
+
     def step(self,closure):
         self.steps+=1
         self.base.zero_grad(set_to_none=True)
+        rng_before=self._rng_state() if self.adaptive else None
         loss=closure()
+        rng_after=self._rng_state() if self.adaptive else None
         loss.backward()
         groups=self.groups()
         radii=dict(self.rhos)
-        if self.adaptive and self.steps%self.probe_every==1:
+        if self.adaptive and (self.steps-1)%self.probe_every==0:
             baseline=float(loss.detach())
             measured={}
             # Evaluate sensitivity with independent probes, using the SAME batch.
@@ -77,6 +92,15 @@ class BlockSAM:
             self._last_radii=radii
         elif self.adaptive:
             radii=getattr(self,"_last_radii",radii)
+        # Match the global L2 budget for equal base radii across two blocks.
+        if self.match_global_budget:
+            budget=math.sqrt(sum(r*r for r in self.rhos.values()))
+            factor=max(self.rhos.values())/budget if budget>0 else 1.0
+            radii={name:r*factor for name,r in radii.items()}
+        grad_norms={}
+        for name,params in groups.items():
+            grad_norms[name]=math.sqrt(sum(float(p.grad.detach().float().square().sum())
+                for p in params if p.grad is not None))
         changed=[]
         try:
             for name,params in groups.items():
@@ -89,5 +113,7 @@ class BlockSAM:
         self.base.step()
         self.history.append({"step":self.steps,"rho_image":radii["image"],
                              "rho_gene":radii["gene"],
-                             "sensitivity":dict(self.sensitivity)})
+                             "sensitivity":dict(self.sensitivity),
+                             "grad_norms":grad_norms,
+                             "lr":float(self.base.param_groups[0]["lr"])})
         return second.detach()
