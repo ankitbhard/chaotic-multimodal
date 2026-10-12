@@ -20,7 +20,7 @@ def seed_all(seed):
     if torch.cuda.is_available(): torch.cuda.manual_seed_all(seed)
 
 def one_epoch(model,loader,opt,name,device):
-    model.train(); losses=[]
+    model.train(); losses=[]; step_times=[]
     for inp,lab in loader:
         x={k:v.to(device) for k,v in inp.items()}
         os_m=lab["os_months"].to(device).float()
@@ -28,6 +28,8 @@ def one_epoch(model,loader,opt,name,device):
         def closure():
             out=model(x)
             return cox_loss(out["survival"][:,1],os_m,events)
+        if device.type=="cuda": torch.cuda.synchronize()
+        step_start=time.perf_counter()
         if name in ("sam","msam"):
             labels={"survival":lab["survival"].to(device),
                     "os_months":os_m,"vital_status":events}
@@ -37,8 +39,11 @@ def one_epoch(model,loader,opt,name,device):
             loss,_=opt.step(legacy_closure,x,labels)
         else:
             loss=opt.step(closure)
+            opt.scheduler.step()
+        if device.type=="cuda": torch.cuda.synchronize()
+        step_times.append(time.perf_counter()-step_start)
         losses.append(float(loss.detach()))
-    return float(np.mean(losses))
+    return float(np.mean(losses)),float(np.mean(step_times))
 
 def main():
     p=argparse.ArgumentParser()
@@ -57,6 +62,7 @@ def main():
     p.add_argument("--rho",type=float,default=0.05,help="Legacy SAM/M-SAM radius")
     p.add_argument("--probe-every",type=int,default=20)
     p.add_argument("--dry-run",action="store_true")
+    p.add_argument("--no-budget-match",action="store_true",help="Disable matched block perturbation budget")
     args=p.parse_args()
     if not 0<=args.fold<args.n_folds: p.error("fold must be in [0,n_folds)")
     with open(args.config) as f: cfg=yaml.safe_load(f)
@@ -107,17 +113,22 @@ def main():
         else:
             opt=BlockSAM(model,lr=cfg_run["lr"],weight_decay=cfg_run["weight_decay"],
                          rho_image=args.rho_image,rho_gene=args.rho_gene,
-                         adaptive=name=="block_adaptive",probe_every=args.probe_every)
+                         adaptive=name=="block_adaptive",probe_every=args.probe_every,
+                         match_global_budget=not args.no_budget_match)
+            from optimizers.chaotic_lr_scheduler import CosineAnnealingScheduler
+            opt.scheduler=CosineAnnealingScheduler(opt.base,T_max=max(1,args.epochs*len(loaders["train"])))
         # Same shuffle seed for each optimizer; separate model RNG streams may diverge
         # because legacy M-SAM uses extra stochastic operations.
         train_loader=loaders["train"]
         if hasattr(train_loader,"generator"): train_loader.generator=torch.Generator().manual_seed(seed)
-        best=-float("inf");best_state=None;history=[];start=time.time()
+        best=-float("inf");best_state=None;history=[];start=time.perf_counter()
         for ep in range(1,args.epochs+1):
-            train_loss=one_epoch(model,train_loader,opt,name,device)
+            train_loss,mean_step_seconds=one_epoch(model,train_loader,opt,name,device)
             val_loss,val_ci,*_=evaluate(model,loaders["val"],device)
             history.append({"epoch":ep,"train_loss":train_loss,"val_loss":float(val_loss),
-                            "val_cindex":float(val_ci)})
+                            "val_cindex":float(val_ci),
+                            "mean_step_seconds":mean_step_seconds,
+                            "lr":float(opt.base.param_groups[0]["lr"]) if name.startswith("block_") else None})
             if np.isfinite(val_ci) and val_ci>best:
                 best=float(val_ci);best_state=copy.deepcopy(model.state_dict())
             print(f"{name} fold={args.fold} epoch={ep} train={train_loss:.4f} val_ci={val_ci:.4f}",flush=True)
@@ -126,7 +137,7 @@ def main():
         test_loss,test_ci,*_=evaluate(model,loaders["test"],device)
         result={"optimizer":name,"fold":args.fold,"best_val_cindex":best,
                 "test_cindex":float(test_ci),"test_loss":float(test_loss),
-                "seconds":time.time()-start,"initial_weights_sha256":digest,
+                "seconds":time.perf_counter()-start,"initial_weights_sha256":digest,
                 "history":history}
         if name.startswith("block_"): result["radius_history"]=opt.history
         with open(outdir/f"{name}_fold{args.fold}.json","w") as f: json.dump(result,f,indent=2)
