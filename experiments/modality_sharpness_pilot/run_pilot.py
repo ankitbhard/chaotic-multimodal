@@ -62,6 +62,7 @@ def main():
     p.add_argument("--rho",type=float,default=0.05,help="Legacy SAM/M-SAM radius")
     p.add_argument("--probe-every",type=int,default=20)
     p.add_argument("--dry-run",action="store_true")
+    p.add_argument("--hvp-diagnostics",action="store_true",help="Record autograd HVP block curvature at probe steps")
     p.add_argument("--curvature-diagnostics",action="store_true",help="Log symmetric block curvature probes; does not alter optimizer updates")
     p.add_argument("--no-budget-match",action="store_true",help="Disable matched block perturbation budget")
     args=p.parse_args()
@@ -116,7 +117,8 @@ def main():
                          rho_image=args.rho_image,rho_gene=args.rho_gene,
                          adaptive=name=="block_adaptive",probe_every=args.probe_every,
                          match_global_budget=not args.no_budget_match,
-                         curvature_diagnostics=args.curvature_diagnostics)
+                         curvature_diagnostics=args.curvature_diagnostics,
+                         hvp_diagnostics=args.hvp_diagnostics)
             from optimizers.chaotic_lr_scheduler import CosineAnnealingScheduler
             opt.scheduler=CosineAnnealingScheduler(opt.base,T_max=max(1,args.epochs*len(loaders["train"])))
         # Same shuffle seed for each optimizer; separate model RNG streams may diverge
@@ -144,6 +146,7 @@ def main():
         if name.startswith("block_"):
             result["radius_history"]=opt.history
             if args.curvature_diagnostics: result["curvature_history"]=opt.curvature_history
+            if args.hvp_diagnostics: result["hvp_history"]=opt.hvp_history
         with open(outdir/f"{name}_fold{args.fold}.json","w") as f: json.dump(result,f,indent=2)
         manifest["methods"][name]={"test_cindex":float(test_ci)}
     with open(outdir/"manifest.json","w") as f: json.dump(manifest,f,indent=2)
