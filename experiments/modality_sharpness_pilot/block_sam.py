@@ -94,7 +94,7 @@ class BlockSAM:
             radii=getattr(self,"_last_radii",radii)
         # Match the global L2 budget for equal base radii across two blocks.
         if self.match_global_budget:
-            budget=math.sqrt(sum(r*r for r in self.rhos.values()))
+            budget=math.sqrt(sum(r*r for r in radii.values()))
             factor=max(self.rhos.values())/budget if budget>0 else 1.0
             radii={name:r*factor for name,r in radii.items()}
         grad_norms={}
