@@ -12,7 +12,7 @@ class BlockSAM:
     def __init__(self, model, lr=1e-3, weight_decay=1e-4,
                  rho_image=0.05, rho_gene=0.05, adaptive=False,
                  probe_every=20, ema=0.9, min_scale=0.5, max_scale=2.0,
-                 match_global_budget=True):
+                 match_global_budget=True, curvature_diagnostics=False):
         self.model=model
         self.base=torch.optim.SGD(model.parameters(),lr=lr,momentum=0.9,weight_decay=weight_decay)
         self.rhos={"image":float(rho_image),"gene":float(rho_gene)}
@@ -25,6 +25,8 @@ class BlockSAM:
         self.steps=0
         self.history=[]
         self.match_global_budget=bool(match_global_budget)
+        self.curvature_diagnostics=bool(curvature_diagnostics)
+        self.curvature_history=[]
         if self.probe_every<1: raise ValueError("probe_every must be >=1")
 
     def groups(self):
@@ -62,15 +64,57 @@ class BlockSAM:
         if state[1] is not None:
             torch.cuda.set_rng_state_all(state[1])
 
+    def diagnose_curvature(self, closure, groups, baseline, rng_before, rng_after):
+        """Same-batch central differences along each block's normalized gradient.
+
+        Diagnostic only: never alters gradients, optimizer state, or the radius
+        controller. Restores parameters and RNG after each forward probe.
+        """
+        diagnostics={}
+        for name,params in groups.items():
+            grad_sq=sum(float(p.grad.detach().float().square().sum())
+                        for p in params if p.grad is not None)
+            grad_norm=math.sqrt(grad_sq)
+            rho=self.rhos[name]
+            if grad_norm<1e-12 or rho<=0:
+                diagnostics[name]={"gradient_norm":grad_norm,
+                                   "status":"no_direction"}
+                continue
+            values={}
+            for sign,label in ((1,"plus"),(-1,"minus")):
+                changed=self.perturb(params,sign*rho)
+                try:
+                    self._set_rng_state(rng_before)
+                    with torch.no_grad():
+                        values[label]=float(closure().detach())
+                finally:
+                    self.restore(changed)
+                    self._set_rng_state(rng_after)
+            plus=values["plus"]-baseline
+            minus=values["minus"]-baseline
+            diagnostics[name]={
+                "status":"ok","gradient_norm":grad_norm,"rho":rho,
+                "baseline_loss":baseline,"loss_plus":values["plus"],
+                "loss_minus":values["minus"],
+                "delta_plus":plus,"delta_minus":minus,
+                "directional_curvature":(plus+minus)/(rho*rho),
+                "slope_estimate":(plus-minus)/(2*rho),
+                "first_order_slope":grad_norm}
+        self.curvature_history.append({"step":self.steps,"blocks":diagnostics})
+        return diagnostics
+
     def step(self,closure):
         self.steps+=1
         self.base.zero_grad(set_to_none=True)
-        rng_before=self._rng_state() if self.adaptive else None
+        rng_before=self._rng_state() if (self.adaptive or self.curvature_diagnostics) else None
         loss=closure()
-        rng_after=self._rng_state() if self.adaptive else None
+        rng_after=self._rng_state() if (self.adaptive or self.curvature_diagnostics) else None
         loss.backward()
         groups=self.groups()
         radii=dict(self.rhos)
+        if self.curvature_diagnostics and (self.steps-1)%self.probe_every==0:
+            self.diagnose_curvature(closure,groups,float(loss.detach()),
+                                    rng_before,rng_after)
         if self.adaptive and (self.steps-1)%self.probe_every==0:
             baseline=float(loss.detach())
             measured={}
@@ -78,10 +122,12 @@ class BlockSAM:
             for name,params in groups.items():
                 changed=self.perturb(params,self.rhos[name])
                 try:
+                    self._set_rng_state(rng_before)
                     with torch.no_grad():
                         probe=float(closure().detach())
                 finally:
                     self.restore(changed)
+                    self._set_rng_state(rng_after)
                 measured[name]=max(0.0,probe-baseline)
                 old=self.sensitivity.get(name,measured[name])
                 self.sensitivity[name]=self.ema*old+(1-self.ema)*measured[name]
