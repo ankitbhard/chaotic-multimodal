@@ -55,6 +55,23 @@ class TestBlockSAM(unittest.TestCase):
         opt.step(closure)
         self.assertTrue(all(v>=0 for v in opt.sensitivity.values()))
 
+    def test_quadratic_directional_curvature(self):
+        torch.manual_seed(11)
+        model=Tiny()
+        opt=BlockSAM(model,lr=0.0,curvature_diagnostics=True,probe_every=1)
+        a=torch.randn(5,3); b=torch.randn(5,2)
+        def closure(): return model(a,b).square().mean()
+        before=[p.detach().clone() for p in model.parameters()]
+        opt.step(closure)
+        self.assertEqual(len(opt.curvature_history),1)
+        for entry in opt.curvature_history[0]["blocks"].values():
+            self.assertEqual(entry["status"],"ok")
+            self.assertAlmostEqual(entry["slope_estimate"],
+                                   entry["first_order_slope"],delta=0.005)
+            self.assertGreaterEqual(entry["directional_curvature"],-0.005)
+        for x,y in zip(before,model.parameters()):
+            self.assertTrue(torch.allclose(x,y,atol=1e-6))
+
     def test_fixed(self): self.run_case(False)
     def test_adaptive(self): self.run_case(True)
 
