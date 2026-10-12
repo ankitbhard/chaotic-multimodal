@@ -1,6 +1,7 @@
 """Isolated blockwise SAM experiments; does not modify legacy optimizers."""
 import math
 import torch
+from experiments.modality_sharpness_pilot.hessian_diagnostics import block_hvp_curvatures
 
 class BlockSAM:
     """Two-pass SAM; image/gene perturbations have independent radii.
@@ -12,7 +13,7 @@ class BlockSAM:
     def __init__(self, model, lr=1e-3, weight_decay=1e-4,
                  rho_image=0.05, rho_gene=0.05, adaptive=False,
                  probe_every=20, ema=0.9, min_scale=0.5, max_scale=2.0,
-                 match_global_budget=True, curvature_diagnostics=False):
+                 match_global_budget=True, curvature_diagnostics=False, hvp_diagnostics=False):
         self.model=model
         self.base=torch.optim.SGD(model.parameters(),lr=lr,momentum=0.9,weight_decay=weight_decay)
         self.rhos={"image":float(rho_image),"gene":float(rho_gene)}
@@ -27,6 +28,8 @@ class BlockSAM:
         self.match_global_budget=bool(match_global_budget)
         self.curvature_diagnostics=bool(curvature_diagnostics)
         self.curvature_history=[]
+        self.hvp_diagnostics=bool(hvp_diagnostics)
+        self.hvp_history=[]
         if self.probe_every<1: raise ValueError("probe_every must be >=1")
 
     def groups(self):
@@ -106,12 +109,16 @@ class BlockSAM:
     def step(self,closure):
         self.steps+=1
         self.base.zero_grad(set_to_none=True)
-        rng_before=self._rng_state() if (self.adaptive or self.curvature_diagnostics) else None
+        rng_before=self._rng_state() if (self.adaptive or self.curvature_diagnostics or self.hvp_diagnostics) else None
         loss=closure()
         rng_after=self._rng_state() if (self.adaptive or self.curvature_diagnostics) else None
         loss.backward()
         groups=self.groups()
         radii=dict(self.rhos)
+        if self.hvp_diagnostics and (self.steps-1)%self.probe_every==0:
+            hvp=block_hvp_curvatures(closure,groups,rng_before=rng_before,
+                                     rng_after=rng_after,set_rng_state=self._set_rng_state)
+            self.hvp_history.append({"step":self.steps,"blocks":hvp})
         if self.curvature_diagnostics and (self.steps-1)%self.probe_every==0:
             self.diagnose_curvature(closure,groups,float(loss.detach()),
                                     rng_before,rng_after)
