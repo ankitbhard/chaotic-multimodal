@@ -14,8 +14,9 @@ from models.joint_model import build_model
 from experiments.modality_sharpness_pilot.block_sam import BlockSAM
 from experiments.modality_sharpness_pilot.chaotic_schedule import SAMSchedule, ScheduledSAM
 from experiments.modality_sharpness_pilot.modality_schedule import ModalitySchedule, ModalityScheduledSAM
+from experiments.modality_sharpness_pilot.new_optimizer_prototypes import OptimizerExperiment, install_shared_gradient_hooks
 
-NAMES=("sam","msam","block_fixed","block_adaptive","schedule_periodic","schedule_random","schedule_chaotic","schedule_sgd","schedule_full","modality_periodic","modality_random","modality_chaotic")
+NAMES=("sam","msam","block_fixed","block_adaptive","schedule_periodic","schedule_random","schedule_chaotic","schedule_sgd","schedule_full","modality_periodic","modality_random","modality_chaotic","new_sgd","new_adamw","new_adaptive_step","new_gradient_diagnostic")
 
 def seed_all(seed):
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
@@ -117,6 +118,13 @@ def main():
         cfg_run["epochs"]=args.epochs
         if name in ("sam","msam"):
             opt,_,_=build_paper_optimizer(name,model,cfg_run,len(loaders["train"]),rho=args.rho)
+        elif name.startswith("new_"):
+            mode="conflict_projection" if name=="new_gradient_diagnostic" else name.removeprefix("new_")
+            if name=="new_gradient_diagnostic":
+                install_shared_gradient_hooks(model)
+            opt=OptimizerExperiment(model,mode,lr=cfg_run["lr"],weight_decay=cfg_run["weight_decay"])
+            from optimizers.chaotic_lr_scheduler import CosineAnnealingScheduler
+            opt.scheduler=CosineAnnealingScheduler(opt.base,T_max=max(1,args.epochs*len(loaders["train"])))
         elif name.startswith("modality_"):
             mode=name.removeprefix("modality_")
             schedule=ModalitySchedule(mode,args.epochs*len(loaders["train"]),
@@ -155,7 +163,7 @@ def main():
             history.append({"epoch":ep,"train_loss":train_loss,"val_loss":float(val_loss),
                             "val_cindex":float(val_ci),
                             "mean_step_seconds":mean_step_seconds,
-                            "lr":float(opt.base.param_groups[0]["lr"]) if name.startswith(("block_","schedule_","modality_")) else None})
+                            "lr":float(opt.base.param_groups[0]["lr"]) if name.startswith(("block_","schedule_","modality_","new_")) else None})
             if np.isfinite(val_ci) and val_ci>best:
                 best=float(val_ci);best_state=copy.deepcopy(model.state_dict())
             print(f"{name} fold={args.fold} epoch={ep} train={train_loss:.4f} val_ci={val_ci:.4f}",flush=True)
@@ -166,6 +174,9 @@ def main():
                 "test_cindex":float(test_ci),"test_loss":float(test_loss),
                 "seconds":time.perf_counter()-start,"initial_weights_sha256":digest,
                 "history":history}
+        if name.startswith("new_"):
+            result["optimizer_history"]=opt.history
+            result["note"]="new_gradient_diagnostic logs shared-space gradient cosine only; no projection is applied" if name=="new_gradient_diagnostic" else "Exploratory optimizer baseline"
         if name.startswith(("schedule_","modality_")):
             result["schedule_history"]=opt.history
             result["sam_steps"]=opt.sam_steps
