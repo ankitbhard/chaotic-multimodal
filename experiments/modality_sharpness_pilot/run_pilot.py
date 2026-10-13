@@ -12,8 +12,9 @@ from train_survival import build_survival_dataloaders, cox_loss, evaluate
 from train_msam_survival import build_paper_optimizer
 from models.joint_model import build_model
 from experiments.modality_sharpness_pilot.block_sam import BlockSAM
+from experiments.modality_sharpness_pilot.chaotic_schedule import SAMSchedule, ScheduledSAM
 
-NAMES=("sam","msam","block_fixed","block_adaptive")
+NAMES=("sam","msam","block_fixed","block_adaptive","schedule_periodic","schedule_random","schedule_chaotic","schedule_sgd","schedule_full")
 
 def seed_all(seed):
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed)
@@ -60,6 +61,7 @@ def main():
     p.add_argument("--rho-image",type=float,default=0.05)
     p.add_argument("--rho-gene",type=float,default=0.05)
     p.add_argument("--rho",type=float,default=0.05,help="Legacy SAM/M-SAM radius")
+    p.add_argument("--sam-fraction",type=float,default=0.5,help="Fraction of steps using SAM in scheduled variants")
     p.add_argument("--probe-every",type=int,default=20)
     p.add_argument("--dry-run",action="store_true")
     p.add_argument("--hvp-diagnostics",action="store_true",help="Record autograd HVP block curvature at probe steps")
@@ -112,6 +114,15 @@ def main():
         cfg_run["epochs"]=args.epochs
         if name in ("sam","msam"):
             opt,_,_=build_paper_optimizer(name,model,cfg_run,len(loaders["train"]),rho=args.rho)
+        elif name.startswith("schedule_"):
+            mode=name.removeprefix("schedule_")
+            fraction=0.0 if mode=="sgd" else 1.0 if mode=="full" else args.sam_fraction
+            schedule=SAMSchedule("periodic" if mode in ("sgd","full") else mode,
+                                 args.epochs*len(loaders["train"]),fraction= fraction,seed=seed)
+            opt=ScheduledSAM(model,schedule,lr=cfg_run["lr"],
+                             weight_decay=cfg_run["weight_decay"],rho=args.rho)
+            from optimizers.chaotic_lr_scheduler import CosineAnnealingScheduler
+            opt.scheduler=CosineAnnealingScheduler(opt.base,T_max=max(1,args.epochs*len(loaders["train"])))
         else:
             opt=BlockSAM(model,lr=cfg_run["lr"],weight_decay=cfg_run["weight_decay"],
                          rho_image=args.rho_image,rho_gene=args.rho_gene,
@@ -132,7 +143,7 @@ def main():
             history.append({"epoch":ep,"train_loss":train_loss,"val_loss":float(val_loss),
                             "val_cindex":float(val_ci),
                             "mean_step_seconds":mean_step_seconds,
-                            "lr":float(opt.base.param_groups[0]["lr"]) if name.startswith("block_") else None})
+                            "lr":float(opt.base.param_groups[0]["lr"]) if name.startswith(("block_","schedule_")) else None})
             if np.isfinite(val_ci) and val_ci>best:
                 best=float(val_ci);best_state=copy.deepcopy(model.state_dict())
             print(f"{name} fold={args.fold} epoch={ep} train={train_loss:.4f} val_ci={val_ci:.4f}",flush=True)
@@ -143,6 +154,10 @@ def main():
                 "test_cindex":float(test_ci),"test_loss":float(test_loss),
                 "seconds":time.perf_counter()-start,"initial_weights_sha256":digest,
                 "history":history}
+        if name.startswith("schedule_"):
+            result["schedule_history"]=opt.history
+            result["sam_steps"]=opt.sam_steps
+            result["total_steps"]=opt.steps
         if name.startswith("block_"):
             result["radius_history"]=opt.history
             if args.curvature_diagnostics: result["curvature_history"]=opt.curvature_history
