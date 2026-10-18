@@ -1,28 +1,46 @@
-#!/usr/bin/env bash
-# Run matched pilot baselines on three cancer cohorts.
-# Example: bash experiments/cvpr_reliability_pilot/run_baselines.sh
-# Override: EPOCHS=30 FOLDS="0" CANCERS="brca" bash .../run_baselines.sh
+#!/bin/bash
+# Phase 2: Baseline experiments (3-fold x 100 epochs)
+# Methods: adamw, aux_cox, mod_dropout
+# Cancers: BRCA, KIRC, LUAD
+#
+# Usage:
+#   bash experiments/cvpr_reliability_pilot/run_baselines.sh
+#   EPOCHS=30 CANCERS="brca" bash experiments/cvpr_reliability_pilot/run_baselines.sh
 set -euo pipefail
-cd "$(dirname "$0")/../.."
+
+PYTHON="${PYTHON:-/opt/pytorch/bin/python3}"
+PROJECT_ROOT="${PROJECT_ROOT:-$HOME/chaotic-multimodal-v2}"
 EPOCHS="${EPOCHS:-100}"
-FOLDS="${FOLDS:-0 1 2}"
+FOLDS="${FOLDS:-3}"
 CANCERS="${CANCERS:-brca kirc luad}"
-OUTPUT_ROOT="${OUTPUT_ROOT:-results/cvpr_reliability_pilot/baselines}"
-mkdir -p "$OUTPUT_ROOT"
+cd "$PROJECT_ROOT"
+
+echo "=== Phase 2: Baseline Experiments ==="
+echo "Start: $(date)"
+echo "Epochs: $EPOCHS | Folds: $FOLDS | Cancers: $CANCERS"
+
 for cancer in $CANCERS; do
-  config="configs/${cancer}.yaml"
-  if [[ ! -f "$config" ]]; then
-    echo "ERROR: missing $config; inspect cancer config filenames" >&2
-    exit 1
-  fi
-  echo "=== $cancer | epochs=$EPOCHS | folds=$FOLDS ==="
-  # Existing runner: same split and initial weights for both methods.
-  python -m experiments.phase1_optimizer_validation.run_phase1 \
-    --config "$config" \
-    --output "$OUTPUT_ROOT/$cancer" \
-    --epochs "$EPOCHS" \
-    --folds $FOLDS \
-    --methods adamw disentangle_aux_only \
-    2>&1 | tee "$OUTPUT_ROOT/$cancer.log"
+    config="configs/${cancer}.yaml"
+    if [[ ! -f "$config" ]]; then
+        echo "ERROR: missing $config" >&2
+        exit 1
+    fi
+
+    echo ""
+    echo "=============================="
+    echo "  Cancer: $cancer"
+    echo "=============================="
+
+    mkdir -p "results/cvpr_reliability_pilot/${cancer}"
+
+    $PYTHON -m experiments.cvpr_reliability_pilot.train \
+        --config "$config" \
+        --methods adamw aux_cox mod_dropout \
+        --folds "$FOLDS" --epochs "$EPOCHS" \
+        --save_dir "results/cvpr_reliability_pilot/${cancer}" \
+        --skip_existing \
+        2>&1 | tee "results/cvpr_reliability_pilot/${cancer}/baselines.log"
 done
-echo "Completed launcher. Inspect per-fold JSON and manifest for failures."
+
+echo ""
+echo "=== Phase 2 Complete: $(date) ==="

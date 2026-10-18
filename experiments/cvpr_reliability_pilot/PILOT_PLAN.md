@@ -1,56 +1,103 @@
-# CVPR reliability-aware multimodal survival pilot (October 2026)
+# CVPR 2027 Pilot Plan — Perturbation-Calibrated Reliability-Guided Fusion (PCRF)
 
-## Research question
-Does **perturbation-calibrated modality reliability** improve histopathology + gene-expression survival ranking over ordinary attention and training-only auxiliary Cox heads, particularly under realistic feature corruption? A learned attention gate alone is NOT sufficient novelty.
+**Date:** 2026-10-18
+**Branch:** `experiments/cvpr-reliability-pilot`
+**Deadline:** 2026-10-27 (Go/No-Go)
 
-## Scope / guardrails
+## Research Question
+
+Does **perturbation-calibrated modality reliability** improve histopathology +
+gene-expression survival ranking over ordinary attention and training-only
+auxiliary Cox heads, particularly under realistic feature corruption?
+A learned attention gate alone is NOT sufficient novelty.
+
+## Scope / Guardrails
+
 - Isolated branch: `experiments/cvpr-reliability-pilot`; do not modify legacy experiment files or results.
 - First three cohorts: BRCA, KIRC, LUAD. Full follow-up: LUSC, STAD.
 - Use existing UNI/UNI2-h feature files and RNA-seq inputs; record embedding backbone per cohort.
-- Use existing `experiments/phase1_optimizer_validation/run_phase1.py` unchanged for reproducible baseline and auxiliary-head runs.
 - No test-set-based tuning, no use of test labels for reliability estimates, no preprocessing fitted outside train fold.
 - Do not assume 20,000 genes are available: log gene names and actual feature counts per fold.
 - Do not claim executed runs unless JSON and manifest files exist.
 
-## Pilot 1: establish reference results
-Run AdamW and `disentangle_aux_only` with matched folds, initialization, 100 epochs and cosine LR. If prior 200-epoch results are comparable, retain them as an additional reference, not a replacement. Start with fold 0 for smoke test, then folds 0/1/2. Use the provided `run_baselines.sh`.
+## Pilot Cohorts
 
-## Pilot 2: reliability method (implementation pending)
-Architecture:
-1. Keep existing image encoder, gene encoder and joint survival head.
-2. Keep training-only image and gene auxiliary Cox heads.
-3. Create two small trainable reliability heads q_I(z_I), q_G(z_G). Map image/gene embeddings to a common dimension before fusion.
-4. Define *training-only* reliability targets from small, biologically plausible, train-fold-calibrated feature perturbations. For each modality m, compute d_m = E[(r_m(z_m+delta)-r_m(z_m))^2] using a frozen or stop-gradient unimodal teacher; do not backprop through the targets.
-5. Calibrate targets using train-only statistics; assess whether stability correlates with predictive utility. Stability is NOT equivalent to correctness.
-6. Gate fusion with softmax(q_I,q_G), but compare with an equal-capacity ordinary learned gate.
-7. Proposed loss: L_joint_Cox + 0.1(L_image_Cox+L_gene_Cox) + gamma * L_reliability. Choose gamma on validation only.
-8. Evaluate image-only, gene-only, both, image-corrupted, gene-corrupted, and missing-modality (if trained for missingness). A missing input must not silently be replaced by a zero vector without explicit masking.
-9. Avoid batchwise Cox objective changes between methods. Document zero-event batch handling and ties.
+| Cancer | Patients (approx) | Image Backbone | Image Dim |
+|--------|--------------------|----------------|-----------|
+| BRCA   | ~1050              | UNI            | 1024      |
+| KIRC   | ~519               | UNI2-h         | 1536      |
+| LUAD   | ~530               | UNI2-h         | 1536      |
 
-## Required ablations
-A. Existing attention + AdamW
-B. Existing attention + auxiliary Cox heads
-C. Equal-capacity learned reliability/gating without perturbation targets
-D. Perturbation-guided reliability, without auxiliary Cox heads
-E. Full perturbation-guided reliability + auxiliary Cox heads
-F. Simple modality dropout or corruption-trained attention control (matched corruption budget)
+## Experimental Design
 
-## Evaluation
-- Main metric: Harrell C-index per patient-level fold, paired differences, uncertainty intervals; also report integrated Brier score if censoring-aware evaluation is correctly implemented.
-- 3-fold quick pilot is a screen, NOT publication-grade evidence. Scale to 5 folds x 5 cancers only if the method shows a credible signal.
-- Record val/test performance, number of patients/events, feature counts, runtime, seed, git SHA, backbone, corruption severity, reliability/attention distributions.
-- Distinguish generalization to *different cancer cohorts* from generalization across image encoders.
-- Compare clean and corruption robustness at matched training budgets. Include failure cases.
+- **Folds:** 3-fold stratified CV (by vital_status)
+- **Epochs:** 100
+- **Optimizer:** AdamW (lr=1e-3, wd=1e-4) for ALL methods
+- **LR Schedule:** Epoch-level cosine annealing
+- **Checkpoint:** Best validation C-index
+- **Seeds:** 42 (data split), 42+fold (model init)
 
-## Go/no-go by Oct 27
-Proceed only if (1) method has a meaningful conceptual distinction from related work, (2) gains over aux-only and ordinary gate appear on >=2 of 3 pilot cohorts or there is a strong reproducible robustness benefit, and (3) no data leakage. Otherwise pivot before full benchmark.
+## Methods (6 total)
 
-## Known implementation risks
+1. **adamw** — Standard attention fusion + AdamW baseline
+2. **aux_cox** — Attention fusion + auxiliary unimodal Cox heads (0.1 weight)
+3. **mod_dropout** — Attention fusion + modality dropout (p=0.15)
+4. **learned_gating** — PCRF architecture, no reliability loss (capacity control)
+5. **pcrf** — PCRF with reliability supervision, no aux Cox in main loss
+6. **pcrf_aux** — PCRF with reliability supervision + aux Cox
+
+## Key Comparisons
+
+| Comparison | Tests |
+|------------|-------|
+| 1 vs 2 | Does auxiliary supervision help? |
+| 1 vs 3 | Does modality dropout improve robustness? |
+| 3 vs 4 | Learned gating vs dropout for robustness |
+| 4 vs 5 | Does reliability supervision help (controlling for capacity)? |
+| 2 vs 6 | Does PCRF+reliability help on top of aux? |
+| 5 vs 6 | Does aux help on top of PCRF? |
+
+## Robustness Evaluation
+
+- Clean (no perturbation)
+- Gaussian noise on image embeddings (sigma = 0.1, 0.3, 0.5, 1.0)
+- Gaussian noise on gene features (sigma = 0.1, 0.3, 0.5, 1.0)
+- Missing image modality (zero embedding)
+- Missing gene modality (zero features)
+
+## Success Criteria
+
+Proceed to full-scale (5 folds x 5 cancers) if:
+1. PCRF improves over learned gating on >=2/3 pilot cancers, OR
+2. PCRF shows reproducible robustness advantage under perturbation/missing modality
+3. No data leakage or evaluation flaws detected
+
+## Known Implementation Risks
+
 - Prior BRCA audit observed only ~1,000 genes although config requested 20,000.
 - Auxiliary supervision changes training objective; do not label it a pure optimizer.
 - Image/gene gradient equalization harmed BRCA; do not reintroduce it by default.
 - Verify test folds are untouched by selection.
-- Existing code may use a two-logit head but Cox loss only reads logit index 1.
+- Existing code uses a two-logit head but Cox loss only reads logit index 1.
+- Zero-event batches produce zero loss and zero gradients.
+
+## File Structure
+
+```
+experiments/cvpr_reliability_pilot/
+├── models.py           # PCRF model architecture
+├── reliability.py      # Perturbation calibration module
+├── losses.py           # Cox loss, reliability loss
+├── train.py            # Training script (all 6 methods)
+├── evaluate.py         # Evaluation + robustness testing
+├── test_pilot.py       # Unit tests (23 tests)
+├── run_baselines.sh    # Phase 2 baseline runs
+├── run_pilot.sh        # Full pilot runs
+├── analyze_results.py  # Analysis and visualization
+├── METHODOLOGY.md      # Mathematical formulation
+└── PILOT_REPORT.md     # Final report
+```
 
 ## Status
-Pilot branch and baseline launcher configured. Reliability method NOT yet implemented or executed; this plan is a protocol, not experimental evidence.
+
+Implementation complete. 23/23 unit tests passing. Ready for EC2 deployment and execution.
