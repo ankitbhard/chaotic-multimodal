@@ -374,8 +374,10 @@ def main():
 
     if args.smoke:
         args.epochs = 5
-        args.folds = 1
-        print(f"=== SMOKE TEST: {cancer} ===")
+        # StratifiedKFold needs n_splits >= 2; smoke test runs fold 0 of 3-fold
+        if args.folds < 2:
+            args.folds = 3
+        print(f"=== SMOKE TEST: {cancer} (fold 0 only, {args.epochs} epochs) ===")
     else:
         print(f"=== CVPR Pilot: {cancer} | {args.folds} folds × {args.epochs} epochs ===")
 
@@ -394,7 +396,8 @@ def main():
     print(f"Device: {device}")
     if device.type == "cuda":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
-        mem = torch.cuda.get_device_properties(0).total_mem / 1e9
+        props = torch.cuda.get_device_properties(0)
+        mem = getattr(props, 'total_memory', getattr(props, 'total_mem', 0)) / 1e9
         print(f"GPU memory: {mem:.1f} GB")
 
     methods = args.methods
@@ -421,7 +424,8 @@ def main():
         "perturbation_sigma": args.perturbation_sigma,
     }
 
-    for fold in range(n_folds):
+    run_folds = 1 if args.smoke else n_folds
+    for fold in range(run_folds):
         print(f"\n{'='*60}")
         print(f"FOLD {fold}/{n_folds}")
         print(f"{'='*60}")
@@ -441,6 +445,15 @@ def main():
             seed=args.seed,  # data split seed is constant
             fold=fold,
             n_folds=n_folds,
+        )
+
+        # Fix: Rebuild training DataLoader with drop_last=True to avoid
+        # BatchNorm failure on single-sample batches (KIRC: 289 = 9×32 + 1)
+        from torch.utils.data import DataLoader
+        train_ds = loaders["train"].dataset
+        loaders["train"] = DataLoader(
+            train_ds, batch_size=cfg.get("batch_size", 32),
+            shuffle=True, num_workers=0, pin_memory=False, drop_last=True,
         )
 
         n_genes = loaders["n_genes"]
