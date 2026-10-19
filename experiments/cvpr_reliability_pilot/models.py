@@ -321,6 +321,12 @@ def build_pilot_model(method, n_genes, image_dim=1024, dropout=0.3):
             "use_reliability_loss": False,
             "mod_dropout": 0.0,
         },
+        "learned_gating_aux": {
+            "model_cls": "pcrf",
+            "use_aux_loss": True,
+            "use_reliability_loss": False,
+            "mod_dropout": 0.0,
+        },
         "pcrf": {
             "model_cls": "pcrf",
             "use_aux_loss": False,
@@ -332,6 +338,13 @@ def build_pilot_model(method, n_genes, image_dim=1024, dropout=0.3):
             "use_aux_loss": True,
             "use_reliability_loss": True,
             "mod_dropout": 0.0,
+        },
+        "pcrf_aux_warmup": {
+            "model_cls": "pcrf",
+            "use_aux_loss": True,
+            "use_reliability_loss": True,
+            "mod_dropout": 0.0,
+            "warmup_epochs": 20,
         },
     }
 
@@ -359,5 +372,6 @@ def build_pilot_model(method, n_genes, image_dim=1024, dropout=0.3):
 
 
 ALL_METHODS = ["adamw", "aux_cox", "mod_dropout", "learned_gating", "pcrf", "pcrf_aux"]
+PHASE2_METHODS = ["learned_gating_aux", "pcrf_aux", "pcrf_aux_warmup"]
 BASELINE_METHODS = ["adamw", "aux_cox", "mod_dropout"]
-ABLATION_METHODS = ALL_METHODS
+ABLATION_METHODS = ALL_METHODS + ["learned_gating_aux", "pcrf_aux_warmup"]

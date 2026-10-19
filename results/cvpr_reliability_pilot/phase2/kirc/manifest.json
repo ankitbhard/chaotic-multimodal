@@ -1,0 +1,80 @@
+{
+  "cancer": "kirc",
+  "config_path": "/home/ubuntu/chaotic-multimodal-v2/configs/kirc.yaml",
+  "methods": [
+    "learned_gating_aux",
+    "pcrf_aux",
+    "pcrf_aux_warmup"
+  ],
+  "n_folds": 3,
+  "epochs": 100,
+  "seed": 42,
+  "device": "cuda",
+  "timestamp": "2026-10-19T00:16:46.718790",
+  "reliability_weight": 0.01,
+  "aux_weight": 0.1,
+  "perturbation_sigma": 0.1,
+  "n_genes_actual": 1000,
+  "n_genes_configured": 20000,
+  "gene_count_discrepancy": true,
+  "image_dim": 1536,
+  "n_patients": {
+    "train": 289,
+    "val": 51,
+    "test": 170,
+    "total": 510
+  },
+  "events": {
+    "train": 95,
+    "total": 169,
+    "event_rate": 0.33137254901960783
+  },
+  "image_backbone": "UNI2-h (1536)",
+  "summary": {
+    "learned_gating_aux": {
+      "test_cindex_mean": 0.6959622592682729,
+      "test_cindex_std": 0.0104505751929196,
+      "val_cindex_mean": 0.7761204783470067,
+      "test_cindex_per_fold": [
+        0.7094831911690919,
+        0.6943699731903485,
+        0.6840336134453782
+      ],
+      "val_cindex_per_fold": [
+        0.6430062630480167,
+        0.8685612788632326,
+        0.816793893129771
+      ]
+    },
+    "pcrf_aux": {
+      "test_cindex_mean": 0.7029448757922273,
+      "test_cindex_std": 0.018387241811938466,
+      "val_cindex_mean": 0.7916275733911856,
+      "test_cindex_per_fold": [
+        0.7024586051179127,
+        0.7257037533512064,
+        0.680672268907563
+      ],
+      "val_cindex_per_fold": [
+        0.6826722338204593,
+        0.8738898756660746,
+        0.8183206106870229
+      ]
+    },
+    "pcrf_aux_warmup": {
+      "test_cindex_mean": 0.6992010280307701,
+      "test_cindex_std": 0.009050626109711734,
+      "val_cindex_mean": 0.7831832485004373,
+      "test_cindex_per_fold": [
+        0.6981100518481351,
+        0.7107908847184986,
+        0.6887021475256769
+      ],
+      "val_cindex_per_fold": [
+        0.6659707724425887,
+        0.866785079928952,
+        0.816793893129771
+      ]
+    }
+  }
+}

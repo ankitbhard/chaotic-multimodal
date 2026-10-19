@@ -343,6 +343,146 @@ class TestBuildPilotModel(unittest.TestCase):
             outputs = model(inputs)
             self.assertEqual(outputs["survival"].shape, (B, 2))
 
+    def test_phase2_methods_build(self):
+        from experiments.cvpr_reliability_pilot.models import build_pilot_model, PHASE2_METHODS
+        for method in PHASE2_METHODS:
+            model, cfg = build_pilot_model(method, 100, 64)
+            self.assertIsNotNone(model)
+            B = 4
+            inputs = {"image": torch.randn(B, 64), "gene": torch.randn(B, 100)}
+            outputs = model(inputs)
+            self.assertEqual(outputs["survival"].shape, (B, 2))
+
+
+class TestLearnedGatingAuxCapacity(unittest.TestCase):
+    """learned_gating_aux must have identical capacity to pcrf_aux."""
+    def test_same_params(self):
+        from experiments.cvpr_reliability_pilot.models import build_pilot_model
+        model_lg_aux, _ = build_pilot_model("learned_gating_aux", 100, 64)
+        model_pcrf_aux, _ = build_pilot_model("pcrf_aux", 100, 64)
+        p_lg = sum(p.numel() for p in model_lg_aux.parameters())
+        p_pcrf = sum(p.numel() for p in model_pcrf_aux.parameters())
+        self.assertEqual(p_lg, p_pcrf)
+
+    def test_same_params_as_warmup(self):
+        from experiments.cvpr_reliability_pilot.models import build_pilot_model
+        model_lg_aux, _ = build_pilot_model("learned_gating_aux", 100, 64)
+        model_warmup, _ = build_pilot_model("pcrf_aux_warmup", 100, 64)
+        p_lg = sum(p.numel() for p in model_lg_aux.parameters())
+        p_wu = sum(p.numel() for p in model_warmup.parameters())
+        self.assertEqual(p_lg, p_wu)
+
+
+class TestGradientIsolation(unittest.TestCase):
+    """Verify gradient flow for each method configuration."""
+
+    def _get_grad_params(self, model, loss):
+        """Run backward and return sets of parameter names with/without gradients."""
+        model.zero_grad()
+        loss.backward()
+        has_grad = set()
+        no_grad = set()
+        for name, p in model.named_parameters():
+            if p.grad is not None and p.grad.abs().sum() > 0:
+                has_grad.add(name)
+            else:
+                no_grad.add(name)
+        return has_grad, no_grad
+
+    def test_pcrf_aux_encoder_gets_aux_gradient(self):
+        """pcrf_aux (use_aux_loss=True): aux loss gradients flow through encoders."""
+        from experiments.cvpr_reliability_pilot.models import PCRFModel
+        from experiments.cvpr_reliability_pilot.losses import combined_loss
+        model = PCRFModel(n_genes=50, image_dim=32, dropout=0.0,
+                         use_aux_loss=True, use_reliability_loss=True)
+        B = 8
+        inputs = {"image": torch.randn(B, 32), "gene": torch.randn(B, 50)}
+        os_m = torch.rand(B) * 100
+        vs = (torch.rand(B) > 0.5).float()
+        vs[0] = 1.0
+
+        # Test: aux loss only (zero out joint and reliability)
+        outputs = model(inputs)
+        from experiments.cvpr_reliability_pilot.losses import cox_loss
+        aux_loss = cox_loss(outputs["aux_img_risk"], os_m, vs) + \
+                   cox_loss(outputs["aux_gene_risk"], os_m, vs)
+
+        has_grad, no_grad = self._get_grad_params(model, aux_loss)
+
+        # Encoder params should have gradients (use_aux_loss=True → non-detached)
+        encoder_params = [n for n in has_grad if "image_encoder" in n or "gene_encoder" in n]
+        self.assertGreater(len(encoder_params), 0,
+                          "Encoder should receive gradients from aux loss when use_aux_loss=True")
+
+    def test_pcrf_no_aux_encoder_isolated(self):
+        """pcrf (use_aux_loss=False): aux loss does NOT flow through encoders."""
+        from experiments.cvpr_reliability_pilot.models import PCRFModel
+        from experiments.cvpr_reliability_pilot.losses import cox_loss
+        model = PCRFModel(n_genes=50, image_dim=32, dropout=0.0,
+                         use_aux_loss=False, use_reliability_loss=True)
+        B = 8
+        inputs = {"image": torch.randn(B, 32), "gene": torch.randn(B, 50)}
+        os_m = torch.rand(B) * 100
+        vs = (torch.rand(B) > 0.5).float()
+        vs[0] = 1.0
+
+        outputs = model(inputs)
+        # Only aux loss — with detached features
+        aux_loss = cox_loss(outputs["aux_img_risk"], os_m, vs) + \
+                   cox_loss(outputs["aux_gene_risk"], os_m, vs)
+
+        has_grad, no_grad = self._get_grad_params(model, aux_loss)
+
+        # Encoder params should NOT have gradients (features detached)
+        encoder_grads = [n for n in has_grad if "image_encoder" in n or "gene_encoder" in n]
+        self.assertEqual(len(encoder_grads), 0,
+                        "Encoder should NOT receive gradients from aux loss when use_aux_loss=False")
+
+        # But aux head params should have gradients
+        aux_grads = [n for n in has_grad if "aux_img" in n or "aux_gene" in n]
+        self.assertGreater(len(aux_grads), 0,
+                          "Aux heads should still receive gradients even with detached features")
+
+    def test_learned_gating_aux_matches_pcrf_aux_gradient_scope(self):
+        """learned_gating_aux has same gradient scope as pcrf_aux (minus reliability)."""
+        from experiments.cvpr_reliability_pilot.models import PCRFModel
+        from experiments.cvpr_reliability_pilot.losses import combined_loss
+
+        B = 8
+        inputs = {"image": torch.randn(B, 32), "gene": torch.randn(B, 50)}
+        os_m = torch.rand(B) * 100
+        vs = (torch.rand(B) > 0.5).float()
+        vs[0] = 1.0
+
+        # learned_gating_aux: use_aux=True, use_reliability=False
+        model = PCRFModel(n_genes=50, image_dim=32, dropout=0.0,
+                         use_aux_loss=True, use_reliability_loss=False)
+        outputs = model(inputs)
+        total, _ = combined_loss(outputs, os_m, vs, model=model,
+                                use_aux=True, use_reliability=False)
+        has_grad, _ = self._get_grad_params(model, total)
+
+        # All encoder params should have gradients (joint + aux both flow to encoder)
+        encoder_grads = [n for n in has_grad if "image_encoder" in n or "gene_encoder" in n]
+        self.assertGreater(len(encoder_grads), 0)
+
+        # Aux head params should have gradients
+        aux_grads = [n for n in has_grad if "aux_img" in n or "aux_gene" in n]
+        self.assertGreater(len(aux_grads), 0)
+
+        # Reliability net params should still have gradients (from softmax in joint path)
+        rel_grads = [n for n in has_grad if "reliability_img" in n or "reliability_gene" in n]
+        self.assertGreater(len(rel_grads), 0,
+                          "Reliability nets get gradients through softmax gating even without reliability loss")
+
+    def test_warmup_config(self):
+        """pcrf_aux_warmup has warmup_epochs in config."""
+        from experiments.cvpr_reliability_pilot.models import build_pilot_model
+        _, cfg = build_pilot_model("pcrf_aux_warmup", 100, 64)
+        self.assertEqual(cfg["warmup_epochs"], 20)
+        self.assertTrue(cfg["use_aux_loss"])
+        self.assertTrue(cfg["use_reliability_loss"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

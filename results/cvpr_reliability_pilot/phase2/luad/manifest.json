@@ -1,0 +1,80 @@
+{
+  "cancer": "luad",
+  "config_path": "/home/ubuntu/chaotic-multimodal-v2/configs/luad.yaml",
+  "methods": [
+    "learned_gating_aux",
+    "pcrf_aux",
+    "pcrf_aux_warmup"
+  ],
+  "n_folds": 3,
+  "epochs": 100,
+  "seed": 42,
+  "device": "cuda",
+  "timestamp": "2026-10-19T00:29:53.491461",
+  "reliability_weight": 0.01,
+  "aux_weight": 0.1,
+  "perturbation_sigma": 0.1,
+  "n_genes_actual": 1000,
+  "n_genes_configured": 20000,
+  "gene_count_discrepancy": true,
+  "image_dim": 1536,
+  "n_patients": {
+    "train": 252,
+    "val": 44,
+    "test": 149,
+    "total": 445
+  },
+  "events": {
+    "train": 91,
+    "total": 160,
+    "event_rate": 0.3595505617977528
+  },
+  "image_backbone": "UNI2-h (1536)",
+  "summary": {
+    "learned_gating_aux": {
+      "test_cindex_mean": 0.6287680081344575,
+      "test_cindex_std": 0.053732960147941135,
+      "val_cindex_mean": 0.744811388929036,
+      "test_cindex_per_fold": [
+        0.6443956043956044,
+        0.5565517241379311,
+        0.6853566958698373
+      ],
+      "val_cindex_per_fold": [
+        0.7945945945945946,
+        0.75,
+        0.6898395721925134
+      ]
+    },
+    "pcrf_aux": {
+      "test_cindex_mean": 0.6257687019725775,
+      "test_cindex_std": 0.012738063802687993,
+      "val_cindex_mean": 0.7311284546578665,
+      "test_cindex_per_fold": [
+        0.6382417582417582,
+        0.6082758620689656,
+        0.6307884856070087
+      ],
+      "val_cindex_per_fold": [
+        0.745945945945946,
+        0.7522522522522522,
+        0.6951871657754011
+      ]
+    },
+    "pcrf_aux_warmup": {
+      "test_cindex_mean": 0.6226111119805825,
+      "test_cindex_std": 0.03323674203273135,
+      "val_cindex_mean": 0.7391691156397039,
+      "test_cindex_per_fold": [
+        0.6364835164835165,
+        0.5767816091954023,
+        0.6545682102628285
+      ],
+      "val_cindex_per_fold": [
+        0.7648648648648648,
+        0.7387387387387387,
+        0.713903743315508
+      ]
+    }
+  }
+}

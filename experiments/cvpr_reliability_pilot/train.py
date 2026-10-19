@@ -32,7 +32,7 @@ from train_survival import (
     build_survival_dataloaders, concordance_index, cox_loss as existing_cox_loss,
 )
 from experiments.cvpr_reliability_pilot.models import (
-    build_pilot_model, ALL_METHODS, BASELINE_METHODS,
+    build_pilot_model, ALL_METHODS, BASELINE_METHODS, PHASE2_METHODS,
 )
 from experiments.cvpr_reliability_pilot.losses import combined_loss, cox_loss
 from experiments.cvpr_reliability_pilot.reliability import PerturbationCalibrator
@@ -198,17 +198,24 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
 
     t_start = time.time()
 
+    warmup_epochs = method_cfg.get("warmup_epochs", 0)
+
     for epoch in range(epochs):
         # Cosine LR schedule
         lr = cosine_lr(base_lr, epoch, epochs)
         set_lr(optimizer, lr)
+
+        # Curriculum reliability: disable reliability loss during warmup
+        epoch_reliability_weight = reliability_weight
+        if warmup_epochs > 0 and epoch < warmup_epochs:
+            epoch_reliability_weight = 0.0
 
         # Train
         epoch_losses = train_one_epoch(
             model, loaders["train"], optimizer, device, method_cfg,
             perturbation_sigma=perturbation_sigma,
             n_perturbations=n_perturbations,
-            reliability_weight=reliability_weight,
+            reliability_weight=epoch_reliability_weight,
             aux_weight=aux_weight,
         )
 
@@ -231,13 +238,18 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
             rel_info = ""
             if "reliability" in epoch_losses and epoch_losses["reliability"] > 0:
                 rel_info = f"  rel={epoch_losses['reliability']:.4f}"
+            warmup_tag = ""
+            if warmup_epochs > 0 and epoch < warmup_epochs:
+                warmup_tag = " [warmup]"
+            elif warmup_epochs > 0 and epoch == warmup_epochs:
+                warmup_tag = " [reliability ON]"
             print(
                 f"    ep {epoch+1:3d}/{epochs}  "
                 f"lr={lr:.6f}  "
                 f"tr={epoch_losses['total']:.4f}  "
                 f"val={val_loss:.4f}  ci={val_ci:.4f}  "
                 f"(best={best_val_ci:.4f}@{best_epoch+1})"
-                f"{rel_info}"
+                f"{rel_info}{warmup_tag}"
             )
 
     elapsed = time.time() - t_start
@@ -279,6 +291,7 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
     history["elapsed_seconds"] = elapsed
     history["weight_hash"] = weight_hash[:16]
     history["test_reliability"] = test_reliability
+    history["warmup_epochs"] = warmup_epochs
 
     # Save per-patient predictions
     history["test_predictions"] = [
@@ -403,6 +416,8 @@ def main():
     methods = args.methods
     if "all" in methods:
         methods = ALL_METHODS
+    elif "phase2" in methods:
+        methods = PHASE2_METHODS
     elif "baselines" in methods:
         methods = BASELINE_METHODS
 
