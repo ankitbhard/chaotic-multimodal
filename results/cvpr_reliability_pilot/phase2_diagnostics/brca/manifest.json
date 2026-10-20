@@ -1,0 +1,80 @@
+{
+  "cancer": "brca",
+  "config_path": "/home/ubuntu/chaotic-multimodal-v2/configs/brca.yaml",
+  "methods": [
+    "learned_gating_aux",
+    "pcrf_aux",
+    "pcrf_aux_warmup"
+  ],
+  "n_folds": 3,
+  "epochs": 100,
+  "seed": 42,
+  "device": "cuda",
+  "timestamp": "2026-10-19T16:40:23.620056",
+  "reliability_weight": 0.01,
+  "aux_weight": 0.1,
+  "perturbation_sigma": 0.1,
+  "n_genes_actual": 1000,
+  "n_genes_configured": 20000,
+  "gene_count_discrepancy": true,
+  "image_dim": 1024,
+  "n_patients": {
+    "train": 596,
+    "val": 105,
+    "test": 351,
+    "total": 1052
+  },
+  "events": {
+    "train": 79,
+    "total": 146,
+    "event_rate": 0.13878326996197718
+  },
+  "image_backbone": "UNI (1024)",
+  "summary": {
+    "learned_gating_aux": {
+      "test_cindex_mean": 0.6256854577474623,
+      "test_cindex_std": 0.05785993369529234,
+      "val_cindex_mean": 0.709914418697763,
+      "test_cindex_per_fold": [
+        0.5472244146277295,
+        0.6448023912321488,
+        0.6850295673825085
+      ],
+      "val_cindex_per_fold": [
+        0.7884615384615384,
+        0.7688679245283019,
+        0.5724137931034483
+      ]
+    },
+    "pcrf_aux": {
+      "test_cindex_mean": 0.6418984527369552,
+      "test_cindex_std": 0.034222997639132925,
+      "val_cindex_mean": 0.7292192886272262,
+      "test_cindex_per_fold": [
+        0.6245724809260721,
+        0.6114247758219861,
+        0.6896981014628073
+      ],
+      "val_cindex_per_fold": [
+        0.8094405594405595,
+        0.8113207547169812,
+        0.5668965517241379
+      ]
+    },
+    "pcrf_aux_warmup": {
+      "test_cindex_mean": 0.6320806936141976,
+      "test_cindex_std": 0.032946113669456746,
+      "val_cindex_mean": 0.7426682014580518,
+      "test_cindex_per_fold": [
+        0.6137858458300447,
+        0.6041182331451345,
+        0.6783380018674137
+      ],
+      "val_cindex_per_fold": [
+        0.8076923076923077,
+        0.839622641509434,
+        0.5806896551724138
+      ]
+    }
+  }
+}

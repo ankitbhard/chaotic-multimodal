@@ -36,6 +36,10 @@ from experiments.cvpr_reliability_pilot.models import (
 )
 from experiments.cvpr_reliability_pilot.losses import combined_loss, cox_loss
 from experiments.cvpr_reliability_pilot.reliability import PerturbationCalibrator
+from experiments.cvpr_reliability_pilot.training_diagnostics import (
+    compute_step_diagnostics, EpochGradientTracker, MomentTracker,
+    compute_hessian_diagnostics, write_diagnostics_csv,
+)
 
 
 # ── LR schedule ──────────────────────────────────────────────────────────────
@@ -83,7 +87,9 @@ def evaluate(model, loader, device):
 
 def train_one_epoch(model, loader, optimizer, device, method_cfg,
                     perturbation_sigma=0.1, n_perturbations=5,
-                    reliability_weight=0.01, aux_weight=0.1):
+                    reliability_weight=0.01, aux_weight=0.1,
+                    capture_diagnostics=False, epoch=0, step_offset=0,
+                    prev_update=None, grad_tracker=None):
     """
     Train one epoch for any method.
 
@@ -97,19 +103,38 @@ def train_one_epoch(model, loader, optimizer, device, method_cfg,
         n_perturbations: MC samples for perturbation
         reliability_weight: gamma for reliability loss
         aux_weight: weight for aux Cox losses
+        capture_diagnostics: if True, capture per-step optimizer diagnostics
+        epoch: current epoch number (0-indexed)
+        step_offset: global step counter offset
+        prev_update: dict for update oscillation tracking (mutated)
+        grad_tracker: EpochGradientTracker instance (mutated)
     Returns:
-        dict of average losses per component
+        (loss_dict, step_rows, global_step)
+        loss_dict: average losses per component
+        step_rows: list of per-step diagnostic dicts (empty if not capturing)
+        global_step: final step count
     """
     model.train()
     accum = {"total": 0.0, "joint": 0.0, "aux_img": 0.0, "aux_gene": 0.0,
              "reliability": 0.0, "aux_img_detached": 0.0, "aux_gene_detached": 0.0}
     n_batches = 0
+    step_rows = []
+    step = step_offset
+
+    if prev_update is None:
+        prev_update = {}
 
     for inputs, labels in loader:
         img = inputs["image"].to(device)
         gene = inputs["gene"].to(device)
         os_m = labels["os_months"].float().to(device)
         vs = labels["vital_status"].float().to(device)
+
+        # Snapshot weights before step (for diagnostics)
+        if capture_diagnostics:
+            before = {name: p.detach().clone()
+                      for name, p in model.named_parameters()
+                      if p.requires_grad}
 
         optimizer.zero_grad()
 
@@ -127,20 +152,41 @@ def train_one_epoch(model, loader, optimizer, device, method_cfg,
         )
 
         total.backward()
+
+        # Capture gradients before step (for diagnostics)
+        if capture_diagnostics:
+            raw_grads = {name: p.grad.detach().clone()
+                         for name, p in model.named_parameters()
+                         if p.requires_grad and p.grad is not None}
+            # Track batch-level gradient statistics
+            if grad_tracker is not None:
+                grad_tracker.record_batch(model)
+
         optimizer.step()
+
+        # Compute per-step diagnostics
+        if capture_diagnostics:
+            lr = optimizer.param_groups[0]["lr"]
+            diag_rows = compute_step_diagnostics(
+                model, optimizer, before, raw_grads, lr, prev_update)
+            for row in diag_rows:
+                row.update(epoch=epoch + 1, step=step, batch=n_batches)
+            step_rows.extend(diag_rows)
 
         for k, v in loss_dict.items():
             if k in accum:
                 accum[k] += v
         n_batches += 1
+        step += 1
 
-    return {k: v / max(n_batches, 1) for k, v in accum.items()}
+    avg_losses = {k: v / max(n_batches, 1) for k, v in accum.items()}
+    return avg_losses, step_rows, step
 
 
 # ── Single method run ────────────────────────────────────────────────────────
 
 def run_method(method, loaders, n_genes, image_dim, cfg, device,
-               initial_state=None):
+               initial_state=None, capture_diagnostics=False):
     """
     Train and evaluate one method on one fold.
 
@@ -152,6 +198,7 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
         cfg: experiment config dict
         device: cuda/cpu
         initial_state: shared initial weights (for fair comparison)
+        capture_diagnostics: if True, capture per-step/epoch/Hessian diagnostics
     Returns:
         dict with full training history and test results
     """
@@ -162,6 +209,7 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
     aux_weight = cfg.get("aux_weight", 0.1)
     perturbation_sigma = cfg.get("perturbation_sigma", 0.1)
     n_perturbations = cfg.get("n_perturbations", 5)
+    hessian_every = cfg.get("hessian_every", 10)
 
     # Build model
     model, method_cfg = build_pilot_model(method, n_genes, image_dim)
@@ -200,6 +248,15 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
 
     warmup_epochs = method_cfg.get("warmup_epochs", 0)
 
+    # Diagnostic state
+    all_step_rows = []
+    all_epoch_rows = []
+    all_hessian_rows = []
+    global_step = 0
+    prev_update = {}
+    moment_tracker = MomentTracker() if capture_diagnostics else None
+    last_update_dict = None  # for Hessian update-direction curvature
+
     for epoch in range(epochs):
         # Cosine LR schedule
         lr = cosine_lr(base_lr, epoch, epochs)
@@ -210,14 +267,23 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
         if warmup_epochs > 0 and epoch < warmup_epochs:
             epoch_reliability_weight = 0.0
 
+        # Per-epoch gradient tracker
+        grad_tracker = EpochGradientTracker() if capture_diagnostics else None
+
         # Train
-        epoch_losses = train_one_epoch(
+        epoch_losses, step_rows, global_step = train_one_epoch(
             model, loaders["train"], optimizer, device, method_cfg,
             perturbation_sigma=perturbation_sigma,
             n_perturbations=n_perturbations,
             reliability_weight=epoch_reliability_weight,
             aux_weight=aux_weight,
+            capture_diagnostics=capture_diagnostics,
+            epoch=epoch,
+            step_offset=global_step,
+            prev_update=prev_update,
+            grad_tracker=grad_tracker,
         )
+        all_step_rows.extend(step_rows)
 
         # Validate
         val_loss, val_ci, _, _, _ = evaluate(model, loaders["val"], device)
@@ -227,6 +293,63 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
         history["val_cindex"].append(val_ci)
         history["lr"].append(lr)
         history["epoch_losses"].append(epoch_losses)
+
+        # Epoch-level diagnostics
+        if capture_diagnostics:
+            # Gradient variance and consecutive cosine from batch tracker
+            grad_stats = grad_tracker.get_epoch_stats()
+            # Moment adaptation speed
+            moment_stats = moment_tracker.compute_speed(optimizer, model)
+
+            for group in set(list(grad_stats.keys()) + list(moment_stats.keys())):
+                row = {
+                    "epoch": epoch + 1,
+                    "group": group,
+                    "train_loss": epoch_losses["total"],
+                    "val_loss": val_loss,
+                    "val_cindex": val_ci,
+                    "gen_gap": epoch_losses["total"] - val_loss,
+                    "lr": lr,
+                }
+                if group in grad_stats:
+                    row.update(grad_stats[group])
+                if group in moment_stats:
+                    row.update(moment_stats[group])
+                all_epoch_rows.append(row)
+
+            # Track last update for Hessian curvature
+            last_update_dict = {}
+            for name, p in model.named_parameters():
+                if p.requires_grad and name in prev_update:
+                    # prev_update has flat CPU tensors per group, but we need
+                    # per-param tensors on device for HVP. Store from step rows.
+                    pass
+            # Use the group-level prev_update (flat vectors) — not per-param.
+            # Hessian update-curvature will use per-param snapshots instead.
+
+        # Hessian diagnostics (periodic)
+        if capture_diagnostics and (epoch + 1) % hessian_every == 0:
+            # Build a loss_fn compatible with compute_hessian_diagnostics
+            def _hessian_loss_fn(mdl, batch, dev):
+                inp, lbl = batch
+                img = inp["image"].to(dev)
+                gene = inp["gene"].to(dev)
+                os_m = lbl["os_months"].float().to(dev)
+                vs = lbl["vital_status"].float().to(dev)
+                out = mdl({"image": img, "gene": gene})
+                return cox_loss(out["survival"][:, 1], os_m, vs)
+
+            # Use first training batch for Hessian
+            hessian_batch = next(iter(loaders["train"]))
+            try:
+                hess = compute_hessian_diagnostics(
+                    model, _hessian_loss_fn, hessian_batch, device,
+                    n_power_iter=20, n_hutchinson=10,
+                )
+                hess["epoch"] = epoch + 1
+                all_hessian_rows.append(hess)
+            except RuntimeError as e:
+                print(f"    [WARN] Hessian failed at epoch {epoch+1}: {e}")
 
         # Checkpoint on best val C-index
         if val_ci > best_val_ci:
@@ -253,6 +376,20 @@ def run_method(method, loaders, n_genes, image_dim, cfg, device,
             )
 
     elapsed = time.time() - t_start
+
+    # Save diagnostic CSVs
+    if capture_diagnostics and all_step_rows:
+        step_csv = os.path.join(save_dir, f"{method}_step_diagnostics.csv")
+        write_diagnostics_csv(step_csv, all_step_rows)
+        history["step_diagnostics_csv"] = step_csv
+    if capture_diagnostics and all_epoch_rows:
+        epoch_csv = os.path.join(save_dir, f"{method}_epoch_diagnostics.csv")
+        write_diagnostics_csv(epoch_csv, all_epoch_rows)
+        history["epoch_diagnostics_csv"] = epoch_csv
+    if capture_diagnostics and all_hessian_rows:
+        hessian_csv = os.path.join(save_dir, f"{method}_hessian_diagnostics.csv")
+        write_diagnostics_csv(hessian_csv, all_hessian_rows)
+        history["hessian_diagnostics_csv"] = hessian_csv
 
     # Load best checkpoint for test evaluation
     if best_state is not None:
@@ -378,6 +515,10 @@ def main():
                         help="Noise sigma for perturbation calibration")
     parser.add_argument("--skip_existing", action="store_true",
                         help="Skip runs with existing results")
+    parser.add_argument("--diagnostics", action="store_true",
+                        help="Capture per-step/epoch/Hessian training diagnostics")
+    parser.add_argument("--hessian_every", type=int, default=10,
+                        help="Compute Hessian diagnostics every N epochs")
     args = parser.parse_args()
 
     with open(args.config) as f:
@@ -404,6 +545,7 @@ def main():
     cfg["reliability_weight"] = args.reliability_weight
     cfg["aux_weight"] = args.aux_weight
     cfg["perturbation_sigma"] = args.perturbation_sigma
+    cfg["hessian_every"] = args.hessian_every
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
@@ -539,6 +681,7 @@ def main():
             history = run_method(
                 method, loaders, n_genes, image_dim, cfg, device,
                 initial_state=initial_state,
+                capture_diagnostics=args.diagnostics,
             )
 
             # Save result
