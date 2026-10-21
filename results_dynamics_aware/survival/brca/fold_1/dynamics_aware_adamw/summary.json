@@ -1,0 +1,16 @@
+{
+  "task": "survival",
+  "dataset": "brca",
+  "fold": 1,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_score": 0.7735849056603774,
+  "test_score": 0.5536366655596148,
+  "test_loss": 0.2889590547843413,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}

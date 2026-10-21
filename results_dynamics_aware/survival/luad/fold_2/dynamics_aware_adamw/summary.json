@@ -1,0 +1,16 @@
+{
+  "task": "survival",
+  "dataset": "luad",
+  "fold": 2,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 10,
+  "best_val_score": 0.6577540106951871,
+  "test_score": 0.6040050062578223,
+  "test_loss": 1.2156750440597535,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}

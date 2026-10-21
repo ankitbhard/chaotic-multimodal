@@ -1,0 +1,16 @@
+{
+  "task": "classification",
+  "dataset": "cifar10",
+  "fold": 43,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 49,
+  "best_val_score": 0.9286,
+  "test_score": 0.9249,
+  "test_loss": 0.45338752098083496,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}

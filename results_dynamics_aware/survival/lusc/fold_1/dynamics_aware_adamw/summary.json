@@ -1,0 +1,16 @@
+{
+  "task": "survival",
+  "dataset": "lusc",
+  "fold": 1,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 7,
+  "best_val_score": 0.6565656565656566,
+  "test_score": 0.49807263136538854,
+  "test_loss": 1.552591896057129,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}

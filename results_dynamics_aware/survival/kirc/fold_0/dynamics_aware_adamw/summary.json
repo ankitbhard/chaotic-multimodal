@@ -1,0 +1,16 @@
+{
+  "task": "survival",
+  "dataset": "kirc",
+  "fold": 0,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_score": 0.7077244258872651,
+  "test_score": 0.7487874226459275,
+  "test_loss": 0.8280573338270187,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}

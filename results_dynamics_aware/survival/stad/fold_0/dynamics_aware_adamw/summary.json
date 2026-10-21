@@ -1,0 +1,16 @@
+{
+  "task": "survival",
+  "dataset": "stad",
+  "fold": 0,
+  "optimizer": "dynamics_aware_adamw",
+  "epochs": 50,
+  "best_epoch": 21,
+  "best_val_score": 0.6807017543859649,
+  "test_score": 0.5487804878048781,
+  "test_loss": 2.119488626718521,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "beta2_min": 0.95,
+  "sensitivity": 3.0,
+  "change_ema": 0.9
+}
