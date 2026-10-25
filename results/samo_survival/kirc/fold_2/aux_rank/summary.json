@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "kirc",
+  "fold": 2,
+  "method": "aux_rank",
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_ci": 0.7938931297709924,
+  "test_ci": 0.6509803921568628,
+  "test_loss": 2.5158371925354004,
+  "wall_seconds": 251.44391789700057,
+  "parameter_count": 1754885,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 44
+}
