@@ -1,0 +1,15 @@
+{
+  "dataset": "stad",
+  "fold": 0,
+  "optimizer": "adamw_b98",
+  "epochs": 50,
+  "best_epoch": 4,
+  "best_val_score": 0.6701754385964912,
+  "test_score": 0.5875179340028694,
+  "test_loss": 1.0171881169080734,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "elapsed_s": 82.08876180648804,
+  "global_steps": 250,
+  "telemetry": {}
+}

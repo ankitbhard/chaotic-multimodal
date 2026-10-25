@@ -1,0 +1,15 @@
+{
+  "dataset": "kirc",
+  "fold": 0,
+  "optimizer": "adamw_b999",
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_score": 0.6868475991649269,
+  "test_score": 0.7466131460110387,
+  "test_loss": 0.8323746373256048,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "elapsed_s": 183.50347137451172,
+  "global_steps": 450,
+  "telemetry": {}
+}

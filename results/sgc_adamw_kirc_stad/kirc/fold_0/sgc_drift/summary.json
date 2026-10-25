@@ -1,0 +1,26 @@
+{
+  "dataset": "kirc",
+  "fold": 0,
+  "optimizer": "sgc_drift",
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_score": 0.7077244258872651,
+  "test_score": 0.7487874226459275,
+  "test_loss": 0.8280573338270187,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "elapsed_s": 234.42867302894592,
+  "global_steps": 450,
+  "telemetry": {
+    "group_0": {
+      "beta2_mean": 0.9738618136159476,
+      "beta2_min": 0.9573781286504954,
+      "beta2_max": 0.9989999999999977,
+      "drift_ema_mean": 0.294941954911525,
+      "alignment_ema_mean": 0.0,
+      "curvature_ema_mean": 0.0,
+      "global_step": 450,
+      "elapsed_s": 234.4302541259999
+    }
+  }
+}

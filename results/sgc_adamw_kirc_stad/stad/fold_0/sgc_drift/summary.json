@@ -1,0 +1,26 @@
+{
+  "dataset": "stad",
+  "fold": 0,
+  "optimizer": "sgc_drift",
+  "epochs": 50,
+  "best_epoch": 21,
+  "best_val_score": 0.6807017543859649,
+  "test_score": 0.5487804878048781,
+  "test_loss": 2.119488626718521,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "elapsed_s": 84.41236805915833,
+  "global_steps": 250,
+  "telemetry": {
+    "group_0": {
+      "beta2_mean": 0.9728732838202626,
+      "beta2_min": 0.9580874029487054,
+      "beta2_max": 0.9989999999999981,
+      "drift_ema_mean": 0.3140763202010553,
+      "alignment_ema_mean": 0.0,
+      "curvature_ema_mean": 0.0,
+      "global_step": 250,
+      "elapsed_s": 84.41352142399955
+    }
+  }
+}
