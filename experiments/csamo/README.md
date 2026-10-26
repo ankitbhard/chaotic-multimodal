@@ -37,3 +37,7 @@ Outputs: `results/csamo_survival/<cancer>/fold_<n>/csamo/{epochs.csv,decisions.c
 - Extra auxiliary heads are present even when disabled. Parameter count differs from original fusion-only baseline.
 - Check original Cox tie/risk-set semantics, data splits, event counts per validation subset, and model shared-weight initialization before interpreting results.
 - If the GPU cannot fit four sequential deep copies or model copying fails, stop and revise the lookahead implementation.
+
+## Resource and epoch statistics
+
+Each `epochs.csv` includes `epoch_seconds`, `decision_seconds`, cumulative `elapsed_seconds`, `process_peak_rss_mib`, `gpu_peak_allocated_mib`, `gpu_peak_reserved_mib`, and `gpu_current_allocated_mib`, in addition to objective mode, training loss, learning rate, and checkpoint validation C-index. GPU metrics are null on CPU. GPU peaks reset at the start of each epoch; process peak RSS is a high-water mark for the whole process (not a per-epoch reset). `summary.json` includes mean/max epoch seconds, total controller decision seconds, and end-of-run memory readings. Peak GPU metrics in summary reflect the final measurement window, not necessarily the maximum across all epochs; use the maximum of `epochs.csv` for the run-wide peak. Timings include CUDA synchronization for more accurate wall-clock readings.
