@@ -8,6 +8,8 @@ import csv
 import json
 import math
 import time
+import resource
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -23,6 +25,22 @@ from experiments.samo.objectives import cox_efron_free, ranking_loss
 CANDIDATES = ("cox", "aux", "rank", "aux_rank")
 WEIGHTS = {"cox": (0., 0.), "aux": (0.1, 0.), "rank": (0., 0.1),
            "aux_rank": (0.1, 0.1)}
+
+def memory_stats(device):
+    """Process peak RSS and CUDA allocator memory; values are MiB."""
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    rss_mib = rss / (1024 * 1024) if sys.platform == "darwin" else rss / 1024
+    result = {"process_peak_rss_mib": round(rss_mib, 2)}
+    if device.type == "cuda":
+        torch.cuda.synchronize(device)
+        result.update(
+            gpu_peak_allocated_mib=round(torch.cuda.max_memory_allocated(device) / 2**20, 2),
+            gpu_peak_reserved_mib=round(torch.cuda.max_memory_reserved(device) / 2**20, 2),
+            gpu_current_allocated_mib=round(torch.cuda.memory_allocated(device) / 2**20, 2))
+    else:
+        result.update(gpu_peak_allocated_mib=None, gpu_peak_reserved_mib=None,
+                      gpu_current_allocated_mib=None)
+    return result
 
 def objective(model, inputs, labels, mode, temperature):
     outputs = model(inputs)
@@ -131,19 +149,30 @@ def run_one(args, cancer, fold):
     best, best_epoch, best_state = -float("inf"), 0, None
     history, decisions = [], []
     started = time.perf_counter()
+    if args.device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(args.device)
     for epoch in range(args.epochs):
+        epoch_started = time.perf_counter()
+        if args.device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(args.device)
+        decision_seconds = 0.0
         lr = args.lr * 0.5 * (1 + math.cos(math.pi * epoch / args.epochs))
         for group in optimizer.param_groups:
             group["lr"] = lr
         gen.manual_seed(args.seed + fold * 10000 + epoch)
         # Use one fixed training batch for all candidate lookaheads.
         if epoch >= args.warmup and (epoch - args.warmup) % args.interval == 0:
+            decision_started = time.perf_counter()
             probe = next(iter(train))
             new_mode, scores = choose_mode(
                 model, optimizer, probe, controller_val, args.device,
                 args.temperature, mode, args.min_gain)
+            if args.device.type == "cuda":
+                torch.cuda.synchronize(args.device)
+            decision_seconds = time.perf_counter() - decision_started
             decisions.append(dict(epoch=epoch + 1, previous=mode,
-                                  selected=new_mode, **scores))
+                                  selected=new_mode, decision_seconds=decision_seconds,
+                                  **scores))
             mode = new_mode
             # Re-seed generator: probing must not perturb the main epoch shuffle.
             gen.manual_seed(args.seed + fold * 10000 + epoch)
@@ -161,15 +190,22 @@ def run_one(args, cancer, fold):
         if not losses:
             raise RuntimeError("Empty training epoch")
         val_ci = evaluate_ci(model, checkpoint_val, args.device)
+        if args.device.type == "cuda":
+            torch.cuda.synchronize(args.device)
+        epoch_seconds = time.perf_counter() - epoch_started
+        mem = memory_stats(args.device)
         history.append(dict(epoch=epoch + 1, mode=mode,
                             train_loss=float(np.mean(losses)), checkpoint_val_ci=val_ci,
-                            lr=lr, elapsed_seconds=time.perf_counter() - started))
+                            lr=lr, epoch_seconds=epoch_seconds,
+                            decision_seconds=decision_seconds,
+                            elapsed_seconds=time.perf_counter() - started, **mem))
         if np.isfinite(val_ci) and val_ci > best:
             best, best_epoch = val_ci, epoch + 1
             best_state = {k: v.detach().cpu().clone()
                           for k, v in model.state_dict().items()}
         print(f"{cancer} fold={fold} epoch={epoch+1}/{args.epochs} "
-              f"mode={mode} checkpoint_val_ci={val_ci:.4f}", flush=True)
+              f"mode={mode} checkpoint_val_ci={val_ci:.4f} "
+              f"epoch_s={epoch_seconds:.1f} peak_gpu_mib={mem['gpu_peak_allocated_mib']}", flush=True)
     if best_state is None:
         raise RuntimeError("No finite checkpoint validation C-index")
     model.load_state_dict(best_state)
@@ -180,6 +216,7 @@ def run_one(args, cancer, fold):
                 writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
                 writer.writeheader()
                 writer.writerows(rows)
+    final_memory = memory_stats(args.device)
     summary_path.write_text(json.dumps(dict(
         completed=True, dataset=cancer, fold=fold, method="csamo",
         epochs=args.epochs, best_epoch=best_epoch, best_val_ci=best,
@@ -188,7 +225,11 @@ def run_one(args, cancer, fold):
         parameter_count=sum(p.numel() for p in model.parameters()),
         controller_fraction=args.controller_fraction,
         interval=args.interval, warmup=args.warmup,
-        min_gain=args.min_gain, decisions=decisions), indent=2))
+        min_gain=args.min_gain, decisions=decisions,
+        mean_epoch_seconds=float(np.mean([row["epoch_seconds"] for row in history])),
+        max_epoch_seconds=float(max(row["epoch_seconds"] for row in history)),
+        total_decision_seconds=float(sum(row["decision_seconds"] for row in history)),
+        **final_memory), indent=2))
 
 def main():
     p = argparse.ArgumentParser()
