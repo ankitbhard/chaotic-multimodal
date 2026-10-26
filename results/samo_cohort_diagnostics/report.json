@@ -1,0 +1,13 @@
+{
+  "folds_analyzed": 9,
+  "missing": [],
+  "selection_epoch": 50,
+  "selection_counts": {
+    "aux_rank": 3,
+    "aux": 2,
+    "baseline": 3,
+    "rank": 1
+  },
+  "mean_validation_gain_vs_cox": 0.01459197515666698,
+  "warning": "Exploratory in-sample analysis only. Selecting an objective on validation and assessing the same validation set is optimistic. Existing test summaries use checkpoints chosen over all epochs and cannot establish unbiased selected-model test performance. For confirmatory evaluation, rerun selected objectives using nested validation and evaluate test exactly once."
+}
