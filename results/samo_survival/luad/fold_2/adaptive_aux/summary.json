@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "luad",
+  "fold": 2,
+  "method": "adaptive_aux",
+  "epochs": 50,
+  "best_epoch": 36,
+  "best_val_ci": 0.6497326203208557,
+  "test_ci": 0.6430538172715895,
+  "test_loss": 4.030473041534424,
+  "wall_seconds": 200.4031953450003,
+  "parameter_count": 1754885,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 44
+}
