@@ -10,16 +10,17 @@ from models.joint_model import build_model
 from experiments.cvpr_reliability_pilot.models import JointModelWithAux
 from experiments.optimizer_dynamics_overnight.run import seed_all
 from experiments.samo.objectives import cox_efron_free, ranking_loss, LossWeightController
+from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients
 
-METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo")
+METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj")
 
 def loss_parts(outputs, t, e, method, temperature):
     risk=outputs["survival"][:,1]
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
-    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method=="samo" else zero
+    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj") else zero
     gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method=="samo" else zero
-    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo") else zero
+    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj") else zero
     return fusion,img,gene,rank
 
 def evaluate(model, loader, device):
@@ -69,7 +70,7 @@ def run_one(args,cancer,fold,method):
         if len(matched)==0:raise RuntimeError("No baseline tensors matched auxiliary model")
     model=model.to(args.device)
     optimizer=torch.optim.AdamW(model.parameters(),lr=args.lr,weight_decay=args.weight_decay)
-    adaptive=method in ("adaptive_aux","samo")
+    adaptive=method in ("adaptive_aux","samo","ra_samo","ra_samo_no_proj")
     controller=LossWeightController(initial=(args.aux_weight,args.aux_weight,args.rank_weight),
                                    min_weight=args.min_weight,max_weight=args.max_weight,
                                    warmup=args.warmup)
@@ -90,7 +91,14 @@ def run_one(args,cancer,fold,method):
             parts=loss_parts(model(x),t,e,method,args.temperature)
             loss=parts[0]+weights[0]*parts[1]+weights[1]*parts[2]+weights[2]*parts[3]
             if not torch.isfinite(loss):raise RuntimeError(f"Nonfinite loss {cancer}/{fold}/{method}")
+            prepared = None
+            if method in ("ra_samo", "ra_samo_no_proj"):
+                prepared = prepare_branch_gradients(
+                    model, *parts, weights,
+                    project=(method == "ra_samo"))
             loss.backward()
+            if prepared is not None:
+                apply_branch_gradients(prepared)
             optimizer.step()
             sums+=np.array([float(z.detach()) for z in parts]);n+=1
         if n==0:raise RuntimeError("Empty training epoch")
@@ -99,7 +107,7 @@ def run_one(args,cancer,fold,method):
         if adaptive:
             new=controller.update(epoch,means)
             weights[:2]=new[:2]
-            if method=="samo":weights[2]=new[2]
+            if method in ("samo","ra_samo","ra_samo_no_proj"):weights[2]=new[2]
         val_loss,val_ci=evaluate(model,val,args.device)
         history.append(dict(epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
