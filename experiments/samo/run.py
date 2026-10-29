@@ -19,7 +19,7 @@ def loss_parts(outputs, t, e, method, temperature):
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
     img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj") else zero
-    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method=="samo" else zero
+    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj") else zero
     rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj") else zero
     return fusion,img,gene,rank
 
@@ -83,6 +83,12 @@ def run_one(args,cancer,fold,method):
         model.train()
         generator.manual_seed(args.seed+fold*10000+epoch)
         sums=np.zeros(4);n=0
+        diag_sums={key:0.0 for key in (
+            "image_cosine_aux","image_cosine_rank","image_projected_aux",
+            "image_projected_rank","image_relative_update_change",
+            "gene_cosine_aux","gene_cosine_rank","gene_projected_aux",
+            "gene_projected_rank","gene_relative_update_change")}
+        diag_n=0
         for inputs,labels in train:
             x={k:v.to(args.device) for k,v in inputs.items()}
             t=labels["os_months"].float().to(args.device)
@@ -98,7 +104,12 @@ def run_one(args,cancer,fold,method):
                     project=(method == "ra_samo"))
             loss.backward()
             if prepared is not None:
-                apply_branch_gradients(prepared)
+                diagnostics=apply_branch_gradients(prepared)
+                diag_n+=1
+                for branch, diag in diagnostics.items():
+                    for attr in ("cosine_aux","cosine_rank","projected_aux",
+                                 "projected_rank","relative_update_change"):
+                        diag_sums[f"{branch}_{attr}"]+=float(getattr(diag,attr))
             optimizer.step()
             sums+=np.array([float(z.detach()) for z in parts]);n+=1
         if n==0:raise RuntimeError("Empty training epoch")
@@ -109,7 +120,8 @@ def run_one(args,cancer,fold,method):
             weights[:2]=new[:2]
             if method in ("samo","ra_samo","ra_samo_no_proj"):weights[2]=new[2]
         val_loss,val_ci=evaluate(model,val,args.device)
-        history.append(dict(epoch=epoch+1,train_fusion_loss=means[0],
+        diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
+        history.append(dict(**diag_means,epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,
                             weight_img=weights[0],weight_gene=weights[1],
