@@ -15,6 +15,7 @@ class BranchDiagnostics:
     projected_aux: bool
     projected_rank: bool
     primary_norm: float
+    relative_update_change: float
 
 
 def _grads(loss, params):
@@ -68,6 +69,8 @@ def prepare_branch_gradients(model, fusion_loss, image_loss, gene_loss,
         aux = _grads(aux_loss, params)
         rank = _grads(ranking_loss, params)
         cos_aux, cos_rank = _cosine(primary, aux), _cosine(primary, rank)
+        original = [p + aux_weight * a + weights[2] * q
+                    for p, a, q in zip(primary, aux, rank)]
         if project:
             aux, projected_aux = _project(aux, primary)
             rank, projected_rank = _project(rank, primary)
@@ -75,11 +78,15 @@ def prepare_branch_gradients(model, fusion_loss, image_loss, gene_loss,
             projected_aux = projected_rank = False
         combined = [p + aux_weight * a + weights[2] * r
                     for p, a, r in zip(primary, aux, rank)]
+        delta = [c - o for c, o in zip(combined, original)]
+        relative_change = float((_dot(delta, delta).sqrt() /
+                                 (_dot(original, original).sqrt() + 1e-12)).item())
         result[branch] = (
             params,
             combined,
             BranchDiagnostics(cos_aux, cos_rank, projected_aux,
-                              projected_rank, float(_dot(primary, primary).sqrt().item())),
+                              projected_rank, float(_dot(primary, primary).sqrt().item()),
+                              relative_change),
         )
     return result
 
