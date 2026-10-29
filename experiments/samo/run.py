@@ -36,6 +36,37 @@ def evaluate(model, loader, device):
             risks.extend(risk.cpu().tolist());times.extend(t.cpu().tolist());events.extend(e.cpu().tolist())
     return float(np.mean(losses)),float(concordance_index(times,risks,events))
 
+def evaluate_modality_diagnostics(model, loader, device):
+    """Validation-only diagnostics; no training updates or checkpoint selection."""
+    if not hasattr(model, "aux_img"):
+        return {}
+    collected = {key: [] for key in ("fused", "image_aux", "gene_aux",
+                                      "image_ablated", "gene_ablated")}
+    times, events = [], []
+    model.eval()
+    with torch.no_grad():
+        for inputs, labels in loader:
+            x = {k: v.to(device) for k, v in inputs.items()}
+            full = model(x)
+            collected["fused"].extend(full["survival"][:, 1].cpu().tolist())
+            collected["image_aux"].extend(full["aux_img_risk"].cpu().tolist())
+            collected["gene_aux"].extend(full["aux_gene_risk"].cpu().tolist())
+            # Zero the encoded modality via the model's modality_mask interface.
+            # This is an out-of-distribution intervention, not causal attribution.
+            for name, mask in (("image_ablated", (0., 1.)),
+                               ("gene_ablated", (1., 0.))):
+                m = x["image"].new_tensor(mask).view(1, 2).expand(x["image"].shape[0], -1)
+                out = model(x, modality_mask=m)
+                collected[name].extend(out["survival"][:, 1].cpu().tolist())
+            times.extend(labels["os_months"].float().tolist())
+            events.extend(labels["vital_status"].float().tolist())
+    scores = {f"val_ci_{key}": float(concordance_index(times, risks, events))
+              for key, risks in collected.items()}
+    scores["val_image_ablation_delta"] = scores["val_ci_fused"] - scores["val_ci_image_ablated"]
+    scores["val_gene_ablation_delta"] = scores["val_ci_fused"] - scores["val_ci_gene_ablated"]
+    return scores
+
+
 def run_one(args,cancer,fold,method):
     out=Path(args.out)/cancer/f"fold_{fold}"/method
     summary=out/"summary.json"
@@ -89,6 +120,7 @@ def run_one(args,cancer,fold,method):
             "gene_cosine_aux","gene_cosine_rank","gene_projected_aux",
             "gene_projected_rank","gene_relative_update_change")}
         diag_n=0
+        primary_norm_sums={"image":0.0,"gene":0.0}
         for inputs,labels in train:
             x={k:v.to(args.device) for k,v in inputs.items()}
             t=labels["os_months"].float().to(args.device)
@@ -107,6 +139,7 @@ def run_one(args,cancer,fold,method):
                 diagnostics=apply_branch_gradients(prepared)
                 diag_n+=1
                 for branch, diag in diagnostics.items():
+                    primary_norm_sums[branch]+=diag.primary_norm
                     for attr in ("cosine_aux","cosine_rank","projected_aux",
                                  "projected_rank","relative_update_change"):
                         diag_sums[f"{branch}_{attr}"]+=float(getattr(diag,attr))
@@ -121,6 +154,11 @@ def run_one(args,cancer,fold,method):
             if method in ("samo","ra_samo","ra_samo_no_proj"):weights[2]=new[2]
         val_loss,val_ci=evaluate(model,val,args.device)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
+        if diag_n:
+            diag_means.update({f"{branch}_primary_gradient_norm": value/diag_n
+                               for branch,value in primary_norm_sums.items()})
+        if args.modality_diagnostics:
+            diag_means.update(evaluate_modality_diagnostics(model,val,args.device))
         history.append(dict(**diag_means,epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,
@@ -159,6 +197,8 @@ def main():
     p.add_argument("--temperature",type=float,default=1.0)
     p.add_argument("--out",default="results/samo_survival")
     p.add_argument("--skip-existing",action="store_true")
+    p.add_argument("--modality-diagnostics",action="store_true",
+                   help="Log unimodal and zero-feature-ablation validation C-indices; diagnostic only")
     a=p.parse_args()
     a.device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for cancer in a.cancers:
