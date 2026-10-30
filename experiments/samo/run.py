@@ -11,16 +11,17 @@ from experiments.cvpr_reliability_pilot.models import JointModelWithAux
 from experiments.optimizer_dynamics_overnight.run import seed_all
 from experiments.samo.objectives import cox_efron_free, ranking_loss, LossWeightController
 from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients
+from experiments.samo.progress_controller import ProgressController
 
-METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj")
+METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1")
 
 def loss_parts(outputs, t, e, method, temperature):
     risk=outputs["survival"][:,1]
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
-    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj") else zero
-    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj") else zero
-    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj") else zero
+    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
+    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
+    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
     return fusion,img,gene,rank
 
 def evaluate(model, loader, device):
@@ -101,11 +102,15 @@ def run_one(args,cancer,fold,method):
         if len(matched)==0:raise RuntimeError("No baseline tensors matched auxiliary model")
     model=model.to(args.device)
     optimizer=torch.optim.AdamW(model.parameters(),lr=args.lr,weight_decay=args.weight_decay)
-    adaptive=method in ("adaptive_aux","samo","ra_samo","ra_samo_no_proj")
+    adaptive=method in ("adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1")
     controller=LossWeightController(initial=(args.aux_weight,args.aux_weight,args.rank_weight),
                                    min_weight=args.min_weight,max_weight=args.max_weight,
                                    warmup=args.warmup)
     weights=[args.aux_weight,args.aux_weight,args.rank_weight]
+    progress=ProgressController(ema=args.progress_ema,gain=args.progress_gain,
+                                min_scale=args.progress_min_scale,
+                                max_scale=args.progress_max_scale,warmup=args.warmup)
+    progress_scales=(1.0,1.0)
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
     for epoch in range(args.epochs):
@@ -127,12 +132,13 @@ def run_one(args,cancer,fold,method):
             e=labels["vital_status"].float().to(args.device)
             optimizer.zero_grad(set_to_none=True)
             parts=loss_parts(model(x),t,e,method,args.temperature)
-            loss=parts[0]+weights[0]*parts[1]+weights[1]*parts[2]+weights[2]*parts[3]
+            effective_weights=(weights[0]*progress_scales[0],weights[1]*progress_scales[1],weights[2]) if method=="ra_samo_v1" else weights
+            loss=parts[0]+effective_weights[0]*parts[1]+effective_weights[1]*parts[2]+effective_weights[2]*parts[3]
             if not torch.isfinite(loss):raise RuntimeError(f"Nonfinite loss {cancer}/{fold}/{method}")
             prepared = None
-            if method in ("ra_samo", "ra_samo_no_proj"):
+            if method in ("ra_samo", "ra_samo_no_proj","ra_samo_v1"):
                 prepared = prepare_branch_gradients(
-                    model, *parts, weights,
+                    model, *parts, effective_weights,
                     project=(method == "ra_samo"))
             loss.backward()
             if prepared is not None:
@@ -151,7 +157,9 @@ def run_one(args,cancer,fold,method):
         if adaptive:
             new=controller.update(epoch,means)
             weights[:2]=new[:2]
-            if method in ("samo","ra_samo","ra_samo_no_proj"):weights[2]=new[2]
+            if method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1"):weights[2]=new[2]
+        if method=="ra_samo_v1":
+            progress_scales=progress.update(epoch,means[1],means[2])
         val_loss,val_ci=evaluate(model,val,args.device)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
         if diag_n:
@@ -159,7 +167,8 @@ def run_one(args,cancer,fold,method):
                                for branch,value in primary_norm_sums.items()})
         if args.modality_diagnostics:
             diag_means.update(evaluate_modality_diagnostics(model,val,args.device))
-        history.append(dict(**diag_means,epoch=epoch+1,train_fusion_loss=means[0],
+        history.append(dict(**diag_means,progress_scale_img=progress_scales[0],
+                            progress_scale_gene=progress_scales[1],epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,
                             weight_img=weights[0],weight_gene=weights[1],
@@ -194,6 +203,10 @@ def main():
     p.add_argument("--min-weight",type=float,default=0.02)
     p.add_argument("--max-weight",type=float,default=0.3)
     p.add_argument("--warmup",type=int,default=2)
+    p.add_argument("--progress-ema",type=float,default=0.9)
+    p.add_argument("--progress-gain",type=float,default=1.0)
+    p.add_argument("--progress-min-scale",type=float,default=0.5)
+    p.add_argument("--progress-max-scale",type=float,default=1.5)
     p.add_argument("--temperature",type=float,default=1.0)
     p.add_argument("--out",default="results/samo_survival")
     p.add_argument("--skip-existing",action="store_true")
