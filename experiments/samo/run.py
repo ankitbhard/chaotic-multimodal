@@ -12,16 +12,17 @@ from experiments.optimizer_dynamics_overnight.run import seed_all
 from experiments.samo.objectives import cox_efron_free, ranking_loss, LossWeightController
 from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients
 from experiments.samo.progress_controller import ProgressController
+from experiments.samo.history_controller import HistoryController, load_history
 
-METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1")
+METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2")
 
 def loss_parts(outputs, t, e, method, temperature):
     risk=outputs["survival"][:,1]
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
-    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
+    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
     gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
-    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
+    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
     return fusion,img,gene,rank
 
 def evaluate(model, loader, device):
@@ -111,6 +112,10 @@ def run_one(args,cancer,fold,method):
                                 min_scale=args.progress_min_scale,
                                 max_scale=args.progress_max_scale,warmup=args.warmup)
     progress_scales=(1.0,1.0)
+    history_controller=HistoryController(load_history(args.history_files, horizon=args.history_horizon),
+        min_weight=args.min_weight,max_weight=args.max_weight,warmup=args.warmup)
+    if method=="ra_samo_v2" and not args.history_files:
+        raise ValueError("ra_samo_v2 requires --history-files from patient-disjoint development data")
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
     for epoch in range(args.epochs):
@@ -160,6 +165,8 @@ def run_one(args,cancer,fold,method):
             if method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1"):weights[2]=new[2]
         if method=="ra_samo_v1":
             progress_scales=progress.update(epoch,means[1],means[2])
+        if method=="ra_samo_v2":
+            weights=history_controller.update(epoch,means,weights)
         val_loss,val_ci=evaluate(model,val,args.device)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
         if diag_n:
@@ -207,6 +214,8 @@ def main():
     p.add_argument("--progress-gain",type=float,default=1.0)
     p.add_argument("--progress-min-scale",type=float,default=0.5)
     p.add_argument("--progress-max-scale",type=float,default=1.5)
+    p.add_argument("--history-files",nargs="*",default=[],help="Patient-disjoint development histories for v2")
+    p.add_argument("--history-horizon",type=int,default=3)
     p.add_argument("--temperature",type=float,default=1.0)
     p.add_argument("--out",default="results/samo_survival")
     p.add_argument("--skip-existing",action="store_true")
