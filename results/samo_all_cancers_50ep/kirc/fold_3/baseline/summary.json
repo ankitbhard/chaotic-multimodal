@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "kirc",
+  "fold": 3,
+  "method": "baseline",
+  "epochs": 50,
+  "best_epoch": 8,
+  "best_val_ci": 0.8102678571428571,
+  "test_ci": 0.6433301797540208,
+  "test_loss": 3.435592234134674,
+  "wall_seconds": 235.02400085299814,
+  "parameter_count": 1713667,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 45
+}

@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "brca",
+  "fold": 0,
+  "method": "rank",
+  "epochs": 50,
+  "best_epoch": 14,
+  "best_val_ci": 0.6345679012345679,
+  "test_ci": 0.594213649851632,
+  "test_loss": 3.16315119607108,
+  "wall_seconds": 364.3200284510003,
+  "parameter_count": 1451523,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 42
+}

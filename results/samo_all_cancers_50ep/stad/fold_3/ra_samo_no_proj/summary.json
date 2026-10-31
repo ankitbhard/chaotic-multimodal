@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "stad",
+  "fold": 3,
+  "method": "ra_samo_no_proj",
+  "epochs": 50,
+  "best_epoch": 7,
+  "best_val_ci": 0.6212534059945504,
+  "test_ci": 0.5815602836879432,
+  "test_loss": 3.1579235394795737,
+  "wall_seconds": 25.99729279500025,
+  "parameter_count": 1754885,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 45
+}
