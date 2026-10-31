@@ -13,16 +13,17 @@ from experiments.samo.objectives import cox_efron_free, ranking_loss, LossWeight
 from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients
 from experiments.samo.progress_controller import ProgressController
 from experiments.samo.history_controller import HistoryController, load_history
+from experiments.samo.censor_aware_controller import CensorAwareController, survival_information
 
-METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2")
+METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v3_0","ra_samo_v3_1","ra_samo_v3_2","ra_samo_v3_3")
 
 def loss_parts(outputs, t, e, method, temperature):
     risk=outputs["survival"][:,1]
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
-    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
-    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1") else zero
-    rank=ranking_loss(risk,t,e,temperature) if method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
+    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
+    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
+    rank=ranking_loss(risk,t,e,temperature) if method.startswith("ra_samo_v3_") or method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
     return fusion,img,gene,rank
 
 def evaluate(model, loader, device):
@@ -116,6 +117,15 @@ def run_one(args,cancer,fold,method):
         min_weight=args.min_weight,max_weight=args.max_weight,warmup=args.warmup)
     if method=="ra_samo_v2" and not args.history_files:
         raise ValueError("ra_samo_v2 requires --history-files from patient-disjoint development data")
+    v3=CensorAwareController(method,aux_weight=args.aux_weight,rank_weight=args.rank_weight,warmup=args.warmup) if method.startswith("ra_samo_v3_") else None
+    train_labels=data["train"].dataset
+    # Extract only training labels, never validation/test, for survival information.
+    train_times=[];train_events=[]
+    if v3 is not None:
+        for _, label in DataLoader(train_labels,batch_size=128,shuffle=False,num_workers=0):
+            train_times.extend(label["os_months"].float().tolist())
+            train_events.extend(label["vital_status"].float().tolist())
+    info=survival_information(train_times,train_events) if v3 is not None else {}
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
     for epoch in range(args.epochs):
@@ -167,6 +177,10 @@ def run_one(args,cancer,fold,method):
             progress_scales=progress.update(epoch,means[1],means[2])
         if method=="ra_samo_v2":
             weights=history_controller.update(epoch,means,weights)
+        if v3 is not None:
+            # v3.3 rollout selection is implemented by the next EC2 agent; no validation
+            # scores are passed here until matched, isolated rollouts are available.
+            weights=list(v3.update(epoch,means,info).weights)
         val_loss,val_ci=evaluate(model,val,args.device)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
         if diag_n:
@@ -174,7 +188,7 @@ def run_one(args,cancer,fold,method):
                                for branch,value in primary_norm_sums.items()})
         if args.modality_diagnostics:
             diag_means.update(evaluate_modality_diagnostics(model,val,args.device))
-        history.append(dict(**diag_means,progress_scale_img=progress_scales[0],
+        history.append(dict(**diag_means,v3_mode=(v3.mode if v3 else ""),v3_reason=(v3.state.reason if v3 else ""),v3_event_rate=info.get("event_rate", ""),v3_pair_density=info.get("pair_density", ""),progress_scale_img=progress_scales[0],
                             progress_scale_gene=progress_scales[1],epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,
