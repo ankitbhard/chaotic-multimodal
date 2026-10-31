@@ -3,7 +3,7 @@ v3.3 adds an optional validation-guided mode choice supplied by the runner.
 This is an experimental heuristic; no guarantee of C-index improvement.
 """
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 MODES=("cox","aux","rank")
 
@@ -32,7 +32,7 @@ class CensorAwareController:
 
     v3_0: training-loss progress and stability.
     v3_1: additionally event/pair information.
-    v3_2: additionally branch gradient alignment.
+    v3_2: additionally branch gradient alignment and reliability.
     v3_3: additionally inner-validation *candidate rollout* scores (if provided).
     Mode choices are not based on cohort names or outer test C-index.
     """
@@ -77,10 +77,20 @@ class CensorAwareController:
             scores["aux"]+=.15*(.3-event)
             scores["rank"]+=.15*(density-.15)
         if self.variant in ("ra_samo_v3_2","ra_samo_v3_3") and alignment:
-            a=float(alignment.get("aux",0.))
-            r=float(alignment.get("rank",0.))
-            if math.isfinite(a):scores["aux"]+=.15*a
-            if math.isfinite(r):scores["rank"]+=.15*r
+            # alignment["aux"] = mean cosine(primary, aux gradient) across encoders
+            # alignment["rank"] = mean cosine(primary, rank gradient) across encoders
+            # alignment["aux_reliability"] = 1 - variance of cosine across batches
+            # alignment["rank_reliability"] = 1 - variance of cosine across batches
+            # Positive cosine → aligned → aux/rank helps primary task
+            a_cos=float(alignment.get("aux",0.))
+            r_cos=float(alignment.get("rank",0.))
+            a_rel=float(alignment.get("aux_reliability",0.))
+            r_rel=float(alignment.get("rank_reliability",0.))
+            if math.isfinite(a_cos): scores["aux"]+=.15*a_cos
+            if math.isfinite(r_cos): scores["rank"]+=.15*r_cos
+            # Reliability: consistent gradient direction → trust the signal more
+            if math.isfinite(a_rel): scores["aux"]+=.10*a_rel
+            if math.isfinite(r_rel): scores["rank"]+=.10*r_rel
         if self.variant=="ra_samo_v3_3" and validation_scores:
             # Scores must come from INNER-validation matched rollouts, never test.
             finite={k:float(v) for k,v in validation_scores.items()

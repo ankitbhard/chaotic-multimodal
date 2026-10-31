@@ -1,16 +1,16 @@
 """Matched SAMO survival benchmark. Run from repository root."""
-import argparse, csv, json, math, time
+import argparse, copy, csv, json, math, time, io
 from pathlib import Path
 import numpy as np
 import torch
 import yaml
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 from train_survival import build_survival_dataloaders, concordance_index
 from models.joint_model import build_model
 from experiments.cvpr_reliability_pilot.models import JointModelWithAux
 from experiments.optimizer_dynamics_overnight.run import seed_all
 from experiments.samo.objectives import cox_efron_free, ranking_loss, LossWeightController
-from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients
+from experiments.samo.representation_gradients import prepare_branch_gradients, apply_branch_gradients, _grads, _cosine
 from experiments.samo.progress_controller import ProgressController
 from experiments.samo.history_controller import HistoryController, load_history
 from experiments.samo.censor_aware_controller import CensorAwareController, survival_information
@@ -70,6 +70,105 @@ def evaluate_modality_diagnostics(model, loader, device):
     return scores
 
 
+def compute_gradient_alignment(model, loader, device, method, temperature):
+    """Compute gradient cosine between primary (cox) and aux/rank across training batches.
+    Returns mean cosine and reliability (1 - normalized variance) for each objective.
+    Uses only training data. Does NOT modify model parameters or optimizer state.
+    """
+    cosines_aux, cosines_rank = [], []
+    model.train()
+    for inputs, labels in loader:
+        x = {k: v.to(device) for k, v in inputs.items()}
+        t = labels["os_months"].float().to(device)
+        e = labels["vital_status"].float().to(device)
+        outputs = model(x)
+        parts = loss_parts(outputs, t, e, method, temperature)
+        # Collect encoder params for both branches
+        for branch in ("image", "gene"):
+            params = [p for p in getattr(model, branch + "_encoder").parameters()
+                      if p.requires_grad]
+            if not params:
+                continue
+            primary = _grads(parts[0], params)
+            aux_g = _grads(parts[1] + parts[2], params)  # combined aux
+            rank_g = _grads(parts[3], params)
+            cosines_aux.append(_cosine(primary, aux_g))
+            cosines_rank.append(_cosine(primary, rank_g))
+    if not cosines_aux:
+        return {}
+    mean_aux = float(np.mean(cosines_aux))
+    mean_rank = float(np.mean(cosines_rank))
+    var_aux = float(np.var(cosines_aux))
+    var_rank = float(np.var(cosines_rank))
+    # Reliability: 1 when variance is 0 (perfectly consistent), decays with variance
+    rel_aux = max(0.0, 1.0 - var_aux / max(0.01, abs(mean_aux)**2 + 0.01))
+    rel_rank = max(0.0, 1.0 - var_rank / max(0.01, abs(mean_rank)**2 + 0.01))
+    return {"aux": mean_aux, "rank": mean_rank,
+            "aux_reliability": rel_aux, "rank_reliability": rel_rank}
+
+
+def v3_3_candidate_rollouts(model, optimizer, train_loader, inner_val_loader,
+                            device, method, temperature, rollout_epochs, generator,
+                            seed, fold, epoch, lr):
+    """Run short candidate rollouts for cox/aux/rank from SAME checkpoint.
+    Score each on inner-validation C-index. Restores all state afterward.
+    Uses only training data for updates and inner-val (from outer-train) for scoring.
+    """
+    # Save complete state
+    model_state = copy.deepcopy(model.state_dict())
+    opt_state = copy.deepcopy(optimizer.state_dict())
+    rng_state = torch.random.get_rng_state()
+    cuda_rng = torch.cuda.get_rng_state() if torch.cuda.is_available() else None
+    gen_state = generator.get_state()
+
+    mode_weights = {
+        "cox": [0.0, 0.0, 0.0],
+        "aux": [0.1, 0.1, 0.0],
+        "rank": [0.0, 0.0, 0.1],
+    }
+    scores = {}
+    for mode_name, weights in mode_weights.items():
+        # Restore to checkpoint
+        model.load_state_dict(copy.deepcopy(model_state))
+        optimizer.load_state_dict(copy.deepcopy(opt_state))
+        torch.random.set_rng_state(rng_state.clone())
+        if cuda_rng is not None:
+            torch.cuda.set_rng_state(cuda_rng.clone())
+        generator.set_state(gen_state.clone())
+
+        # Short rollout
+        for re in range(rollout_epochs):
+            rollout_lr = lr * 0.5 * (1 + math.cos(math.pi * (epoch + re) / 50))
+            for group in optimizer.param_groups:
+                group["lr"] = rollout_lr
+            model.train()
+            generator.manual_seed(seed + fold * 10000 + epoch * 100 + re)
+            for inputs, labels in train_loader:
+                x = {k: v.to(device) for k, v in inputs.items()}
+                t = labels["os_months"].float().to(device)
+                e = labels["vital_status"].float().to(device)
+                optimizer.zero_grad(set_to_none=True)
+                parts = loss_parts(model(x), t, e, method, temperature)
+                loss = parts[0] + weights[0] * parts[1] + weights[1] * parts[2] + weights[2] * parts[3]
+                if torch.isfinite(loss):
+                    loss.backward()
+                    optimizer.step()
+
+        # Score on inner validation
+        _, ci = evaluate(model, inner_val_loader, device)
+        scores[mode_name] = ci
+
+    # Restore original state completely
+    model.load_state_dict(model_state)
+    optimizer.load_state_dict(opt_state)
+    torch.random.set_rng_state(rng_state)
+    if cuda_rng is not None:
+        torch.cuda.set_rng_state(cuda_rng)
+    generator.set_state(gen_state)
+
+    return scores
+
+
 def run_one(args,cancer,fold,method):
     out=Path(args.out)/cancer/f"fold_{fold}"/method
     summary=out/"summary.json"
@@ -126,6 +225,20 @@ def run_one(args,cancer,fold,method):
             train_times.extend(label["os_months"].float().tolist())
             train_events.extend(label["vital_status"].float().tolist())
     info=survival_information(train_times,train_events) if v3 is not None else {}
+    # v3.3: create inner-val split from outer-training data for candidate rollouts
+    inner_val_loader=None
+    inner_train_loader=None
+    if method=="ra_samo_v3_3":
+        ds=data["train"].dataset
+        n_inner_val=max(1,len(ds)//5)  # 20% of outer-train for inner-val
+        n_inner_train=len(ds)-n_inner_val
+        inner_gen=torch.Generator().manual_seed(args.seed+fold+999)
+        indices=torch.randperm(len(ds),generator=inner_gen).tolist()
+        inner_train_loader=DataLoader(Subset(ds,indices[:n_inner_train]),
+            batch_size=cfg.get("batch_size",32),shuffle=True,drop_last=True,num_workers=0,generator=torch.Generator())
+        inner_val_loader=DataLoader(Subset(ds,indices[n_inner_train:]),
+            batch_size=cfg.get("batch_size",32),shuffle=False,num_workers=0)
+    v3_alignment={}
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
     for epoch in range(args.epochs):
@@ -178,9 +291,20 @@ def run_one(args,cancer,fold,method):
         if method=="ra_samo_v2":
             weights=history_controller.update(epoch,means,weights)
         if v3 is not None:
-            # v3.3 rollout selection is implemented by the next EC2 agent; no validation
-            # scores are passed here until matched, isolated rollouts are available.
-            weights=list(v3.update(epoch,means,info).weights)
+            # v3.2/v3.3: compute gradient alignment every 5 epochs to limit overhead
+            if method in ("ra_samo_v3_2","ra_samo_v3_3") and epoch % 5 == 0 and epoch >= args.warmup:
+                v3_alignment=compute_gradient_alignment(model,train,args.device,method,args.temperature)
+            # v3.3: run candidate rollouts every 10 epochs after warmup
+            v3_val_scores=None
+            if method=="ra_samo_v3_3" and inner_val_loader is not None and epoch % 10 == 0 and epoch >= args.warmup:
+                v3_val_scores=v3_3_candidate_rollouts(
+                    model,optimizer,inner_train_loader,inner_val_loader,
+                    args.device,method,args.temperature,
+                    rollout_epochs=2,generator=generator,
+                    seed=args.seed,fold=fold,epoch=epoch,lr=lr)
+            weights=list(v3.update(epoch,means,info,
+                alignment=v3_alignment if method in ("ra_samo_v3_2","ra_samo_v3_3") else None,
+                validation_scores=v3_val_scores).weights)
         val_loss,val_ci=evaluate(model,val,args.device)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
         if diag_n:
@@ -188,7 +312,7 @@ def run_one(args,cancer,fold,method):
                                for branch,value in primary_norm_sums.items()})
         if args.modality_diagnostics:
             diag_means.update(evaluate_modality_diagnostics(model,val,args.device))
-        history.append(dict(**diag_means,v3_mode=(v3.mode if v3 else ""),v3_reason=(v3.state.reason if v3 else ""),v3_event_rate=info.get("event_rate", ""),v3_pair_density=info.get("pair_density", ""),progress_scale_img=progress_scales[0],
+        history.append(dict(**diag_means,v3_mode=(v3.mode if v3 else ""),v3_reason=(v3.state.reason if v3 else ""),v3_event_rate=info.get("event_rate", ""),v3_pair_density=info.get("pair_density", ""),v3_align_aux=v3_alignment.get("aux","") if v3 else "",v3_align_rank=v3_alignment.get("rank","") if v3 else "",v3_align_aux_rel=v3_alignment.get("aux_reliability","") if v3 else "",v3_align_rank_rel=v3_alignment.get("rank_reliability","") if v3 else "",progress_scale_img=progress_scales[0],
                             progress_scale_gene=progress_scales[1],epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,

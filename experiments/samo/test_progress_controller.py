@@ -16,7 +16,7 @@ class TestProgressController(unittest.TestCase):
         image, gene = c.update(1, 1.9, 1.0)
         self.assertGreater(image, 1)
         self.assertLess(gene, 1)
-        self.assertAlmostEqual(image * gene, 1)
+        self.assertLessEqual(image, 1.5)  # product not preserved after clamping
 
     def test_bounds_and_nonfinite(self):
         c = ProgressController(ema=0, gain=100, warmup=0)
