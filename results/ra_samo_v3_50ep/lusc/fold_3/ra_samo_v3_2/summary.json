@@ -1,0 +1,16 @@
+{
+  "completed": true,
+  "dataset": "lusc",
+  "fold": 3,
+  "method": "ra_samo_v3_2",
+  "epochs": 50,
+  "best_epoch": 9,
+  "best_val_ci": 0.6306413301662708,
+  "test_ci": 0.5223214285714286,
+  "test_loss": 3.916839520136515,
+  "wall_seconds": 78.1834849600018,
+  "parameter_count": 1754885,
+  "lr": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 45
+}
