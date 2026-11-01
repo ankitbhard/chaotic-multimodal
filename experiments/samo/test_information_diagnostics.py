@@ -14,7 +14,6 @@ from experiments.samo.information_diagnostics import (
     build_probe_subset,
     _per_event_scores,
     approx_fisher_trace,
-    per_layer_fisher,
     compute_epoch_diagnostics,
     diagnostics_to_row,
     fit_unimodal_probes,
@@ -169,10 +168,10 @@ class TestPerEventScores(unittest.TestCase):
         risk = outputs["survival"][:, 1]
         t = labels["os_months"].float()
         e = labels["vital_status"].float()
-        n_events = int(e.bool().sum().item())
+        n_events = min(int(e.bool().sum().item()), 8)  # capped at max_events
         params = list(model.image_encoder.parameters())
-        scores = _per_event_scores(risk, t, e, params)
-        self.assertEqual(len(scores), n_events)
+        sq_norms = _per_event_scores(risk, t, e, params)
+        self.assertEqual(len(sq_norms), n_events)
 
     def test_all_censored_returns_empty(self):
         torch.manual_seed(42)
@@ -181,8 +180,8 @@ class TestPerEventScores(unittest.TestCase):
         time = torch.tensor([1., 2., 3., 4., 5., 6., 7., 8.])
         event = torch.zeros(8)
         params = list(model.image_encoder.parameters())
-        scores = _per_event_scores(risk, time, event, params)
-        self.assertEqual(len(scores), 0)
+        sq_norms = _per_event_scores(risk, time, event, params)
+        self.assertEqual(len(sq_norms), 0)
 
     def test_single_event(self):
         torch.manual_seed(42)
@@ -196,10 +195,11 @@ class TestPerEventScores(unittest.TestCase):
         outputs = model(inputs)
         risk = outputs["survival"][:, 1]
         params = list(model.image_encoder.parameters())
-        scores = _per_event_scores(risk, labels["os_months"], labels["vital_status"], params)
-        self.assertEqual(len(scores), 1)
-        # Score should be finite
-        self.assertTrue(torch.isfinite(scores[0]).all())
+        sq_norms = _per_event_scores(risk, labels["os_months"], labels["vital_status"], params)
+        self.assertEqual(len(sq_norms), 1)
+        # Squared norm should be finite and positive
+        self.assertTrue(math.isfinite(sq_norms[0]))
+        self.assertGreaterEqual(sq_norms[0], 0.0)
 
     def test_tied_event_times(self):
         torch.manual_seed(42)
@@ -208,10 +208,10 @@ class TestPerEventScores(unittest.TestCase):
         time = torch.tensor([5., 5., 10., 15.])
         event = torch.tensor([1., 1., 0., 1.])
         params = list(model.image_encoder.parameters())
-        scores = _per_event_scores(risk, time, event, params)
-        self.assertEqual(len(scores), 3)  # 3 events
-        for s in scores:
-            self.assertTrue(torch.isfinite(s).all())
+        sq_norms = _per_event_scores(risk, time, event, params)
+        self.assertEqual(len(sq_norms), 3)  # 3 events
+        for sn in sq_norms:
+            self.assertTrue(math.isfinite(sn))
 
 
 class TestFisherTrace(unittest.TestCase):
@@ -219,25 +219,14 @@ class TestFisherTrace(unittest.TestCase):
         self.assertEqual(approx_fisher_trace([]), 0.0)
 
     def test_positive(self):
-        scores = [torch.randn(10) for _ in range(5)]
-        ft = approx_fisher_trace(scores)
+        sq_norms = [float(torch.randn(10).pow(2).sum().item()) for _ in range(5)]
+        ft = approx_fisher_trace(sq_norms)
         self.assertGreater(ft, 0.0)
 
-    def test_per_layer_breakdown(self):
-        scores = [torch.randn(15) for _ in range(3)]
-        shapes = [(5,), (10,)]  # two layers: 5 + 10 = 15
-        result = per_layer_fisher(scores, shapes)
-        self.assertIn("layer_0_fisher", result)
-        self.assertIn("layer_1_fisher", result)
-        self.assertIn("layer_0_fisher_normalized", result)
-
-    def test_layer_fisher_sums_to_total(self):
-        scores = [torch.randn(15) for _ in range(5)]
-        shapes = [(5,), (10,)]
-        result = per_layer_fisher(scores, shapes)
-        total = approx_fisher_trace(scores)
-        layer_sum = result["layer_0_fisher"] + result["layer_1_fisher"]
-        self.assertAlmostEqual(total, layer_sum, places=5)
+    def test_mean_of_sq_norms(self):
+        sq_norms = [1.0, 4.0, 9.0]
+        ft = approx_fisher_trace(sq_norms)
+        self.assertAlmostEqual(ft, (1.0 + 4.0 + 9.0) / 3.0)
 
 
 class TestStatePreservation(unittest.TestCase):

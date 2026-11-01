@@ -85,7 +85,7 @@ def build_probe_subset(dataset, n_probe: int = 64, seed: int = 42) -> Tuple[List
 # Per-event Fisher score computation
 # ---------------------------------------------------------------------------
 
-def _per_event_scores(risk, time, event, params):
+def _per_event_scores(risk, time, event, params, max_events=8):
     """Compute per-event Cox score gradients (Breslow approximation).
 
     For each observed event i, the individual log-likelihood contribution is:
@@ -100,7 +100,11 @@ def _per_event_scores(risk, time, event, params):
     This operates on a MINI-BATCH, so R_i is the mini-batch risk set.
     This is a biased approximation of the full-data Fisher.
 
-    Returns: list of per-event gradient vectors (flattened), one per event.
+    To keep computation tractable, only up to max_events are sampled
+    (deterministically: first max_events by index order).
+
+    Returns: list of per-event squared gradient norms (floats), one per event.
+             This avoids storing full gradient vectors to reduce memory.
     """
     risk = risk.reshape(-1)
     time = time.reshape(-1)
@@ -110,7 +114,11 @@ def _per_event_scores(risk, time, event, params):
     if len(event_indices) == 0:
         return []
 
-    scores = []
+    # Cap events for tractability
+    if len(event_indices) > max_events:
+        event_indices = event_indices[:max_events]
+
+    sq_norms = []
     for i in event_indices:
         # Risk set: all patients with time >= time[i]
         risk_set = time >= time[i]
@@ -119,51 +127,31 @@ def _per_event_scores(risk, time, event, params):
 
         grads = torch.autograd.grad(ell_i, params, retain_graph=True,
                                      allow_unused=True)
-        flat = torch.cat([
-            (g if g is not None else torch.zeros_like(p)).reshape(-1)
+        # Compute squared norm directly without storing full vector
+        sq_norm = sum(
+            (g if g is not None else torch.zeros_like(p)).pow(2).sum().item()
             for p, g in zip(params, grads)
-        ])
-        scores.append(flat.detach())
+        )
+        sq_norms.append(sq_norm)
 
-    return scores
+    return sq_norms
 
 
-def approx_fisher_trace(scores: List[torch.Tensor]) -> float:
-    """Compute approximate Fisher trace from per-event score gradients.
+def approx_fisher_trace(sq_norms: List[float]) -> float:
+    """Compute approximate Fisher trace from per-event squared gradient norms.
 
     Fisher trace = (1/n_events) * sum_i ||score_i||^2
 
     This is the trace of the empirical Fisher information matrix under
     the assumption that each event contributes independently. For Cox
     models with coupled risk sets, this is an approximation.
+
+    Args:
+        sq_norms: list of per-event squared gradient norms (floats).
     """
-    if not scores:
+    if not sq_norms:
         return 0.0
-    sq_norms = [float(s.dot(s).item()) for s in scores]
     return float(np.mean(sq_norms))
-
-
-def per_layer_fisher(scores: List[torch.Tensor], param_shapes: List[Tuple[int, ...]]) -> Dict[str, float]:
-    """Break down Fisher trace by parameter layer.
-
-    Returns dict mapping layer index to its Fisher trace contribution,
-    normalized by parameter count for cross-encoder comparison.
-    """
-    if not scores:
-        return {}
-    offsets = [0]
-    for shape in param_shapes:
-        offsets.append(offsets[-1] + int(np.prod(shape)))
-
-    result = {}
-    for layer_idx, (start, end, shape) in enumerate(
-            zip(offsets[:-1], offsets[1:], param_shapes)):
-        n_params = int(np.prod(shape))
-        layer_sq_norms = [float(s[start:end].dot(s[start:end]).item()) for s in scores]
-        result[f"layer_{layer_idx}_fisher"] = float(np.mean(layer_sq_norms))
-        result[f"layer_{layer_idx}_fisher_normalized"] = float(np.mean(layer_sq_norms)) / max(n_params, 1)
-        result[f"layer_{layer_idx}_n_params"] = n_params
-    return result
 
 
 # ---------------------------------------------------------------------------
@@ -184,9 +172,6 @@ class EncoderDiagnostics:
 
     # Gradient sensitivity (how much loss changes with small parameter perturbation)
     grad_sensitivity: float = 0.0  # mean |grad| per parameter
-
-    # Per-layer Fisher breakdown
-    layer_fisher: Dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -332,9 +317,9 @@ def compute_epoch_diagnostics(
         cox_rank_cosines = []
         aux_rank_cosines = []
 
-        # Fisher score accumulators
-        img_fisher_scores = []
-        gene_fisher_scores = []
+        # Fisher score accumulators (squared norms, not full vectors)
+        img_fisher_sq_norms = []
+        gene_fisher_sq_norms = []
 
         total_events = 0
         total_pairs = 0
@@ -389,11 +374,11 @@ def compute_epoch_diagnostics(
                 cox_rank_cosines.append(_cosine_sim(all_cox, all_rank))
                 aux_rank_cosines.append(_cosine_sim(all_aux, all_rank))
 
-                # --- Per-event Fisher scores ---
-                img_scores = _per_event_scores(risk, t, e, img_params)
-                gene_scores = _per_event_scores(risk, t, e, gene_params)
-                img_fisher_scores.extend(img_scores)
-                gene_fisher_scores.extend(gene_scores)
+                # --- Per-event Fisher scores (squared norms only) ---
+                img_sq = _per_event_scores(risk, t, e, img_params, max_events=8)
+                gene_sq = _per_event_scores(risk, t, e, gene_params, max_events=8)
+                img_fisher_sq_norms.extend(img_sq)
+                gene_fisher_sq_norms.extend(gene_sq)
 
             # Count events and pairs
             n_ev = int(e.bool().sum().item())
@@ -407,20 +392,18 @@ def compute_epoch_diagnostics(
             diag.image_encoder.cox_grad_norm = mean_img_norm
             diag.image_encoder.squared_cox_grad_norm = float(np.mean([x**2 for x in img_cox_norms]))
             diag.image_encoder.grad_sensitivity = mean_img_norm / max(n_img_params, 1)
-            diag.image_encoder.fisher_trace = approx_fisher_trace(img_fisher_scores)
+            diag.image_encoder.fisher_trace = approx_fisher_trace(img_fisher_sq_norms)
             diag.image_encoder.fisher_trace_normalized = diag.image_encoder.fisher_trace / max(n_img_params, 1)
-            diag.image_encoder.n_events_fisher = len(img_fisher_scores)
-            diag.image_encoder.layer_fisher = per_layer_fisher(img_fisher_scores, img_param_shapes)
+            diag.image_encoder.n_events_fisher = len(img_fisher_sq_norms)
 
         if gene_cox_norms:
             mean_gene_norm = float(np.mean(gene_cox_norms))
             diag.gene_encoder.cox_grad_norm = mean_gene_norm
             diag.gene_encoder.squared_cox_grad_norm = float(np.mean([x**2 for x in gene_cox_norms]))
             diag.gene_encoder.grad_sensitivity = mean_gene_norm / max(n_gene_params, 1)
-            diag.gene_encoder.fisher_trace = approx_fisher_trace(gene_fisher_scores)
+            diag.gene_encoder.fisher_trace = approx_fisher_trace(gene_fisher_sq_norms)
             diag.gene_encoder.fisher_trace_normalized = diag.gene_encoder.fisher_trace / max(n_gene_params, 1)
-            diag.gene_encoder.n_events_fisher = len(gene_fisher_scores)
-            diag.gene_encoder.layer_fisher = per_layer_fisher(gene_fisher_scores, gene_param_shapes)
+            diag.gene_encoder.n_events_fisher = len(gene_fisher_sq_norms)
 
         # --- Alignment diagnostics ---
         if cox_aux_cosines:
