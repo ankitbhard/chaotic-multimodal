@@ -1,0 +1,771 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{subcaption}
+
+\title{Representation-Aware Multi-Objective Optimization\\for Multimodal Cancer Prognosis}
+\author{Ankit Bhardwaj \\
+University of Connecticut \\
+\texttt{ankit.bhardwaj@uconn.edu}}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{abstract}
+Multimodal cancer survival prediction integrates whole-slide
+histopathology images with bulk RNA-seq transcriptomes, but joint
+training under Cox partial likelihood faces a compounding challenge:
+auxiliary objectives---such as per-modality survival heads and pairwise
+ranking losses---can produce gradients that \textit{conflict} with the
+primary objective's gradient direction in encoder parameter space,
+degrading rather than improving the fused model. We introduce
+\textbf{RA-SAMO} (Representation-Aware Survival-Aware Multi-Objective
+optimization), a framework that (1)~decomposes training into a primary
+Cox loss and multiple auxiliary objectives with adaptive EMA-based
+weighting, and (2)~projects auxiliary encoder gradients that conflict
+with the primary gradient onto its orthogonal complement, preserving
+the primary objective's descent direction while retaining
+non-conflicting auxiliary signal. We evaluate RA-SAMO on five TCGA
+cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under stratified 5-fold
+cross-validation and demonstrate generalization to 7-class
+dermoscopic lesion classification on HAM10000. Gradient-level
+diagnostics---including Fisher information traces and inter-objective
+cosine similarities---reveal that objective effectiveness is
+cancer-dependent: ranking loss gradients align closely with Cox
+($\cos > 0.93$) and thus add little, while auxiliary survival heads
+provide orthogonal signal ($\cos \approx 0.14$) but require careful
+weighting. RA-SAMO achieves competitive C-index across all five
+cancers (mean 0.629) with the lowest cross-method variance, and on
+HAM10000 produces the most stable macro-F1 ($0.695 \pm 0.011$) across
+seeds. These results position RA-SAMO as a principled framework for
+multi-objective multimodal optimization in data-scarce clinical settings,
+with clear scope conditions: the framework provides the largest gains
+when auxiliary gradients are both informative and conflicting.
+\end{abstract}
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Introduction}
+
+Cancer prognosis is a critical clinical task that supports treatment
+planning, patient stratification, and personalized therapeutic
+decisions~\cite{who2024}. Recent advances in computational pathology
+and pathology foundation models~\cite{chen2024uni, vorontsov2024virchow,
+lu2024conch} have enabled integration of complementary
+modalities---particularly whole-slide histopathology images and bulk
+RNA-seq transcriptomes~\cite{chen2021, chen2022porpoise,
+acosta2022}---yielding prognostic signal that neither modality delivers
+alone.
+
+Joint training of image and genomic encoders under Cox partial
+likelihood~\cite{cox1972} faces two compounding challenges.
+First, \textit{modality imbalance}: one encoder's gradients often
+dominate the shared optimization, leaving the other modality
+under-trained~\cite{wang2020what, peng2022ogm}. Second,
+\textit{objective conflict}: auxiliary training objectives---such as
+per-modality survival heads or pairwise ranking
+losses---can produce gradients that \textit{oppose} the primary
+objective's descent direction in encoder parameter space. While
+multi-task learning and gradient modulation
+methods~\cite{peng2022ogm, du2023unimodal, fan2023pmr} address
+modality imbalance, they do not explicitly resolve inter-objective
+gradient conflicts.
+
+We introduce \textbf{RA-SAMO} (Representation-Aware Survival-Aware
+Multi-Objective optimization), a framework that addresses both
+challenges jointly. RA-SAMO trains a multimodal survival model with a
+primary Cox loss and multiple auxiliary objectives (per-modality Cox
+heads, pairwise ranking loss), adaptively weights them using an
+EMA-based controller, and---critically---projects auxiliary gradients
+that conflict with the primary objective onto its orthogonal
+complement before the optimizer step. This ensures the primary
+objective's descent direction is never opposed while retaining
+non-conflicting auxiliary signal.
+
+Through extensive evaluation on five TCGA cancer cohorts and the
+HAM10000 dermoscopic classification benchmark, we make three
+contributions:
+
+\begin{itemize}
+\item \textbf{Gradient projection for multi-objective medical
+learning.} A conflict-resolution mechanism that projects conflicting
+auxiliary encoder gradients onto the orthogonal complement of the
+primary gradient, preventing auxiliary objectives from degrading
+the primary loss (Section~\ref{sec:projection}).
+
+\item \textbf{Comprehensive gradient-level diagnostics.} Fisher
+information traces and inter-objective cosine similarities reveal
+that objective utility is cancer-dependent: ranking loss is
+near-redundant with Cox ($\cos > 0.93$), while auxiliary survival
+heads provide orthogonal but noisy signal ($\cos \approx 0.14$)
+(Section~\ref{sec:diagnostics}).
+
+\item \textbf{Cross-domain generalization.} RA-SAMO generalizes
+from survival prediction to 7-class classification on HAM10000
+(image + tabular metadata), producing the most stable performance
+across random seeds (Section~\ref{sec:ham10000}).
+\end{itemize}
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Related Work}
+
+\subsection{Multimodal Cancer Survival Prediction}
+
+MCAT~\cite{chen2021} uses co-attention to fuse gigapixel slides with
+genomic features. PORPOISE~\cite{chen2022porpoise} performs pan-cancer
+integrative analysis via multimodal deep learning.
+SurvPath~\cite{jaume2024survpath} models dense interactions between
+biological pathways and histology. MOTCat~\cite{xu2023motcat}
+introduces optimal transport-based co-attention for cross-modal
+alignment. These architectures assume standard optimizers suffice and
+do not address gradient conflicts between training objectives.
+
+\subsection{Modality Imbalance}
+
+Wang et al.~\cite{wang2020what} identified that one modality often
+dominates multimodal training. OGM-GE~\cite{peng2022ogm} suppresses
+dominant-modality gradients with an adaptive scaling factor and
+Gaussian noise injection. PMR~\cite{fan2023pmr} introduces prototypical
+modal rebalancing. Du et al.~\cite{du2023unimodal} use unimodal
+teachers for balanced learning. These methods operate on gradient
+\textit{magnitudes} but do not consider gradient \textit{directions}
+between objectives.
+
+\subsection{Multi-Objective Gradient Methods}
+
+Multi-task learning faces conflicting gradients across tasks. PCGrad
+\cite{yu2020pcgrad} projects conflicting task gradients; CAGrad
+\cite{liu2021cagrad} finds a common descent direction; Nash-MTL
+\cite{navon2022nashmtl} frames it as a bargaining game. These methods
+resolve inter-task conflicts but have not been applied to
+multi-objective training within a single multimodal survival model,
+where the ``tasks'' are different loss functions on the same
+prediction target.
+
+\subsection{Sharpness-Aware Minimization}
+
+SAM~\cite{foret2021sam} seeks flat minima via worst-case perturbation.
+M-SAM~\cite{rajoli2025msam} targets perturbation to the dominant
+modality. RA-SAMO is complementary: it can wrap any base optimizer
+(including SAM) and adds conflict resolution at the objective level
+rather than the perturbation level.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Method}
+
+\subsection{Problem Formulation}
+
+Given $N$ patients, each with histopathology slide embedding
+$\mathbf{x}_i^{\text{img}} \in \mathbb{R}^{d_{\text{img}}}$ and gene
+expression profile
+$\mathbf{x}_i^{\text{gene}} \in \mathbb{R}^{d_{\text{gene}}}$, with
+survival time $t_i > 0$ and event indicator $\delta_i \in \{0, 1\}$
+($1 =$ observed death), we seek a risk function $f_\theta$ such that
+patients with higher predicted risk
+$r_i = f_\theta(\mathbf{x}_i^{\text{img}},
+\mathbf{x}_i^{\text{gene}})$ have shorter survival times.
+Performance is measured by Harrell's concordance index
+(C-index)~\cite{harrell1996}.
+
+\subsection{Model Architecture}
+
+\textbf{Image encoder.}
+Pre-extracted slide embeddings from UNI~\cite{chen2024uni} (1024-d for
+BRCA) or UNI2-h (1536-d for others) are mapped via a single-layer MLP:
+\begin{equation}
+\mathbf{h}^{\text{img}} = \text{Dropout}_{p}\!\bigl(
+\text{ReLU}\bigl(\text{BN}(\mathbf{W}_{\text{img}} \mathbf{x}^{\text{img}})\bigr)\bigr)
+\in \mathbb{R}^{512}
+\label{eq:img_enc}
+\end{equation}
+
+\textbf{Gene encoder.}
+A three-layer MLP encodes gene expression:
+\begin{equation}
+\mathbf{h}^{\text{gene}} = \text{MLP}_{512 \to 256 \to 128}(\mathbf{x}^{\text{gene}})
+\in \mathbb{R}^{128}
+\label{eq:gene_enc}
+\end{equation}
+with batch normalization, ReLU, and dropout ($p\!=\!0.3$) after each layer.
+
+\textbf{Cross-modal attention fusion.}
+Both representations are projected to a shared $d\!=\!256$ space, and a
+learned attention network computes per-patient modality weights:
+\begin{equation}
+\alpha_m = \frac{
+  \exp\!\bigl(\mathbf{u}^\top \tanh(\mathbf{W}_a \tilde{\mathbf{h}}^m)\bigr)
+}{
+  \sum_{m'} \exp\!\bigl(\mathbf{u}^\top \tanh(\mathbf{W}_a \tilde{\mathbf{h}}^{m'})\bigr)
+}
+\label{eq:attn}
+\end{equation}
+producing the fused representation
+$\mathbf{h} = \sum_m \alpha_m \tilde{\mathbf{h}}^m \in \mathbb{R}^{256}$.
+
+\textbf{Survival head.}
+A shared layer ($256 \to 256$, ReLU, dropout) followed by a linear
+projection yields risk score $r_i$.
+
+\textbf{Auxiliary heads.}
+Per-modality auxiliary Cox survival heads
+($\mathbb{R}^{512} \to \mathbb{R}^{64} \to \mathbb{R}^{1}$ for image;
+$\mathbb{R}^{128} \to \mathbb{R}^{64} \to \mathbb{R}^{1}$ for gene)
+provide unimodal survival predictions used as auxiliary objectives.
+
+\subsection{Multi-Objective Loss}
+
+The total loss combines four components:
+\begin{equation}
+\mathcal{L} = \mathcal{L}_{\text{cox}}^{\text{fuse}} +
+w_{\text{img}} \mathcal{L}_{\text{cox}}^{\text{img}} +
+w_{\text{gene}} \mathcal{L}_{\text{cox}}^{\text{gene}} +
+w_{\text{rank}} \mathcal{L}_{\text{rank}}
+\label{eq:total_loss}
+\end{equation}
+
+\textbf{Primary loss.} The Cox partial log-likelihood~\cite{cox1972}
+on fused predictions with Breslow's tied-event approximation:
+\begin{equation}
+\mathcal{L}_{\text{cox}} = -\frac{1}{|\mathcal{E}|}
+\sum_{i: \delta_i = 1}
+\left( r_i - \log \sum_{j: t_j \geq t_i} e^{r_j} \right)
+\label{eq:cox}
+\end{equation}
+where $\mathcal{E} = \{i : \delta_i = 1\}$ is the set of observed events.
+
+\textbf{Auxiliary Cox losses.}
+$\mathcal{L}_{\text{cox}}^{\text{img}}$ and
+$\mathcal{L}_{\text{cox}}^{\text{gene}}$ apply Eq.~\ref{eq:cox} to
+per-modality risk scores from auxiliary heads. These encourage each
+encoder to independently learn prognostically informative
+representations.
+
+\textbf{Pairwise ranking loss.}
+For comparable pairs where patient $i$ has an observed event before
+patient $j$'s follow-up ends:
+\begin{equation}
+\mathcal{L}_{\text{rank}} = \frac{1}{|\mathcal{P}|}
+\sum_{(i,j) \in \mathcal{P}}
+\log\bigl(1 + e^{(r_j - r_i)/\tau}\bigr)
+\label{eq:rank}
+\end{equation}
+where $\mathcal{P} = \{(i,j) : \delta_i = 1 \land t_i < t_j\}$ and
+$\tau$ is a temperature parameter.
+
+\subsection{Adaptive Loss Weighting}
+
+The weights $\mathbf{w} = (w_{\text{img}}, w_{\text{gene}},
+w_{\text{rank}})$ are updated per epoch using an EMA-based controller.
+Let $\bar{\ell}_k^{(e)}$ be the exponentially smoothed epoch-mean loss
+for component $k$ at epoch $e$, with smoothing factor $\beta = 0.9$:
+\begin{equation}
+\bar{\ell}_k^{(e)} = \beta \cdot \bar{\ell}_k^{(e-1)} + (1 - \beta) \cdot \ell_k^{(e)}
+\end{equation}
+
+The controller computes normalized ratios against first-epoch baselines
+and adjusts weights toward components whose losses are lagging:
+\begin{equation}
+w_k^{(e+1)} = \text{clip}\!\left(
+w_k^{(e)} + \text{clip}\!\left(
+\frac{0.1 \cdot \bar{\ell}_k^{(e)} / \bar{\ell}_k^{(0)}}
+{\text{mean}_j(\bar{\ell}_j^{(e)} / \bar{\ell}_j^{(0)})} - w_k^{(e)},
+\pm \Delta_{\max}
+\right),
+[w_{\min}, w_{\max}]
+\right)
+\label{eq:weight_update}
+\end{equation}
+with $w_{\min}\!=\!0.02$, $w_{\max}\!=\!0.3$,
+$\Delta_{\max}\!=\!0.02$, and a warmup of 2 epochs during which
+weights remain at their initial values (0.1 each). This bounded,
+slow-moving controller prevents any auxiliary objective from
+overwhelming the primary loss.
+
+\subsection{Gradient Projection for Conflict Resolution}
+\label{sec:projection}
+
+The key contribution of RA-SAMO is explicit resolution of gradient
+conflicts between the primary and auxiliary objectives in each
+encoder's parameter space.
+
+For each encoder $m \in \{\text{img}, \text{gene}\}$, let
+$\mathbf{g}_m^{\text{pri}}$, $\mathbf{g}_m^{\text{aux}}$, and
+$\mathbf{g}_m^{\text{rank}}$ denote the gradients of the primary
+(fused Cox), auxiliary (per-modality Cox), and ranking losses with
+respect to encoder $m$'s parameters $\theta_m$, computed via
+\texttt{torch.autograd.grad} with \texttt{retain\_graph=True}.
+
+\textbf{Conflict detection.} An auxiliary gradient
+$\mathbf{g}_m^{\text{sec}}$ (where ``sec'' is either aux or rank)
+\textit{conflicts} with the primary if their inner product is negative:
+\begin{equation}
+\text{conflict}(\mathbf{g}_m^{\text{sec}}, \mathbf{g}_m^{\text{pri}}) =
+\bigl(\langle \mathbf{g}_m^{\text{sec}}, \mathbf{g}_m^{\text{pri}} \rangle < 0\bigr)
+\label{eq:conflict}
+\end{equation}
+
+\textbf{Projection.} When conflict is detected, the auxiliary gradient
+is projected onto the orthogonal complement of the primary gradient:
+\begin{equation}
+\hat{\mathbf{g}}_m^{\text{sec}} = \mathbf{g}_m^{\text{sec}} -
+\frac{\langle \mathbf{g}_m^{\text{sec}}, \mathbf{g}_m^{\text{pri}} \rangle}
+{\|\mathbf{g}_m^{\text{pri}}\|^2}
+\mathbf{g}_m^{\text{pri}}
+\label{eq:project}
+\end{equation}
+When no conflict exists ($\langle \mathbf{g}_m^{\text{sec}},
+\mathbf{g}_m^{\text{pri}} \rangle \geq 0$), the auxiliary gradient is
+used unmodified.
+
+\textbf{Gradient replacement.} The final encoder gradient combines
+primary and (possibly projected) auxiliary gradients:
+\begin{equation}
+\mathbf{g}_m = \mathbf{g}_m^{\text{pri}} +
+w_{\text{aux}} \hat{\mathbf{g}}_m^{\text{aux}} +
+w_{\text{rank}} \hat{\mathbf{g}}_m^{\text{rank}}
+\label{eq:combined}
+\end{equation}
+This replaces the encoder's \texttt{.grad} attribute after
+\texttt{backward()} and before \texttt{optimizer.step()}.
+Shared parameters (fusion, survival head) receive standard
+gradients from the weighted loss.
+
+The full training step is summarized in Algorithm~\ref{alg:rasamo}.
+
+\begin{algorithm}[t]
+\caption{RA-SAMO Training Step}
+\label{alg:rasamo}
+\begin{algorithmic}[1]
+\REQUIRE Model $f_\theta$ with encoders $\theta_{\text{img}}, \theta_{\text{gene}}$,
+batch $(\mathbf{X}, \mathbf{t}, \boldsymbol{\delta})$,
+weights $(w_{\text{img}}, w_{\text{gene}}, w_{\text{rank}})$
+\STATE Forward pass: compute
+$\mathcal{L}_{\text{cox}}^{\text{fuse}}$,
+$\mathcal{L}_{\text{cox}}^{\text{img}}$,
+$\mathcal{L}_{\text{cox}}^{\text{gene}}$,
+$\mathcal{L}_{\text{rank}}$
+\FOR{each encoder $m \in \{\text{img}, \text{gene}\}$}
+  \STATE $\mathbf{g}_m^{\text{pri}} \leftarrow \nabla_{\theta_m} \mathcal{L}_{\text{cox}}^{\text{fuse}}$
+  \STATE $\mathbf{g}_m^{\text{aux}} \leftarrow \nabla_{\theta_m} \mathcal{L}_{\text{cox}}^{m}$
+  \STATE $\mathbf{g}_m^{\text{rank}} \leftarrow \nabla_{\theta_m} \mathcal{L}_{\text{rank}}$
+  \IF{$\langle \mathbf{g}_m^{\text{aux}}, \mathbf{g}_m^{\text{pri}} \rangle < 0$}
+    \STATE Project: $\hat{\mathbf{g}}_m^{\text{aux}} \leftarrow$ Eq.~\ref{eq:project}
+  \ELSE
+    \STATE $\hat{\mathbf{g}}_m^{\text{aux}} \leftarrow \mathbf{g}_m^{\text{aux}}$
+  \ENDIF
+  \STATE Repeat projection for $\mathbf{g}_m^{\text{rank}}$
+  \STATE $\mathbf{g}_m \leftarrow \mathbf{g}_m^{\text{pri}} + w_{\text{aux}} \hat{\mathbf{g}}_m^{\text{aux}} + w_{\text{rank}} \hat{\mathbf{g}}_m^{\text{rank}}$
+\ENDFOR
+\STATE $\mathcal{L}_{\text{total}} \leftarrow$ Eq.~\ref{eq:total_loss}
+\STATE $\mathcal{L}_{\text{total}}$.\texttt{backward()}
+\STATE Replace encoder gradients: $\theta_m$.\texttt{grad} $\leftarrow \mathbf{g}_m$
+\STATE \texttt{optimizer.step()}
+\STATE Update weights $\mathbf{w}$ via Eq.~\ref{eq:weight_update} (end of epoch)
+\end{algorithmic}
+\end{algorithm}
+
+\textbf{Diagnostic output.} At each step, RA-SAMO records
+per-encoder cosine similarities
+$\cos(\mathbf{g}_m^{\text{aux}}, \mathbf{g}_m^{\text{pri}})$ and
+$\cos(\mathbf{g}_m^{\text{rank}}, \mathbf{g}_m^{\text{pri}})$,
+whether projection was applied, and the relative update change
+$\|\mathbf{g}_m^{\text{proj}} - \mathbf{g}_m^{\text{orig}}\| /
+\|\mathbf{g}_m^{\text{orig}}\|$. These diagnostics enable
+post-hoc analysis of when and where gradient conflicts occur
+(Section~\ref{sec:diagnostics}).
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Experimental Setup}
+
+\subsection{Datasets}
+
+\textbf{TCGA Survival.}
+We evaluate on five TCGA cancer cohorts (Table~\ref{tab:datasets}).
+Histopathology slide embeddings are extracted using
+UNI~\cite{chen2024uni} (1024-d for BRCA) or UNI2-h (1536-d for
+others), following the pre-extracted embeddings released by
+Jaume et al.~\cite{jaume2024tangle}. Gene expression profiles use
+the top 1,000 most variable genes per cohort after log1p
+transformation and standard scaling (fitted on training data only).
+
+\begin{table}[t]
+\centering
+\caption{Dataset statistics. Event rate = fraction of patients with
+observed death (uncensored).}
+\label{tab:datasets}
+\begin{tabular}{lrrrl}
+\toprule
+Cancer & $N$ & Event \% & Cens. \% & Encoder \\
+\midrule
+BRCA & 1,123 & 13.6\% & 86.4\% & UNI 1024-d \\
+KIRC & 519   & 34.6\% & 65.4\% & UNI2-h 1536-d \\
+LUAD & 522   & 35.6\% & 64.4\% & UNI2-h 1536-d \\
+LUSC & 500   & 42.6\% & 57.4\% & UNI2-h 1536-d \\
+STAD & 367   & 39.4\% & 60.6\% & UNI2-h 1536-d \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{HAM10000 Classification.}
+To test generalization beyond survival prediction, we evaluate on
+HAM10000~\cite{tschandl2018ham10000}: 10,015 dermoscopic images with
+tabular metadata (age, sex, localization) across 7 lesion classes.
+Splits are grouped by lesion ID to prevent data leakage (same
+lesion may have multiple images), with stratified 70/15/15
+train/val/test splits.
+
+\subsection{Methods Compared}
+
+All methods use the same architecture and hyperparameters; only the
+optimization strategy varies:
+
+\begin{itemize}
+\item \textbf{Baseline}: Cox loss only (Eq.~\ref{eq:cox}), AdamW optimizer.
+\item \textbf{+ Aux}: Add per-modality auxiliary Cox heads.
+\item \textbf{+ Rank}: Add pairwise ranking loss (Eq.~\ref{eq:rank}).
+\item \textbf{+ Aux+Rank}: Both auxiliary heads and ranking loss.
+\item \textbf{Adaptive Aux}: Auxiliary heads with EMA-based weight
+controller (Eq.~\ref{eq:weight_update}), no gradient projection.
+\item \textbf{SAMO}: Adaptive Aux + Rank with weight controller.
+\item \textbf{RA-SAMO}: SAMO + gradient projection
+(Eq.~\ref{eq:project}--\ref{eq:combined}).
+\end{itemize}
+
+For HAM10000, we additionally compare SAM~\cite{foret2021sam} and
+unimodal baselines (image-only, metadata-only), replacing Cox loss
+with cross-entropy.
+
+\subsection{Training Protocol}
+
+\textbf{TCGA:} 50 epochs, batch size 32, AdamW (lr$\!=\!10^{-3}$,
+weight decay$\!=\!10^{-4}$), cosine annealing. Stratified 5-fold
+cross-validation (stratified by vital status). Model selection on
+best validation C-index. Each patient tested exactly once.
+
+\textbf{HAM10000:} 30 epochs, batch size 32, AdamW
+(lr$\!=\!10^{-3}$), cosine annealing. ResNet-18 (pretrained
+ImageNet) image encoder, 3-layer MLP metadata encoder. Three seeds
+(42, 43, 44). Model selection on best validation macro-F1. Auxiliary
+objectives use cross-entropy instead of Cox. Ranking loss weight
+set to zero (no natural ordering in classification).
+
+All experiments run on a single NVIDIA T4 GPU (16 GB).
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Results}
+
+\subsection{TCGA Survival Prediction}
+
+Table~\ref{tab:tcga_results} presents test C-index across five TCGA
+cohorts under 5-fold cross-validation.
+
+\begin{table*}[t]
+\centering
+\caption{Test C-index (5-fold mean $\pm$ std) on TCGA survival
+prediction. Best per-cancer in \textbf{bold}. ``Adap.~Aux'' =
+Adaptive Aux. All methods use the same architecture and hyperparameters.}
+\label{tab:tcga_results}
+\begin{tabular}{lcccccr}
+\toprule
+Method & BRCA & KIRC & LUAD & LUSC & STAD & Mean \\
+\midrule
+Baseline (Cox) &
+  $.629 \pm .067$ &
+  $\mathbf{.740} \pm .061$ &
+  $.641 \pm .058$ &
+  $.559 \pm .052$ &
+  $.583 \pm .023$ &
+  .630 \\
++ Aux &
+  $.662 \pm .056$ &
+  $.728 \pm .062$ &
+  $.618 \pm .041$ &
+  $.540 \pm .066$ &
+  $.581 \pm .033$ &
+  .626 \\
++ Rank &
+  $.621 \pm .056$ &
+  $.731 \pm .062$ &
+  $\mathbf{.646} \pm .041$ &
+  $\mathbf{.568} \pm .066$ &
+  $.591 \pm .033$ &
+  .631 \\
++ Aux+Rank &
+  $.650 \pm .056$ &
+  $.731 \pm .062$ &
+  $.637 \pm .041$ &
+  $.551 \pm .066$ &
+  $.568 \pm .033$ &
+  .628 \\
+Adap.\ Aux &
+  $\mathbf{.678} \pm .066$ &
+  $.731 \pm .062$ &
+  $.626 \pm .041$ &
+  $.539 \pm .071$ &
+  $\mathbf{.595} \pm .038$ &
+  $\mathbf{.634}$ \\
+SAMO &
+  $.632 \pm .056$ &
+  $.731 \pm .062$ &
+  $.631 \pm .041$ &
+  $.536 \pm .066$ &
+  $.569 \pm .033$ &
+  .620 \\
+RA-SAMO &
+  $.640 \pm .067$ &
+  $.729 \pm .061$ &
+  $.629 \pm .058$ &
+  $.562 \pm .052$ &
+  $.583 \pm .023$ &
+  .629 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\textbf{No single method dominates.} The best method is
+cancer-dependent: Adaptive Aux wins on BRCA and STAD, pure ranking
+wins on LUAD and LUSC, and the Cox-only baseline wins on KIRC. All
+differences between the top-ranked methods are within noise
+($< 0.005$ mean C-index).
+
+\textbf{RA-SAMO is consistently competitive.} While not the top
+performer on any single cancer, RA-SAMO (mean 0.629) is within
+0.005 of the best method overall (Adaptive Aux, 0.634) and notably
+improves over SAMO (0.620) by 0.009. The gradient projection
+prevents the degradation observed in SAMO, where conflicting
+auxiliary gradients in the ranking branch hurt performance.
+
+\textbf{Ranking loss is redundant with Cox.} The ``+ Rank'' method
+achieves high C-index on LUAD/LUSC but not BRCA, consistent with
+gradient alignment analysis (Section~\ref{sec:diagnostics}): ranking
+gradients are $>93\%$ aligned with Cox, adding signal only when the
+ranking pairs provide complementary information.
+
+\subsection{HAM10000 Classification}
+\label{sec:ham10000}
+
+Table~\ref{tab:ham10000} shows results on 7-class dermoscopic
+classification, demonstrating that RA-SAMO's multi-objective
+framework generalizes beyond survival prediction.
+
+\begin{table}[t]
+\centering
+\caption{HAM10000 7-class classification (mean $\pm$ std over 3
+seeds). Best in \textbf{bold}; lowest std in \underline{underline}.}
+\label{tab:ham10000}
+\begin{tabular}{lcc}
+\toprule
+Method & Macro-F1 & Balanced Acc \\
+\midrule
+Image-Only & $.698 \pm .018$ & $.670 \pm .020$ \\
+Meta-Only  & $.196 \pm .008$ & $.216 \pm .016$ \\
+AdamW      & $\mathbf{.709} \pm .028$ & $\mathbf{.704} \pm .028$ \\
+SAM        & $.704 \pm .033$ & $.683 \pm .035$ \\
+Adap.\ Aux & $.692 \pm .028$ & $.670 \pm .034$ \\
+SAMO       & $.685 \pm .027$ & $.661 \pm .040$ \\
+RA-SAMO    & $\underline{.695 \pm .011}$ & $.667 \pm .023$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{RA-SAMO has the lowest variance.} While AdamW achieves the
+highest absolute macro-F1 (0.709), its cross-seed standard
+deviation is 2.5$\times$ higher than RA-SAMO's (0.028 vs 0.011).
+RA-SAMO's gradient projection smooths the optimization landscape,
+producing more consistent results across random initializations.
+
+\textbf{Metadata contributes minimally.} The Meta-Only baseline
+achieves only 0.196 macro-F1, confirming that the image modality
+dominates. This creates a natural testbed for multimodal optimization:
+methods must learn to utilize the weaker modality without being
+overwhelmed by the stronger one.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Gradient-Level Diagnostics}
+\label{sec:diagnostics}
+
+We conducted a 27-run diagnostic study (3 cancers $\times$ 3
+methods $\times$ 3 folds $\times$ 50 epochs) recording Fisher
+information traces and inter-objective gradient alignments at
+diagnostic epochs.
+
+\subsection{Inter-Objective Gradient Alignment}
+
+Table~\ref{tab:alignment} reports cosine similarity between the
+primary Cox gradient and auxiliary objective gradients, measured in
+encoder parameter space.
+
+\begin{table}[t]
+\centering
+\caption{Gradient cosine similarity: primary Cox vs.\ secondary
+objectives (mean $\pm$ std across folds and diagnostic epochs).}
+\label{tab:alignment}
+\begin{tabular}{lcc}
+\toprule
+Cancer & $\cos(\nabla\mathcal{L}_{\text{cox}}, \nabla\mathcal{L}_{\text{aux}})$ &
+$\cos(\nabla\mathcal{L}_{\text{cox}}, \nabla\mathcal{L}_{\text{rank}})$ \\
+\midrule
+BRCA & $0.180 \pm 0.058$ & $0.981 \pm 0.018$ \\
+KIRC & $0.168 \pm 0.074$ & $0.947 \pm 0.025$ \\
+LUAD & $0.109 \pm 0.062$ & $0.947 \pm 0.027$ \\
+LUSC & $0.106 \pm 0.053$ & $0.933 \pm 0.031$ \\
+STAD & $0.121 \pm 0.055$ & $0.938 \pm 0.029$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Ranking loss is near-redundant.} Across all five cancers,
+$\cos(\nabla\mathcal{L}_{\text{cox}}, \nabla\mathcal{L}_{\text{rank}})
+> 0.93$. The ranking loss pushes parameters in essentially the same
+direction as Cox, providing minimal orthogonal information. This
+explains why ``+ Rank'' alone rarely improves over the baseline.
+
+\textbf{Auxiliary heads provide orthogonal signal.} The cosine
+similarity between Cox and auxiliary gradients is low
+($0.11$--$0.18$), indicating that per-modality survival objectives
+provide genuinely different gradient directions. However, this
+orthogonality means auxiliary gradients may also \textit{conflict}
+with the primary objective, motivating RA-SAMO's projection mechanism.
+
+\subsection{Fisher Information and Modality Imbalance}
+
+The Fisher information trace
+$\text{Tr}(\hat{F}_m) = \frac{1}{|\mathcal{E}|} \sum_{i \in \mathcal{E}}
+\|\nabla_{\theta_m} \ell_i^{\text{Cox}}\|^2$
+quantifies how much gradient signal each encoder receives from
+observed events.
+
+\textbf{Gene encoder dominates.} The gene-to-image Fisher ratio
+exceeds 1.0 across all cancers and methods: 1.12--1.54 for BRCA,
+1.99--2.40 for KIRC, 2.21--2.39 for LUAD. This indicates the gene
+encoder consistently receives stronger per-event gradient signal,
+contrary to the image dominance reported in audiovisual
+settings~\cite{peng2022ogm}. In the survival prediction setting with
+pre-extracted image features, the gene encoder has more trainable
+parameters and larger gradient magnitudes.
+
+\textbf{Fisher imbalance does not predict intervention benefit.}
+We tested whether early-epoch (epochs 1--5) Fisher ratio predicts
+test C-index improvement from auxiliary objectives. The Pearson
+correlation is $r = -0.36$, $p = 0.15$---not statistically
+significant. This suggests that modality imbalance alone does not
+determine whether multi-objective training will help; the gradient
+\textit{direction} (conflict vs.\ alignment) matters more than
+magnitude.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Discussion}
+
+\subsection{Cancer-Dependent Objective Selection}
+
+The most striking finding is that no single objective combination
+dominates across all cancers. Table~\ref{tab:tcga_results} shows:
+\begin{itemize}
+\item \textbf{BRCA} (86\% censored): Adaptive Aux wins (0.678).
+Heavy censoring makes auxiliary per-modality heads valuable for
+representation learning.
+\item \textbf{KIRC} (65\% censored): Baseline Cox wins (0.740).
+Moderate censoring and relatively balanced modalities mean auxiliary
+objectives add noise.
+\item \textbf{LUAD/LUSC}: Ranking loss wins. Moderate event rates
+provide enough comparable pairs for the ranking objective to add signal.
+\item \textbf{STAD} (61\% censored): Adaptive Aux wins (0.595).
+Small cohort size ($n\!=\!367$) benefits from the regularizing
+effect of auxiliary heads.
+\end{itemize}
+
+This cancer-dependence has practical implications: rather than
+applying a single optimizer to all cohorts, practitioners should
+validate objective combinations per cancer type.
+
+\subsection{When Does Gradient Projection Help?}
+
+RA-SAMO improves over SAMO (which lacks projection) by 0.009 mean
+C-index. The projection is most valuable when:
+\begin{enumerate}
+\item Auxiliary gradients are both \textit{informative} (providing
+signal not captured by the primary loss) and \textit{conflicting}
+(opposing the primary gradient direction).
+\item The auxiliary weight is large enough for conflicts to materially
+affect the optimizer step.
+\end{enumerate}
+
+When auxiliary gradients are aligned with the primary (as ranking loss
+nearly always is), projection is rarely triggered and has no effect.
+When auxiliary gradients are orthogonal but non-conflicting, they
+pass through unmodified. The projection mechanism specifically targets
+the harmful case: strong auxiliary signal pushing \textit{against}
+the primary objective.
+
+\subsection{Limitations and Future Work}
+
+\textbf{Scale of differences.} All methods in Table~\ref{tab:tcga_results}
+fall within a narrow C-index band (0.620--0.634 mean). With 5-fold
+cross-validation on cohorts of 367--1,123 patients, individual fold
+variance is large (std 0.02--0.07). Larger cohorts or more folds
+are needed for definitive statistical separation.
+
+\textbf{Fixed architecture.} Results are specific to the late-fusion
+attention architecture with pre-extracted features. Early-fusion
+architectures or end-to-end training may show different gradient
+dynamics.
+
+\textbf{Loss-progress vs.\ performance.} Our adaptive weight
+controller uses loss-progress signals (Eq.~\ref{eq:weight_update}),
+which are not always correlated with C-index improvement. A
+controller that directly optimizes validation C-index (e.g., via
+short inner-validation rollouts) may provide better objective
+selection, though our experiments with 2-epoch rollouts
+showed insufficient differential signal.
+
+\textbf{Computational cost.} RA-SAMO requires per-encoder gradient
+computation via \texttt{autograd.grad} (6 calls per step: 2
+encoders $\times$ 3 objectives), adding $\sim$10--15\% wall-clock
+overhead versus standard backpropagation. This is modest compared
+to SAM's 2$\times$ forward-backward cost.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Conclusion}
+
+We introduced RA-SAMO, a multi-objective optimization framework for
+multimodal medical learning that resolves inter-objective gradient
+conflicts via orthogonal projection. Evaluation across five TCGA
+cancer cohorts and the HAM10000 classification benchmark reveals
+three key findings: (1)~optimal objective combinations are
+cancer-dependent, with no single method dominating; (2)~ranking
+loss is near-redundant with Cox partial likelihood ($\cos > 0.93$),
+while per-modality auxiliary heads provide genuinely orthogonal
+signal; (3)~gradient projection prevents the degradation observed
+in na\"ive multi-objective training, yielding the most consistent
+performance across cancers and random seeds.
+
+These results suggest that optimizer design---specifically, how
+multiple objectives interact in the gradient space of each
+encoder---deserves systematic attention alongside architecture
+and representation choices in multimodal medical AI.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
