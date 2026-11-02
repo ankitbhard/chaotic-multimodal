@@ -1,0 +1,28 @@
+{
+  "completed": true,
+  "method": "adamw",
+  "seed": 43,
+  "epochs": 30,
+  "best_epoch": 16,
+  "best_val_macro_f1": 0.6792977687830047,
+  "test_loss": 0.6395897911000551,
+  "test_accuracy": 0.8339973439575034,
+  "test_macro_f1": 0.7262855357624465,
+  "test_balanced_acc": 0.7210218508219224,
+  "test_auroc": 0.9612713280886904,
+  "test_per_class_f1": [
+    0.6067415730337078,
+    0.7272727272727272,
+    0.7014492753623189,
+    0.7857142857142857,
+    0.5941176470588235,
+    0.9187032418952619,
+    0.75
+  ],
+  "wall_seconds": 1348.013849691,
+  "parameter_count": 11418632,
+  "lr": 0.0001,
+  "weight_decay": 0.0001,
+  "batch_size": 64,
+  "pretrained": true
+}

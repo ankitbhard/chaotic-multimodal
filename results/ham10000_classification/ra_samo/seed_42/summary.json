@@ -1,0 +1,28 @@
+{
+  "completed": true,
+  "method": "ra_samo",
+  "seed": 42,
+  "epochs": 30,
+  "best_epoch": 24,
+  "best_val_macro_f1": 0.7104531974385259,
+  "test_loss": 0.7773277554203256,
+  "test_accuracy": 0.8164768921634293,
+  "test_macro_f1": 0.6999139634437003,
+  "test_balanced_acc": 0.6761680966826041,
+  "test_auroc": 0.9605312822971326,
+  "test_per_class_f1": [
+    0.5168539325842696,
+    0.7307692307692308,
+    0.6013513513513514,
+    0.8666666666666666,
+    0.4918032786885246,
+    0.9141755062680811,
+    0.7777777777777778
+  ],
+  "wall_seconds": 2046.7992549369992,
+  "parameter_count": 11456534,
+  "lr": 0.0001,
+  "weight_decay": 0.0001,
+  "batch_size": 64,
+  "pretrained": true
+}

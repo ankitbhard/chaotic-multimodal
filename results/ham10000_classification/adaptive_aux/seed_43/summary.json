@@ -1,0 +1,28 @@
+{
+  "completed": true,
+  "method": "adaptive_aux",
+  "seed": 43,
+  "epochs": 30,
+  "best_epoch": 19,
+  "best_val_macro_f1": 0.7035794718288458,
+  "test_loss": 0.7214645215305305,
+  "test_accuracy": 0.8286852589641435,
+  "test_macro_f1": 0.7108269555445647,
+  "test_balanced_acc": 0.689216830719292,
+  "test_auroc": 0.9588951781797771,
+  "test_per_class_f1": [
+    0.5208333333333334,
+    0.7590361445783131,
+    0.6727828746177371,
+    0.7407407407407406,
+    0.5636363636363635,
+    0.9187592319054653,
+    0.8
+  ],
+  "wall_seconds": 1372.7230021220003,
+  "parameter_count": 11456534,
+  "lr": 0.0001,
+  "weight_decay": 0.0001,
+  "batch_size": 64,
+  "pretrained": true
+}

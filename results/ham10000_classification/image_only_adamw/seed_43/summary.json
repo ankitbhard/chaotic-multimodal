@@ -1,0 +1,28 @@
+{
+  "completed": true,
+  "method": "image_only_adamw",
+  "seed": 43,
+  "epochs": 30,
+  "best_epoch": 13,
+  "best_val_macro_f1": 0.6882588560848971,
+  "test_loss": 0.6525337309285533,
+  "test_accuracy": 0.8200531208499336,
+  "test_macro_f1": 0.6894801669155199,
+  "test_balanced_acc": 0.664211384167535,
+  "test_auroc": 0.955868967162008,
+  "test_per_class_f1": [
+    0.5555555555555555,
+    0.7142857142857143,
+    0.6319444444444444,
+    0.6666666666666666,
+    0.5565217391304347,
+    0.9135082604470359,
+    0.787878787878788
+  ],
+  "wall_seconds": 1410.4866603720002,
+  "parameter_count": 11180103,
+  "lr": 0.0001,
+  "weight_decay": 0.0001,
+  "batch_size": 64,
+  "pretrained": true
+}
