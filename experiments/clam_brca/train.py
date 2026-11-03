@@ -205,7 +205,7 @@ def run_one(args, fold, method):
             gene_csv_paths=args.gene_csv_paths,
             image_dim=args.image_dim,
             n_top_genes=args.n_top_genes,
-            seed=args.seed, fold=fold, n_folds=args.folds)
+            seed=args.seed, fold=fold, n_folds=args.n_folds)
     split = args._split_cache[split_key]
 
     # Build dataloaders
@@ -474,8 +474,10 @@ def main():
     args.warmup = cfg.get("warmup", 2)
     args.temperature = cfg.get("temperature", 1.0)
 
+    # n_folds = total CV splits (always from config); folds = how many to run
+    args.n_folds = cfg.get("folds", 5)
     if args.folds is None:
-        args.folds = cfg.get("folds", 5)
+        args.folds = args.n_folds
     if args.epochs is None:
         args.epochs = cfg.get("epochs", 50)
     if args.seed is None:
@@ -486,7 +488,7 @@ def main():
     args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {args.device}")
     print(f"Methods: {args.methods}")
-    print(f"Folds: {args.folds}, Epochs: {args.epochs}")
+    print(f"Folds: {args.folds}/{args.n_folds}, Epochs: {args.epochs}")
 
     for fold in range(args.folds):
         for method in args.methods:
