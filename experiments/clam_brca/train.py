@@ -19,6 +19,7 @@ Usage:
 import argparse
 import copy
 import csv
+import gc
 import json
 import math
 import os
@@ -400,6 +401,12 @@ def run_one(args, fold, method):
     print(f"  {method} fold={fold} TEST ci={test_ci:.4f}  "
           f"({wall_s:.0f}s)", flush=True)
 
+    # Free loaders/datasets to reclaim RAM before next method
+    del loaders, model, optimizer
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
     # Save best checkpoint for post-hoc analysis (attention weights, etc.)
     ckpt_path = out_dir / "best_model.pt"
     torch.save(best_state, ckpt_path)
@@ -435,9 +442,7 @@ def run_one(args, fold, method):
             torch.cuda.max_memory_allocated(args.device) / 1024 ** 2)
     summary_file.write_text(json.dumps(summary, indent=2))
 
-    # Clean split cache for this fold to free memory
-    if split_key in getattr(args, "_split_cache", {}):
-        del args._split_cache[split_key]
+    del best_state
 
 
 # ---------------------------------------------------------------------------

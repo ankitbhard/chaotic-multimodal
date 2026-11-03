@@ -130,37 +130,47 @@ def load_meanpooled(paths: List[str], expected_dim: int,
 class CLAMSurvivalDataset(Dataset):
     """Returns variable-length patch bags per patient.
 
-    Pre-caches all subsampled patches in memory at init time to avoid
-    the per-epoch disk I/O bottleneck (~99% of training time without cache).
+    When preload=True, caches all subsampled patches in memory at init time
+    to avoid the per-epoch disk I/O bottleneck. Use preload=True for
+    train/val splits, preload=False for test (used once, saves ~5 GB RAM).
     """
 
-    def __init__(self, records, gene_matrix, image_dim, max_patches=4096):
+    def __init__(self, records, gene_matrix, image_dim, max_patches=4096,
+                 preload=False):
         self.records = records
         self.gene_matrix = gene_matrix.astype(np.float32)
         self.image_dim = image_dim
         self.max_patches = max_patches
+        self._preloaded = preload
 
-        # Preload and cache all patches
-        self._patch_cache = []
-        for i, rec in enumerate(records):
-            patches = load_patches(
-                rec["uni_paths"], image_dim,
-                max_patches, rec["patient_barcode"])
-            self._patch_cache.append(patches)
-            if (i + 1) % 100 == 0:
-                print(f"    cached {i+1}/{len(records)} patients", flush=True)
-        print(f"    cached {len(records)} patients "
-              f"({sum(p.shape[0] for p in self._patch_cache):,} patches)",
-              flush=True)
+        if preload:
+            self._patch_cache = []
+            for i, rec in enumerate(records):
+                patches = load_patches(
+                    rec["uni_paths"], image_dim,
+                    max_patches, rec["patient_barcode"])
+                self._patch_cache.append(patches)
+                if (i + 1) % 200 == 0:
+                    print(f"    cached {i+1}/{len(records)} patients",
+                          flush=True)
+            print(f"    cached {len(records)} patients "
+                  f"({sum(p.shape[0] for p in self._patch_cache):,} patches)",
+                  flush=True)
 
     def __len__(self):
         return len(self.records)
 
     def __getitem__(self, idx):
         rec = self.records[idx]
+        if self._preloaded:
+            patches = self._patch_cache[idx]
+        else:
+            patches = load_patches(
+                rec["uni_paths"], self.image_dim,
+                self.max_patches, rec["patient_barcode"])
         genes = torch.tensor(self.gene_matrix[idx], dtype=torch.float32)
         return (
-            {"patches": self._patch_cache[idx], "gene": genes},
+            {"patches": patches, "gene": genes},
             {"os_months": rec["os_months"],
              "vital_status": rec["vital_status"],
              "survival": rec["surv_label"]},
@@ -174,7 +184,7 @@ class MeanPoolSurvivalDataset(Dataset):
     use before mean-pooling — ensuring both aggregation methods see identical
     input patches for a fair comparison.
 
-    Pre-caches all mean-pooled embeddings at init time.
+    Always preloads (mean-pooled embeddings are small: N x D → D per patient).
     """
 
     def __init__(self, records, gene_matrix, image_dim, max_patches=None):
@@ -182,7 +192,7 @@ class MeanPoolSurvivalDataset(Dataset):
         self.gene_matrix = gene_matrix.astype(np.float32)
         self.image_dim = image_dim
 
-        # Preload and cache all mean-pooled embeddings
+        # Preload all mean-pooled embeddings (small: one [D] vector per patient)
         self._cache = []
         for rec in records:
             self._cache.append(load_meanpooled(
@@ -194,13 +204,12 @@ class MeanPoolSurvivalDataset(Dataset):
         return len(self.records)
 
     def __getitem__(self, idx):
-        rec = self.records[idx]
         genes = torch.tensor(self.gene_matrix[idx], dtype=torch.float32)
         return (
             {"image": self._cache[idx], "gene": genes},
-            {"os_months": rec["os_months"],
-             "vital_status": rec["vital_status"],
-             "survival": rec["surv_label"]},
+            {"os_months": self.records[idx]["os_months"],
+             "vital_status": self.records[idx]["vital_status"],
+             "survival": self.records[idx]["surv_label"]},
         )
 
 
@@ -349,18 +358,28 @@ def build_split(uni_dir: str, gene_csv_paths: List[str],
 # Dataloader factories
 # ---------------------------------------------------------------------------
 
-def build_clam_loaders(split: dict, batch_size: int = 8,
+def build_clam_loaders(split: dict, batch_size: int = 32,
                        max_patches: int = 4096, num_workers: int = 0):
-    """Build CLAM dataloaders from a split dict."""
-    def _loader(recs, genes, shuffle):
-        ds = CLAMSurvivalDataset(recs, genes, split["image_dim"], max_patches)
+    """Build CLAM dataloaders from a split dict.
+
+    Train and val patches are preloaded into RAM to eliminate I/O bottleneck.
+    Test patches are loaded on the fly to keep total RAM under 16 GB.
+    """
+    def _ds(recs, genes, preload):
+        return CLAMSurvivalDataset(
+            recs, genes, split["image_dim"], max_patches, preload=preload)
+
+    def _loader(ds, shuffle):
         return DataLoader(ds, batch_size=batch_size, shuffle=shuffle,
                           num_workers=num_workers, collate_fn=clam_collate_fn,
                           pin_memory=False)
+    train_ds = _ds(split["train_recs"], split["train_genes"], preload=True)
+    val_ds   = _ds(split["val_recs"],   split["val_genes"],   preload=True)
+    test_ds  = _ds(split["test_recs"],  split["test_genes"],  preload=False)
     return {
-        "train": _loader(split["train_recs"], split["train_genes"], True),
-        "val":   _loader(split["val_recs"],   split["val_genes"],   False),
-        "test":  _loader(split["test_recs"],  split["test_genes"],  False),
+        "train": _loader(train_ds, shuffle=True),
+        "val":   _loader(val_ds,   shuffle=False),
+        "test":  _loader(test_ds,  shuffle=False),
     }
 
 
