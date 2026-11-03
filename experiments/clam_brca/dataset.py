@@ -128,7 +128,11 @@ def load_meanpooled(paths: List[str], expected_dim: int,
 # ---------------------------------------------------------------------------
 
 class CLAMSurvivalDataset(Dataset):
-    """Returns variable-length patch bags per patient."""
+    """Returns variable-length patch bags per patient.
+
+    Pre-caches all subsampled patches in memory at init time to avoid
+    the per-epoch disk I/O bottleneck (~99% of training time without cache).
+    """
 
     def __init__(self, records, gene_matrix, image_dim, max_patches=4096):
         self.records = records
@@ -136,17 +140,27 @@ class CLAMSurvivalDataset(Dataset):
         self.image_dim = image_dim
         self.max_patches = max_patches
 
+        # Preload and cache all patches
+        self._patch_cache = []
+        for i, rec in enumerate(records):
+            patches = load_patches(
+                rec["uni_paths"], image_dim,
+                max_patches, rec["patient_barcode"])
+            self._patch_cache.append(patches)
+            if (i + 1) % 100 == 0:
+                print(f"    cached {i+1}/{len(records)} patients", flush=True)
+        print(f"    cached {len(records)} patients "
+              f"({sum(p.shape[0] for p in self._patch_cache):,} patches)",
+              flush=True)
+
     def __len__(self):
         return len(self.records)
 
     def __getitem__(self, idx):
         rec = self.records[idx]
-        patches = load_patches(
-            rec["uni_paths"], self.image_dim,
-            self.max_patches, rec["patient_barcode"])
         genes = torch.tensor(self.gene_matrix[idx], dtype=torch.float32)
         return (
-            {"patches": patches, "gene": genes},
+            {"patches": self._patch_cache[idx], "gene": genes},
             {"os_months": rec["os_months"],
              "vital_status": rec["vital_status"],
              "survival": rec["surv_label"]},
@@ -159,29 +173,31 @@ class MeanPoolSurvivalDataset(Dataset):
     When max_patches is set, subsamples the same patch subset that CLAM would
     use before mean-pooling — ensuring both aggregation methods see identical
     input patches for a fair comparison.
+
+    Pre-caches all mean-pooled embeddings at init time.
     """
 
     def __init__(self, records, gene_matrix, image_dim, max_patches=None):
         self.records = records
         self.gene_matrix = gene_matrix.astype(np.float32)
         self.image_dim = image_dim
-        self.max_patches = max_patches
-        self._cache = {}
+
+        # Preload and cache all mean-pooled embeddings
+        self._cache = []
+        for rec in records:
+            self._cache.append(load_meanpooled(
+                rec["uni_paths"], image_dim,
+                max_patches=max_patches,
+                patient_barcode=rec["patient_barcode"]))
 
     def __len__(self):
         return len(self.records)
 
     def __getitem__(self, idx):
         rec = self.records[idx]
-        key = rec["patient_barcode"]
-        if key not in self._cache:
-            self._cache[key] = load_meanpooled(
-                rec["uni_paths"], self.image_dim,
-                max_patches=self.max_patches,
-                patient_barcode=rec["patient_barcode"])
         genes = torch.tensor(self.gene_matrix[idx], dtype=torch.float32)
         return (
-            {"image": self._cache[key], "gene": genes},
+            {"image": self._cache[idx], "gene": genes},
             {"os_months": rec["os_months"],
              "vital_status": rec["vital_status"],
              "survival": rec["surv_label"]},

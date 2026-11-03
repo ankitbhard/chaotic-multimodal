@@ -208,10 +208,10 @@ def run_one(args, fold, method):
             seed=args.seed, fold=fold, n_folds=args.n_folds)
     split = args._split_cache[split_key]
 
-    # Build dataloaders — both use same max_patches for fair comparison
+    # Build dataloaders — matched batch_size and max_patches for fair comparison
     if cfg["clam"]:
         loaders = build_clam_loaders(
-            split, batch_size=args.clam_batch_size,
+            split, batch_size=args.batch_size,
             max_patches=args.max_patches)
     else:
         loaders = build_meanpool_loaders(
@@ -425,9 +425,8 @@ def run_one(args, fold, method):
         "parameter_count": param_count,
         "trainable_count": trainable_count,
         "seed": args.seed + fold,
-        "batch_size": (args.clam_batch_size if cfg["clam"]
-                       else args.batch_size),
-        "max_patches": args.max_patches if cfg["clam"] else None,
+        "batch_size": args.batch_size,
+        "max_patches": args.max_patches,
         "image_dim": args.image_dim,
         "n_genes": split["n_genes"],
     }
@@ -470,7 +469,6 @@ def main():
     args.lr = cfg.get("lr", 1e-3)
     args.weight_decay = cfg.get("weight_decay", 1e-4)
     args.batch_size = cfg.get("batch_size", 32)
-    args.clam_batch_size = cfg.get("clam_batch_size", 8)
     args.max_patches = cfg.get("max_patches", 4096)
     args.clam_hidden_dim = cfg.get("clam_hidden_dim", 256)
     args.aux_weight = cfg.get("aux_weight", 0.1)
