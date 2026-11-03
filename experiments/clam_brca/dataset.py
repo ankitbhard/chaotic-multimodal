@@ -7,6 +7,7 @@ Multi-slide patients (e.g., 2 BRCA patients with 2 WSIs each) have all
 slides' patches concatenated before aggregation.
 """
 
+import hashlib
 import os
 import random
 from typing import List
@@ -53,53 +54,72 @@ def _load_single_file(path: str) -> torch.Tensor:
     return t
 
 
-def load_patches(paths: List[str], expected_dim: int,
-                 max_patches: int, patient_barcode: str = None) -> torch.Tensor:
-    """Load patch features from slide files, subsample if needed.
+def _stable_hash_seed(barcode: str) -> int:
+    """Deterministic hash seed from patient barcode (process-independent)."""
+    return int(hashlib.sha256(barcode.encode("utf-8")).hexdigest(), 16) % (2**32)
 
-    Multi-slide patients: patches from all slides are concatenated.
-    Subsampling is deterministic per patient (seeded by barcode hash).
 
-    Returns: [N, expected_dim] where N <= max_patches
+def _subsample(patches: torch.Tensor, max_patches: int,
+               patient_barcode: str = None) -> torch.Tensor:
+    """Deterministic subsample to max_patches, shared by CLAM and MeanPool."""
+    if patches.shape[0] <= max_patches:
+        return patches
+    seed = _stable_hash_seed(patient_barcode) if patient_barcode else 0
+    g = torch.Generator().manual_seed(seed)
+    idx = torch.randperm(patches.shape[0], generator=g)[:max_patches]
+    return patches[idx]
+
+
+def _load_all_patches(paths: List[str], expected_dim: int,
+                      patient_barcode: str = None) -> torch.Tensor:
+    """Load and concatenate patches from all slide files for a patient.
+
+    Raises RuntimeError if no valid embeddings are found (no silent zeros).
     """
     all_patches = []
     for path in paths:
         if not path or not os.path.exists(path):
-            continue
-        try:
-            all_patches.append(_load_single_file(path))
-        except Exception as e:
-            print(f"  [WARN] skipping {os.path.basename(path)}: {e}")
+            raise FileNotFoundError(
+                f"Embedding file missing: {path} "
+                f"(patient {patient_barcode})")
+        t = _load_single_file(path)
+        if t.shape[-1] != expected_dim:
+            raise ValueError(
+                f"Dimension mismatch: {path} has dim {t.shape[-1]}, "
+                f"expected {expected_dim}")
+        all_patches.append(t)
 
     if not all_patches:
-        return torch.zeros(1, expected_dim)
+        raise RuntimeError(
+            f"No embedding files for patient {patient_barcode}")
 
-    patches = torch.cat(all_patches, dim=0)     # [total, D]
-
-    if patches.shape[0] > max_patches:
-        seed = hash(patient_barcode) % (2**32) if patient_barcode else 0
-        g = torch.Generator().manual_seed(seed)
-        idx = torch.randperm(patches.shape[0], generator=g)[:max_patches]
-        patches = patches[idx]
-
-    return patches
+    return torch.cat(all_patches, dim=0)     # [total, D]
 
 
-def load_meanpooled(paths: List[str], expected_dim: int) -> torch.Tensor:
-    """Load patches from all slides, mean-pool to [D]."""
-    all_patches = []
-    for path in paths:
-        if not path or not os.path.exists(path):
-            continue
-        try:
-            all_patches.append(_load_single_file(path))
-        except Exception:
-            pass
+def load_patches(paths: List[str], expected_dim: int,
+                 max_patches: int, patient_barcode: str = None) -> torch.Tensor:
+    """Load patch features, subsample if needed.
 
-    if not all_patches:
-        return torch.zeros(expected_dim)
+    Multi-slide patients: patches from all slides are concatenated.
+    Subsampling is deterministic per patient (stable SHA-256 seed).
 
-    patches = torch.cat(all_patches, dim=0)
+    Returns: [N, expected_dim] where N <= max_patches
+    """
+    patches = _load_all_patches(paths, expected_dim, patient_barcode)
+    return _subsample(patches, max_patches, patient_barcode)
+
+
+def load_meanpooled(paths: List[str], expected_dim: int,
+                    max_patches: int = None,
+                    patient_barcode: str = None) -> torch.Tensor:
+    """Load patches, optionally subsample to match CLAM, then mean-pool to [D].
+
+    When max_patches is set, subsamples the SAME patches that CLAM would see
+    before mean-pooling, ensuring both methods operate on identical inputs.
+    """
+    patches = _load_all_patches(paths, expected_dim, patient_barcode)
+    if max_patches is not None:
+        patches = _subsample(patches, max_patches, patient_barcode)
     return patches.mean(dim=0)                   # [D]
 
 
@@ -134,12 +154,18 @@ class CLAMSurvivalDataset(Dataset):
 
 
 class MeanPoolSurvivalDataset(Dataset):
-    """Returns mean-pooled slide embeddings per patient."""
+    """Returns mean-pooled slide embeddings per patient.
 
-    def __init__(self, records, gene_matrix, image_dim):
+    When max_patches is set, subsamples the same patch subset that CLAM would
+    use before mean-pooling — ensuring both aggregation methods see identical
+    input patches for a fair comparison.
+    """
+
+    def __init__(self, records, gene_matrix, image_dim, max_patches=None):
         self.records = records
         self.gene_matrix = gene_matrix.astype(np.float32)
         self.image_dim = image_dim
+        self.max_patches = max_patches
         self._cache = {}
 
     def __len__(self):
@@ -150,7 +176,9 @@ class MeanPoolSurvivalDataset(Dataset):
         key = rec["patient_barcode"]
         if key not in self._cache:
             self._cache[key] = load_meanpooled(
-                rec["uni_paths"], self.image_dim)
+                rec["uni_paths"], self.image_dim,
+                max_patches=self.max_patches,
+                patient_barcode=rec["patient_barcode"])
         genes = torch.tensor(self.gene_matrix[idx], dtype=torch.float32)
         return (
             {"image": self._cache[key], "gene": genes},
@@ -321,10 +349,15 @@ def build_clam_loaders(split: dict, batch_size: int = 8,
 
 
 def build_meanpool_loaders(split: dict, batch_size: int = 32,
-                           num_workers: int = 0):
-    """Build MeanPool dataloaders from a split dict."""
+                           max_patches: int = None, num_workers: int = 0):
+    """Build MeanPool dataloaders from a split dict.
+
+    When max_patches is set, mean-pools from the same subsampled patches
+    that CLAM would use, ensuring a fair comparison.
+    """
     def _loader(recs, genes, shuffle):
-        ds = MeanPoolSurvivalDataset(recs, genes, split["image_dim"])
+        ds = MeanPoolSurvivalDataset(
+            recs, genes, split["image_dim"], max_patches=max_patches)
         return DataLoader(ds, batch_size=batch_size, shuffle=shuffle,
                           num_workers=num_workers, pin_memory=False)
     return {

@@ -208,14 +208,15 @@ def run_one(args, fold, method):
             seed=args.seed, fold=fold, n_folds=args.n_folds)
     split = args._split_cache[split_key]
 
-    # Build dataloaders
+    # Build dataloaders — both use same max_patches for fair comparison
     if cfg["clam"]:
         loaders = build_clam_loaders(
             split, batch_size=args.clam_batch_size,
             max_patches=args.max_patches)
     else:
         loaders = build_meanpool_loaders(
-            split, batch_size=args.batch_size)
+            split, batch_size=args.batch_size,
+            max_patches=args.max_patches)
 
     # Build model
     model = build_experiment_model(
@@ -398,6 +399,11 @@ def run_one(args, fold, method):
     wall_s = time.perf_counter() - start
     print(f"  {method} fold={fold} TEST ci={test_ci:.4f}  "
           f"({wall_s:.0f}s)", flush=True)
+
+    # Save best checkpoint for post-hoc analysis (attention weights, etc.)
+    ckpt_path = out_dir / "best_model.pt"
+    torch.save(best_state, ckpt_path)
+    print(f"  Checkpoint: {ckpt_path}", flush=True)
 
     # Save epoch history
     with (out_dir / "epochs.csv").open("w", newline="") as f:

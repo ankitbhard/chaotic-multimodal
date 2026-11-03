@@ -342,10 +342,25 @@ class TestPatchLoading(unittest.TestCase):
             self.assertEqual(pooled.shape, (64,))
             self.assertAlmostEqual(pooled.mean().item(), 3.0, places=4)
 
-    def test_fallback_on_missing(self):
-        result = load_patches(["/nonexistent/file.pt"], 1024, 4096)
-        self.assertEqual(result.shape, (1, 1024))
-        self.assertTrue((result == 0).all())
+    def test_raises_on_missing(self):
+        """Missing embedding files must raise, not silently substitute zeros."""
+        with self.assertRaises(FileNotFoundError):
+            load_patches(["/nonexistent/file.pt"], 1024, 4096)
+
+    def test_meanpool_matches_clam_subsample(self):
+        """MeanPool with max_patches uses same subsample as CLAM."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "test.pt")
+            torch.save(torch.randn(200, 64), path)
+            barcode = "TCGA-XX-0001"
+
+            patches = load_patches([path], 64, max_patches=50,
+                                   patient_barcode=barcode)
+            pooled = load_meanpooled([path], 64, max_patches=50,
+                                     patient_barcode=barcode)
+            self.assertTrue(torch.allclose(patches.mean(dim=0), pooled),
+                            "MeanPool should average the same subsampled patches")
 
 
 class TestModelInitialization(unittest.TestCase):

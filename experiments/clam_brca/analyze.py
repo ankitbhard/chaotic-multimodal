@@ -10,7 +10,6 @@ import argparse
 import csv
 import json
 from collections import defaultdict
-from math import erfc, sqrt
 from pathlib import Path
 
 import numpy as np
@@ -65,14 +64,25 @@ def summary_table(results):
 
 
 def paired_ttest(results, key="test_ci"):
-    """Paired t-test: CLAM+RA-SAMO vs each other method."""
+    """Paired t-test: CLAM+RA-SAMO vs each other method.
+
+    Uses scipy.stats.ttest_rel for proper t-distribution with n-1 df,
+    which is correct for small fold counts (e.g., n=3).
+    """
     if "clam_ra_samo" not in results:
         return
     ref = sorted(results["clam_ra_samo"], key=lambda r: r["fold"])
     ref_vals = np.array([r[key] for r in ref])
     n = len(ref_vals)
 
-    print(f"\nPaired t-tests (CLAM+RA-SAMO vs others, metric={key}):")
+    try:
+        from scipy.stats import ttest_rel
+        has_scipy = True
+    except ImportError:
+        has_scipy = False
+        print("  (scipy not available — using normal approximation)")
+
+    print(f"\nPaired t-tests (CLAM+RA-SAMO vs others, metric={key}, n={n}):")
     print(f"{'Comparison':<40} {'Diff':>8} {'t':>8} {'p':>8}")
     print("-" * 68)
     for method in METHOD_ORDER:
@@ -82,14 +92,16 @@ def paired_ttest(results, key="test_ci"):
         if len(other) != n:
             continue
         other_vals = np.array([r[key] for r in other])
-        diff = ref_vals - other_vals
-        mean_d = np.mean(diff)
-        if n > 1:
+        if n > 1 and has_scipy:
+            t_stat, p_val = ttest_rel(ref_vals, other_vals)
+        elif n > 1:
+            diff = ref_vals - other_vals
             se = np.std(diff, ddof=1) / np.sqrt(n)
-            t_stat = mean_d / max(se, 1e-12)
-            p_val = erfc(abs(t_stat) / sqrt(2))
+            t_stat = float(np.mean(diff) / max(se, 1e-12))
+            p_val = float("nan")  # no scipy → can't compute proper p
         else:
             t_stat = p_val = float("nan")
+        mean_d = float(np.mean(ref_vals - other_vals))
         sig = " *" if p_val < 0.05 else ""
         label = METHOD_LABELS.get(method, method)
         print(f"  vs {label:<36} {mean_d:>+.4f} {t_stat:>8.3f} {p_val:>8.4f}{sig}")

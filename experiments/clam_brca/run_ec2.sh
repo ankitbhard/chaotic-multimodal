@@ -45,11 +45,16 @@ echo "Running unit tests..."
 /opt/pytorch/bin/python3 -m pytest experiments/clam_brca/test_clam.py -v --tb=short
 
 if [[ "${SMOKE:-0}" == "1" ]]; then
-    echo "SMOKE TEST: 2 epochs, 1 fold, 2 methods"
+    echo "SMOKE TEST: 2 epochs, 1 fold, 2 methods (separate output dir)"
     /opt/pytorch/bin/python3 -m experiments.clam_brca.train \
         --config configs/brca_clam.yaml \
         --methods clam_adamw clam_ra_samo \
-        --folds 1 --epochs 2 --skip-existing
+        --folds 1 --epochs 2 \
+        --out results/clam_brca_smoke
+
+    echo "Generating smoke analysis..."
+    /opt/pytorch/bin/python3 -m experiments.clam_brca.analyze \
+        --results-dir results/clam_brca_smoke
 else
     echo "FULL RUN: 6 methods x 3 folds x 50 epochs"
     /opt/pytorch/bin/python3 -m experiments.clam_brca.train \
@@ -57,10 +62,10 @@ else
         --methods meanpool_adamw meanpool_aux_adamw meanpool_ra_samo \
                   clam_adamw clam_aux_adamw clam_ra_samo \
         --skip-existing
-fi
 
-echo "Generating analysis..."
-/opt/pytorch/bin/python3 -m experiments.clam_brca.analyze \
-    --results-dir results/clam_brca
+    echo "Generating analysis..."
+    /opt/pytorch/bin/python3 -m experiments.clam_brca.analyze \
+        --results-dir results/clam_brca
+fi
 
 echo "SUCCESS: CLAM BRCA experiment complete."
