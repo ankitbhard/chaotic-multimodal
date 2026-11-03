@@ -1,0 +1,40 @@
+# BRCA CLAM Attention MIL — 2x3 controlled experiment
+# MeanPool vs CLAM × {AdamW, aux+AdamW, RA-SAMO}
+
+cancer: brca
+
+# ── Data paths (EC2) ─────────────────────────────────────────────────────────
+uni_dir: /home/ubuntu/tangle_data/brca/brca
+gene_csv_paths:
+  - /home/ubuntu/tcga_brca_data/histology_gene_train.csv
+  - /home/ubuntu/tcga_brca_data/histology_gene_val.csv
+save_dir: results/clam_brca
+
+# ── Model ────────────────────────────────────────────────────────────────────
+image_dim: 1024           # UNI 1024-dim patch embeddings
+clam_hidden_dim: 256      # Gated attention hidden dimension
+fusion_type: attention
+dropout: 0.3
+
+# ── Gene preprocessing ──────────────────────────────────────────────────────
+n_top_genes: 20000
+
+# ── Training ─────────────────────────────────────────────────────────────────
+epochs: 50
+folds: 3
+seed: 42
+lr: 1.0e-3
+weight_decay: 1.0e-4
+
+# ── Batch sizes ──────────────────────────────────────────────────────────────
+batch_size: 32            # MeanPool methods
+clam_batch_size: 8        # CLAM methods (variable-length patches)
+max_patches: 4096         # Cap per patient (subsample if more)
+
+# ── RA-SAMO / auxiliary losses ───────────────────────────────────────────────
+aux_weight: 0.1
+rank_weight: 0.1
+min_weight: 0.02
+max_weight: 0.3
+warmup: 2
+temperature: 1.0
