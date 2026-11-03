@@ -54,6 +54,10 @@ class TestGatedAttentionAggregator(unittest.TestCase):
         z, _ = agg(patches)
         z.sum().backward()
         for name, p in agg.named_parameters():
+            # attention_v.bias gradient is mathematically zero:
+            # adding a constant to all softmax inputs doesn't change output
+            if name == "attention_v.bias":
+                continue
             self.assertIsNotNone(p.grad, f"{name} has no gradient")
             self.assertGreater(p.grad.abs().sum().item(), 0,
                                f"{name} gradient is zero")
