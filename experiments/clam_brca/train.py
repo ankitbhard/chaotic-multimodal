@@ -209,15 +209,29 @@ def run_one(args, fold, method):
             seed=args.seed, fold=fold, n_folds=args.n_folds)
     split = args._split_cache[split_key]
 
-    # Build dataloaders — matched batch_size and max_patches for fair comparison
-    if cfg["clam"]:
-        loaders = build_clam_loaders(
-            split, batch_size=args.batch_size,
-            max_patches=args.max_patches)
+    # Build dataloaders — cached per (fold, aggregation_type) to avoid OOM
+    # from double-allocation when sequential CLAM methods each preload ~10 GB
+    loader_key = (fold, "clam" if cfg["clam"] else "meanpool")
+    if not hasattr(args, "_loader_cache"):
+        args._loader_cache = {}
+    # Free loaders from previous folds to reclaim RAM
+    stale = [k for k in args._loader_cache if k[0] != fold]
+    for k in stale:
+        del args._loader_cache[k]
+    if stale:
+        gc.collect()
+    if loader_key not in args._loader_cache:
+        if cfg["clam"]:
+            args._loader_cache[loader_key] = build_clam_loaders(
+                split, batch_size=args.batch_size,
+                max_patches=args.max_patches)
+        else:
+            args._loader_cache[loader_key] = build_meanpool_loaders(
+                split, batch_size=args.batch_size,
+                max_patches=args.max_patches)
     else:
-        loaders = build_meanpool_loaders(
-            split, batch_size=args.batch_size,
-            max_patches=args.max_patches)
+        print(f"  Reusing cached {loader_key[1]} loaders", flush=True)
+    loaders = args._loader_cache[loader_key]
 
     # Build model
     model = build_experiment_model(
@@ -401,8 +415,8 @@ def run_one(args, fold, method):
     print(f"  {method} fold={fold} TEST ci={test_ci:.4f}  "
           f"({wall_s:.0f}s)", flush=True)
 
-    # Free loaders/datasets to reclaim RAM before next method
-    del loaders, model, optimizer
+    # Free model/optimizer — loaders are cached in args._loader_cache
+    del model, optimizer
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
