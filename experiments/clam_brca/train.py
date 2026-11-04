@@ -22,6 +22,7 @@ import csv
 import gc
 import json
 import math
+import multiprocessing
 import os
 import random
 import sys
@@ -513,13 +514,33 @@ def main():
     print(f"Methods: {args.methods}")
     print(f"Folds: {args.folds}/{args.n_folds}, Epochs: {args.epochs}")
 
+    # Run each fold in a subprocess to guarantee memory is returned to the OS.
+    # Without this, glibc doesn't release freed CLAM patch caches (~10 GB),
+    # causing OOM when the next fold tries to preload its own patches.
+    # Convert args to a plain dict for pickling (drop device, caches)
+    args_dict = {k: v for k, v in vars(args).items()
+                 if not k.startswith("_") and k != "device"}
     for fold in range(args.folds):
-        for method in args.methods:
-            print(f"\n{'='*60}")
-            print(f"  {method}  fold={fold}")
-            print(f"{'='*60}")
-            run_one(args, fold, method)
+        p = multiprocessing.Process(
+            target=_run_fold, args=(args_dict, fold))
+        p.start()
+        p.join()
+        if p.exitcode != 0:
+            print(f"\nWARNING: Fold {fold} exited with code {p.exitcode}",
+                  flush=True)
+
+
+def _run_fold(args_dict, fold):
+    """Run all methods for one fold (called in a subprocess)."""
+    args = argparse.Namespace(**args_dict)
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    for method in args.methods:
+        print(f"\n{'='*60}")
+        print(f"  {method}  fold={fold}")
+        print(f"{'='*60}", flush=True)
+        run_one(args, fold, method)
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method("spawn", force=True)
     main()
