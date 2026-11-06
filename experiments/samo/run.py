@@ -14,16 +14,17 @@ from experiments.samo.representation_gradients import prepare_branch_gradients, 
 from experiments.samo.progress_controller import ProgressController
 from experiments.samo.history_controller import HistoryController, load_history
 from experiments.samo.censor_aware_controller import CensorAwareController, survival_information
+from experiments.samo.v4_controller import V4Controller
 
-METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v3_0","ra_samo_v3_1","ra_samo_v3_2","ra_samo_v3_3")
+METHODS=("baseline","aux","rank","aux_rank","adaptive_aux","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v3_0","ra_samo_v3_1","ra_samo_v3_2","ra_samo_v3_3","ra_samo_v4")
 
 def loss_parts(outputs, t, e, method, temperature):
     risk=outputs["survival"][:,1]
     fusion=cox_efron_free(risk,t,e)
     zero=fusion*0.
-    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
-    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
-    rank=ranking_loss(risk,t,e,temperature) if method.startswith("ra_samo_v3_") or method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2") else zero
+    img=cox_efron_free(outputs["aux_img_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v4") else zero
+    gene=cox_efron_free(outputs["aux_gene_risk"],t,e) if "aux" in method or method.startswith("ra_samo_v3_") or method in ("samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v4") else zero
+    rank=ranking_loss(risk,t,e,temperature) if method.startswith("ra_samo_v3_") or method in ("rank","aux_rank","samo","ra_samo","ra_samo_no_proj","ra_samo_v1","ra_samo_v2","ra_samo_v4") else zero
     return fusion,img,gene,rank
 
 def evaluate(model, loader, device):
@@ -238,12 +239,23 @@ def run_one(args,cancer,fold,method):
             batch_size=cfg.get("batch_size",32),shuffle=True,drop_last=True,num_workers=0,generator=torch.Generator())
         inner_val_loader=DataLoader(Subset(ds,indices[n_inner_train:]),
             batch_size=cfg.get("batch_size",32),shuffle=False,num_workers=0)
+    v4=V4Controller(warmup=args.warmup,probe_epochs=4) if method=="ra_samo_v4" else None
     v3_alignment={}
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
     for epoch in range(args.epochs):
         lr=args.lr*0.5*(1+math.cos(math.pi*epoch/args.epochs))
         for group in optimizer.param_groups:group["lr"]=lr
+        # v4 probe handling
+        if v4 is not None:
+            action=v4.get_action(epoch)
+            if action=="save_checkpoint":
+                v4.save_checkpoint(model,optimizer,generator)
+            elif action=="restore_and_train":
+                v4.restore_checkpoint(model,optimizer,generator)
+                # Re-apply LR after restore
+                for group in optimizer.param_groups:group["lr"]=lr
+            weights=list(v4.state.weights)
         model.train()
         generator.manual_seed(args.seed+fold*10000+epoch)
         sums=np.zeros(4);n=0
@@ -306,13 +318,15 @@ def run_one(args,cancer,fold,method):
                 alignment=v3_alignment if method in ("ra_samo_v3_2","ra_samo_v3_3") else None,
                 validation_scores=v3_val_scores).weights)
         val_loss,val_ci=evaluate(model,val,args.device)
+        if v4 is not None:
+            v4.report_val_ci(epoch,val_ci)
         diag_means={k:v/diag_n for k,v in diag_sums.items()} if diag_n else {}
         if diag_n:
             diag_means.update({f"{branch}_primary_gradient_norm": value/diag_n
                                for branch,value in primary_norm_sums.items()})
         if args.modality_diagnostics:
             diag_means.update(evaluate_modality_diagnostics(model,val,args.device))
-        history.append(dict(**diag_means,v3_mode=(v3.mode if v3 else ""),v3_reason=(v3.state.reason if v3 else ""),v3_event_rate=info.get("event_rate", ""),v3_pair_density=info.get("pair_density", ""),v3_align_aux=v3_alignment.get("aux","") if v3 else "",v3_align_rank=v3_alignment.get("rank","") if v3 else "",v3_align_aux_rel=v3_alignment.get("aux_reliability","") if v3 else "",v3_align_rank_rel=v3_alignment.get("rank_reliability","") if v3 else "",progress_scale_img=progress_scales[0],
+        history.append(dict(**diag_means,v4_phase=(v4.state.phase if v4 else ""),v4_candidate=(v4.state.active_candidate if v4 else ""),v4_reason=(v4.state.reason if v4 else ""),v3_mode=(v3.mode if v3 else ""),v3_reason=(v3.state.reason if v3 else ""),v3_event_rate=info.get("event_rate", ""),v3_pair_density=info.get("pair_density", ""),v3_align_aux=v3_alignment.get("aux","") if v3 else "",v3_align_rank=v3_alignment.get("rank","") if v3 else "",v3_align_aux_rel=v3_alignment.get("aux_reliability","") if v3 else "",v3_align_rank_rel=v3_alignment.get("rank_reliability","") if v3 else "",progress_scale_img=progress_scales[0],
                             progress_scale_gene=progress_scales[1],epoch=epoch+1,train_fusion_loss=means[0],
                             train_img_loss=means[1],train_gene_loss=means[2],
                             train_rank_loss=means[3],val_loss=val_loss,val_ci=val_ci,
@@ -328,11 +342,14 @@ def run_one(args,cancer,fold,method):
     with (out/"epochs.csv").open("w",newline="") as f:
         writer=csv.DictWriter(f,fieldnames=list(history[0]))
         writer.writeheader();writer.writerows(history)
-    summary.write_text(json.dumps(dict(completed=True,dataset=cancer,fold=fold,method=method,
+    summary_data=dict(completed=True,dataset=cancer,fold=fold,method=method,
          epochs=args.epochs,best_epoch=best_epoch,best_val_ci=best,test_ci=test_ci,
          test_loss=test_loss,wall_seconds=time.perf_counter()-start,
          parameter_count=sum(p.numel() for p in model.parameters()),
-         lr=args.lr,weight_decay=args.weight_decay,seed=args.seed+fold),indent=2))
+         lr=args.lr,weight_decay=args.weight_decay,seed=args.seed+fold)
+    if v4 is not None:
+        summary_data["v4_probe"]=v4.summary()
+    summary.write_text(json.dumps(summary_data,indent=2))
 
 def main():
     p=argparse.ArgumentParser()
