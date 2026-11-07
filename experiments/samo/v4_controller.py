@@ -5,15 +5,15 @@ using val C-index directly via a bounded exploration phase.
 
 Architecture:
   Phase 1 — Warmup (epochs 0-1): Train with cox-only, establish baseline
-  Phase 2 — Probe (epochs 2 to probe_end): Test 3 weight configs from shared
+  Phase 2 — Probe (epochs 2 to probe_end): Test 4 weight configs from shared
              checkpoint. Each probe: probe_epochs from same saved state.
              Score by val C-index.
   Phase 3 — Commit (probe_end to end): Lock in winner's weights. No switching.
 
 Key properties:
   - Uses val_ci directly (not loss progress)
-  - Bounded exploration cost (probe_candidates * probe_epochs epochs)
-  - No per-cancer tuning — same 3 candidates everywhere
+  - Bounded exploration cost (4 candidates * 5 probe_epochs = 20 epochs)
+  - No per-cancer tuning — same 4 candidates everywhere
   - Commits early — no switching instability
   - Saves checkpoints during probes — best-overall checkpoint used regardless
 """
@@ -40,10 +40,11 @@ class V4State:
     committed_candidate: Optional[str] = None
 
 
-# The three probe candidates (same everywhere, no per-cancer tuning)
+# The four probe candidates (same everywhere, no per-cancer tuning)
 PROBE_CANDIDATES = [
     ProbeCandidate("cox_only", (0.0, 0.0, 0.0)),
     ProbeCandidate("aux_focus", (0.1, 0.1, 0.0)),
+    ProbeCandidate("rank_focus", (0.0, 0.0, 0.1)),
     ProbeCandidate("balanced", (0.1, 0.1, 0.1)),
 ]
 
@@ -52,7 +53,7 @@ class V4Controller:
     """Validation-directed probe selection controller.
 
     Usage in training loop:
-        controller = V4Controller(warmup=2, probe_epochs=4)
+        controller = V4Controller(warmup=2, probe_epochs=5)
 
         for epoch in range(total_epochs):
             action = controller.get_action(epoch)
@@ -79,7 +80,7 @@ class V4Controller:
                 controller.report_val_ci(epoch, val_ci)
     """
 
-    def __init__(self, warmup: int = 2, probe_epochs: int = 4):
+    def __init__(self, warmup: int = 2, probe_epochs: int = 5):
         self.warmup = warmup
         self.probe_epochs = probe_epochs
         self.candidates = list(PROBE_CANDIDATES)

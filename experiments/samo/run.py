@@ -239,7 +239,7 @@ def run_one(args,cancer,fold,method):
             batch_size=cfg.get("batch_size",32),shuffle=True,drop_last=True,num_workers=0,generator=torch.Generator())
         inner_val_loader=DataLoader(Subset(ds,indices[n_inner_train:]),
             batch_size=cfg.get("batch_size",32),shuffle=False,num_workers=0)
-    v4=V4Controller(warmup=args.warmup,probe_epochs=4) if method=="ra_samo_v4" else None
+    v4=V4Controller(warmup=args.warmup,probe_epochs=5) if method=="ra_samo_v4" else None
     v3_alignment={}
     history=[]; best=-float("inf");best_state=None;best_epoch=0
     start=time.perf_counter()
