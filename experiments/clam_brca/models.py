@@ -66,7 +66,7 @@ class CLAMImageEncoder(nn.Module):
         self.aggregator = GatedAttentionAggregator(input_dim, hidden_dim, dropout)
         self.projection = nn.Sequential(
             nn.Linear(input_dim, self.FEATURE_DIM),
-            nn.BatchNorm1d(self.FEATURE_DIM),
+            nn.LayerNorm(self.FEATURE_DIM),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout),
         )
