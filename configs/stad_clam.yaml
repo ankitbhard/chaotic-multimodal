@@ -1,0 +1,25 @@
+# STAD CLAM Attention MIL — 2x3 controlled experiment
+cancer: stad
+uni_dir: /home/ubuntu/chaotic-multimodal-v2/tangle_data
+gene_csv_paths:
+  - /home/ubuntu/tcga_stad_data/histology_gene_train.csv
+  - /home/ubuntu/tcga_stad_data/histology_gene_val.csv
+save_dir: results/clam_stad
+image_dim: 1536
+clam_hidden_dim: 256
+fusion_type: attention
+dropout: 0.3
+n_top_genes: 20000
+epochs: 50
+folds: 5
+seed: 42
+lr: 1.0e-3
+weight_decay: 1.0e-4
+batch_size: 32
+max_patches: 4096
+aux_weight: 0.1
+rank_weight: 0.1
+min_weight: 0.02
+max_weight: 0.3
+warmup: 2
+temperature: 1.0

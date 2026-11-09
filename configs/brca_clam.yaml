@@ -21,7 +21,7 @@ n_top_genes: 20000
 
 # ── Training ─────────────────────────────────────────────────────────────────
 epochs: 50
-folds: 3
+folds: 5
 seed: 42
 lr: 1.0e-3
 weight_decay: 1.0e-4
