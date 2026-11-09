@@ -28,7 +28,7 @@ weight_decay: 1.0e-4
 
 # ── Batch sizes ──────────────────────────────────────────────────────────────
 batch_size: 32            # Both MeanPool and CLAM (matched for Cox risk sets)
-max_patches: 4096         # Cap per patient (subsample if more)
+max_patches: 2048         # Cap per patient (reduced from 4096 to fit 5-fold in 16GB RAM)
 
 # ── RA-SAMO / auxiliary losses ───────────────────────────────────────────────
 aux_weight: 0.1
