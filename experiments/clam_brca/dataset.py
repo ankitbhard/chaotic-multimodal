@@ -264,17 +264,28 @@ def build_split(uni_dir: str, gene_csv_paths: List[str],
 
     # Discover embedding files — group by patient barcode
     emb_files = {}
+    n_skipped = 0
     try:
         emb_dir = _discover_uni_dir(uni_dir)
         for fname in sorted(os.listdir(emb_dir)):
             if fname.endswith((".pt", ".h5")):
-                barcode = fname[:12]
                 path = os.path.join(emb_dir, fname)
+                # Validate h5 files can be opened (skip corrupt ones)
+                if fname.endswith(".h5"):
+                    try:
+                        import h5py
+                        with h5py.File(path, "r") as _f:
+                            pass
+                    except (OSError, Exception):
+                        n_skipped += 1
+                        continue
+                barcode = fname[:12]
                 emb_files.setdefault(barcode, []).append(path)
     except (FileNotFoundError, OSError):
         pass
 
-    print(f"  Embedding patients: {len(emb_files)}")
+    print(f"  Embedding patients: {len(emb_files)}"
+          + (f"  (skipped {n_skipped} corrupt files)" if n_skipped else ""))
 
     # Non-gene columns
     NON_GENE = {
