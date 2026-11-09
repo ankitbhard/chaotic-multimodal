@@ -380,15 +380,15 @@ def build_clam_loaders(split: dict, batch_size: int = 32,
         return CLAMSurvivalDataset(
             recs, genes, split["image_dim"], max_patches, preload=preload)
 
-    def _loader(ds, shuffle):
+    def _loader(ds, shuffle, drop_last=False):
         return DataLoader(ds, batch_size=batch_size, shuffle=shuffle,
                           num_workers=num_workers, collate_fn=clam_collate_fn,
-                          pin_memory=False)
+                          pin_memory=False, drop_last=drop_last)
     train_ds = _ds(split["train_recs"], split["train_genes"], preload=True)
     val_ds   = _ds(split["val_recs"],   split["val_genes"],   preload=True)
     test_ds  = _ds(split["test_recs"],  split["test_genes"],  preload=False)
     return {
-        "train": _loader(train_ds, shuffle=True),
+        "train": _loader(train_ds, shuffle=True, drop_last=True),
         "val":   _loader(val_ds,   shuffle=False),
         "test":  _loader(test_ds,  shuffle=False),
     }
@@ -401,13 +401,15 @@ def build_meanpool_loaders(split: dict, batch_size: int = 32,
     When max_patches is set, mean-pools from the same subsampled patches
     that CLAM would use, ensuring a fair comparison.
     """
-    def _loader(recs, genes, shuffle):
+    def _loader(recs, genes, shuffle, drop_last=False):
         ds = MeanPoolSurvivalDataset(
             recs, genes, split["image_dim"], max_patches=max_patches)
         return DataLoader(ds, batch_size=batch_size, shuffle=shuffle,
-                          num_workers=num_workers, pin_memory=False)
+                          num_workers=num_workers, pin_memory=False,
+                          drop_last=drop_last)
     return {
-        "train": _loader(split["train_recs"], split["train_genes"], True),
+        "train": _loader(split["train_recs"], split["train_genes"], True,
+                         drop_last=True),
         "val":   _loader(split["val_recs"],   split["val_genes"],   False),
         "test":  _loader(split["test_recs"],  split["test_genes"],  False),
     }
