@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "method": "meanpool_ra_samo",
+  "fold": 1,
+  "epochs": 50,
+  "best_epoch": 1,
+  "best_val_ci": 0.5101088646967341,
+  "test_ci": 0.5619469026548672,
+  "test_loss": 2.738440910975138,
+  "wall_seconds": 11.538296345000163,
+  "parameter_count": 1754885,
+  "trainable_count": 1754885,
+  "seed": 43,
+  "batch_size": 32,
+  "max_patches": 4096,
+  "image_dim": 1536,
+  "n_genes": 1000,
+  "peak_gpu_mb": 61.12548828125
+}

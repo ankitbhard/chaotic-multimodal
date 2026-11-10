@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "method": "clam_sgd",
+  "fold": 0,
+  "epochs": 50,
+  "best_epoch": 13,
+  "best_val_ci": 0.43886743886743884,
+  "test_ci": 0.5989847715736041,
+  "test_loss": 2.704709768295288,
+  "wall_seconds": 348.9164253399995,
+  "parameter_count": 2500868,
+  "trainable_count": 2500868,
+  "seed": 42,
+  "batch_size": 32,
+  "max_patches": 4096,
+  "image_dim": 1536,
+  "n_genes": 1000,
+  "peak_gpu_mb": 2197.4130859375
+}

@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "method": "meanpool_adamw",
+  "fold": 4,
+  "epochs": 50,
+  "best_epoch": 24,
+  "best_val_ci": 0.6625412541254125,
+  "test_ci": 0.567915036333147,
+  "test_loss": 4.968319007328579,
+  "wall_seconds": 8.51418006700078,
+  "parameter_count": 1451523,
+  "trainable_count": 1451523,
+  "seed": 46,
+  "batch_size": 32,
+  "max_patches": 2048,
+  "image_dim": 1024,
+  "n_genes": 1000,
+  "peak_gpu_mb": 45.2216796875
+}
