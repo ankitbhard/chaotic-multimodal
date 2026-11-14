@@ -74,3 +74,57 @@ class LossWeightController:
         self.weights=list(state["weights"])
         self.baseline=state["baseline"]
         self.smooth=state["smooth"]
+
+
+class GradNormEMAController:
+    """EMA controller using per-objective gradient norms w.r.t. the shared layer.
+
+    Same smoothing/bounding logic as LossWeightController, but driven by
+    gradient-norm ratios instead of loss ratios — a richer signal about
+    optimization difficulty per auxiliary head.
+    """
+    def __init__(self, initial=(0.1, 0.1, 0.1), min_weight=0.02,
+                 max_weight=0.3, ema=0.9, warmup=2, max_change=0.02):
+        if not (0 <= ema < 1 and 0 < min_weight <= max_weight and max_change > 0):
+            raise ValueError("invalid controller configuration")
+        self.weights = list(initial)
+        self.min_weight = min_weight
+        self.max_weight = max_weight
+        self.ema = ema
+        self.warmup = warmup
+        self.max_change = max_change
+        self.baseline = None
+        self.smooth = None
+
+    def update(self, epoch, grad_norms):
+        """Update once per epoch from [img_norm, gene_norm, rank_norm] means."""
+        values = [float(v) for v in grad_norms]
+        if not all(__import__("math").isfinite(v) and v >= 0 for v in values):
+            return self.weights[:]
+        if self.baseline is None:
+            self.baseline = [max(v, 1e-8) for v in values]
+            self.smooth = values[:]
+        else:
+            self.smooth = [self.ema * a + (1 - self.ema) * b
+                           for a, b in zip(self.smooth, values)]
+        if epoch < self.warmup:
+            return self.weights[:]
+        ratios = [self.smooth[i] / self.baseline[i] for i in range(3)]
+        center = max(sum(ratios) / len(ratios), 1e-8)
+        for i, ratio in enumerate(ratios):
+            target = max(self.min_weight,
+                         min(self.max_weight, 0.1 * ratio / center))
+            delta = max(-self.max_change,
+                        min(self.max_change, target - self.weights[i]))
+            self.weights[i] = max(self.min_weight,
+                                  min(self.max_weight, self.weights[i] + delta))
+        return self.weights[:]
+
+    def state_dict(self):
+        return dict(weights=self.weights[:], baseline=self.baseline,
+                    smooth=self.smooth)
+
+    def load_state_dict(self, state):
+        self.weights = list(state["weights"])
+        self.baseline = state["baseline"]
+        self.smooth = state["smooth"]

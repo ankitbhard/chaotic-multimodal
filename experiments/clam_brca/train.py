@@ -38,11 +38,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../.."))
 from models.joint_model import build_model
 from experiments.cvpr_reliability_pilot.models import JointModelWithAux
 from experiments.clam_brca.models import (
-    JointModelCLAM, JointModelCLAMWithAux)
+    JointModelCLAM, JointModelCLAMWithAux, JointModelCLAMWithContrastive)
 from experiments.clam_brca.dataset import (
     build_split, build_clam_loaders, build_meanpool_loaders)
 from experiments.samo.objectives import (
-    cox_efron_free, ranking_loss, LossWeightController)
+    cox_efron_free, ranking_loss, LossWeightController, GradNormEMAController)
 from experiments.samo.representation_gradients import (
     prepare_branch_gradients, apply_branch_gradients)
 from train_survival import concordance_index
@@ -71,6 +71,70 @@ METHOD_CONFIG = {
     "clam_aux_adamw": {
         "clam": True, "aux": True, "project": False, "adaptive": True,
     },
+    "clam_adam": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "adam",
+    },
+    "clam_sgd": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "sgd",
+    },
+    "clam_adadelta": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "adadelta",
+    },
+    "clam_rmsprop": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "rmsprop",
+    },
+    "clam_adagrad": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "adagrad",
+    },
+    "clam_sgd_nesterov": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "optimizer": "sgd_nesterov",
+    },
+    "clam_aux_only": {
+        "clam": True, "aux": True, "rank": False, "project": False,
+        "adaptive": True,
+    },
+    "clam_rank_only": {
+        "clam": True, "aux": False, "rank": True, "project": False,
+        "adaptive": True,
+    },
+    "clam_aux_static": {
+        "clam": True, "aux": True, "rank": False, "project": False,
+        "adaptive": False,
+    },
+    "clam_rank_static": {
+        "clam": True, "aux": False, "rank": True, "project": False,
+        "adaptive": False,
+    },
+    "clam_amo_static": {
+        "clam": True, "aux": True, "rank": True, "project": False,
+        "adaptive": False,
+    },
+    "clam_elasticnet": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "regularizer": "elasticnet",
+    },
+    "clam_contrastive": {
+        "clam": True, "aux": False, "project": False, "adaptive": False,
+        "regularizer": "contrastive",
+    },
+    "clam_consistency": {
+        "clam": True, "aux": True, "project": False, "adaptive": False,
+        "regularizer": "consistency",
+    },
+    "clam_gradnorm": {
+        "clam": True, "aux": True, "rank": True, "project": False,
+        "adaptive": False, "regularizer": "gradnorm",
+    },
+    "clam_gradnorm_ema": {
+        "clam": True, "aux": True, "rank": True, "project": False,
+        "adaptive": "gradnorm_ema",
+    },
 }
 
 ALL_METHODS = list(METHOD_CONFIG.keys())
@@ -82,6 +146,94 @@ def seed_all(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+# ---------------------------------------------------------------------------
+# Regularization baselines
+# ---------------------------------------------------------------------------
+
+def elastic_net_penalty(model, lambda1=1e-4, lambda2=1e-4):
+    """L1 + L2 penalty on gene_encoder, shared, and head_survival parameters."""
+    l1 = l2 = 0.0
+    for mod in (model.gene_encoder, model.shared, model.head_survival):
+        for p in mod.parameters():
+            l1 = l1 + p.abs().sum()
+            l2 = l2 + (p ** 2).sum()
+    return lambda1 * l1 + lambda2 * l2
+
+
+def info_nce_loss(proj_img, proj_gene, temperature=0.1):
+    """Cross-modal InfoNCE. Positives = same patient, negatives = others."""
+    logits = proj_img @ proj_gene.T / temperature  # [B, B]
+    labels = torch.arange(logits.size(0), device=logits.device)
+    loss_i2g = torch.nn.functional.cross_entropy(logits, labels)
+    loss_g2i = torch.nn.functional.cross_entropy(logits.T, labels)
+    return (loss_i2g + loss_g2i) / 2
+
+
+def consistency_loss(risk_img, risk_gene, risk_fused):
+    """MSE between centered per-modality and fused risk scores."""
+    ri = risk_img - risk_img.mean()
+    rg = risk_gene - risk_gene.mean()
+    rf = risk_fused - risk_fused.mean()
+    return ((ri - rf) ** 2).mean() + ((rg - rf) ** 2).mean()
+
+
+def gradnorm_update(model, task_losses, weights, state,
+                    alpha=1.5, lr=0.025):
+    """GradNorm per-batch weight update (Chen et al., 2018).
+
+    Balances gradient norms of weighted task losses w.r.t. the last
+    shared layer, steering training rates toward parity.
+    """
+    shared_params = [p for p in model.shared.parameters()
+                     if p.requires_grad]
+    if not shared_params:
+        return weights
+
+    # Record initial losses on first call
+    if "initial_losses" not in state:
+        state["initial_losses"] = [l.detach().item() for l in task_losses]
+
+    # Per-task gradient norms w.r.t. shared layer
+    G = []
+    for loss in task_losses:
+        grads = torch.autograd.grad(loss, shared_params,
+                                    retain_graph=True, allow_unused=True)
+        sq = torch.tensor(0.0, device=loss.device)
+        for g in grads:
+            if g is not None:
+                sq = sq + g.flatten().norm() ** 2
+        G.append(sq.item() ** 0.5)
+
+    # Weighted gradient norms and mean
+    Gw = [w * g for w, g in zip(weights, G)]
+    Gw_bar = float(np.mean(Gw)) if sum(Gw) > 0 else 1.0
+
+    # Relative inverse training rates
+    rates = [l.item() / max(l0, 1e-8)
+             for l, l0 in zip(task_losses, state["initial_losses"])]
+    r_mean = float(np.mean(rates))
+    r_rel = [r / max(r_mean, 1e-8) for r in rates]
+
+    # Target gradient norms
+    targets = [Gw_bar * (r ** alpha) for r in r_rel]
+
+    # Update weights via gradient descent on |Gw_i - target_i|
+    new_w = []
+    for i in range(len(weights)):
+        grad = np.sign(Gw[i] - targets[i]) * G[i]
+        w = weights[i] - lr * grad
+        new_w.append(max(0.02, min(0.3, w)))
+
+    # Renormalize to preserve total weight budget
+    total = sum(new_w)
+    budget = sum(weights)
+    if total > 0:
+        new_w = [w * budget / total for w in new_w]
+        new_w = [max(0.02, min(0.3, w)) for w in new_w]
+
+    return new_w
 
 
 # ---------------------------------------------------------------------------
@@ -113,6 +265,12 @@ def build_experiment_model(method, n_genes, image_dim, hidden_dim, dropout,
 
     if not cfg["clam"] and cfg["aux"]:
         model = JointModelWithAux(n_genes, image_dim, dropout)
+        _copy_matching(baseline, model)
+        return model
+
+    if cfg.get("regularizer") == "contrastive":
+        model = JointModelCLAMWithContrastive(
+            n_genes, image_dim, hidden_dim, dropout)
         _copy_matching(baseline, model)
         return model
 
@@ -245,19 +403,49 @@ def run_one(args, fold, method):
                           if p.requires_grad)
     print(f"  {method}: {trainable_count:,} trainable params", flush=True)
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    opt_name = METHOD_CONFIG[method].get("optimizer", "adamw")
+    if opt_name == "adam":
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif opt_name == "sgd":
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=args.lr, momentum=0.9,
+            weight_decay=args.weight_decay)
+    elif opt_name == "sgd_nesterov":
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=args.lr, momentum=0.9,
+            nesterov=True, weight_decay=args.weight_decay)
+    elif opt_name == "adadelta":
+        optimizer = torch.optim.Adadelta(
+            model.parameters(), lr=1.0, weight_decay=args.weight_decay)
+    elif opt_name == "rmsprop":
+        optimizer = torch.optim.RMSprop(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    elif opt_name == "adagrad":
+        optimizer = torch.optim.Adagrad(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    else:
+        optimizer = torch.optim.AdamW(
+            model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
     # Weight controller (RA-SAMO & aux methods)
     controller = LossWeightController(
         initial=(args.aux_weight, args.aux_weight, args.rank_weight),
         min_weight=args.min_weight, max_weight=args.max_weight,
         warmup=args.warmup)
+    gnorm_controller = None
+    if cfg["adaptive"] == "gradnorm_ema":
+        gnorm_controller = GradNormEMAController(
+            initial=(args.aux_weight, args.aux_weight, args.rank_weight),
+            min_weight=args.min_weight, max_weight=args.max_weight,
+            warmup=args.warmup)
     weights = [args.aux_weight, args.aux_weight, args.rank_weight]
 
     # Reset peak memory counter
     if torch.cuda.is_available():
         torch.cuda.reset_peak_memory_stats(args.device)
+
+    gradnorm_state = {}  # for GradNorm per-batch tracking
 
     history = []
     best_ci = -float("inf")
@@ -274,6 +462,8 @@ def run_one(args, fold, method):
         # --- Train ---
         model.train()
         sums = np.zeros(4)
+        reg_loss_sum = 0.0
+        gnorm_sums = np.zeros(3)  # img, gene, rank grad norms
         n_batches = 0
         diag_sums = {k: 0.0 for k in (
             "image_cosine_aux", "image_cosine_rank",
@@ -302,17 +492,59 @@ def run_one(args, fold, method):
             if cfg["aux"]:
                 img_loss = cox_efron_free(outputs["aux_img_risk"], t, e)
                 gene_loss = cox_efron_free(outputs["aux_gene_risk"], t, e)
+            else:
+                img_loss = gene_loss = zero
+
+            use_rank = cfg.get("rank", cfg["aux"])  # default: rank follows aux
+            if use_rank:
                 rank_loss_val = ranking_loss(risk, t, e, args.temperature)
             else:
-                img_loss = gene_loss = rank_loss_val = zero
+                rank_loss_val = zero
 
-            loss = (fusion_loss
-                    + weights[0] * img_loss
-                    + weights[1] * gene_loss
-                    + weights[2] * rank_loss_val)
+            reg = cfg.get("regularizer")
+            if reg == "elasticnet":
+                reg_loss_val = elastic_net_penalty(model)
+                loss = fusion_loss + reg_loss_val
+            elif reg == "contrastive":
+                reg_loss_val = info_nce_loss(
+                    outputs["proj_img"], outputs["proj_gene"])
+                loss = fusion_loss + args.aux_weight * reg_loss_val
+            elif reg == "consistency":
+                reg_loss_val = consistency_loss(
+                    outputs["aux_img_risk"], outputs["aux_gene_risk"], risk)
+                loss = fusion_loss + args.aux_weight * reg_loss_val
+            elif reg == "gradnorm":
+                weights = gradnorm_update(
+                    model, [img_loss, gene_loss, rank_loss_val],
+                    weights, gradnorm_state)
+                reg_loss_val = None
+                loss = (fusion_loss
+                        + weights[0] * img_loss
+                        + weights[1] * gene_loss
+                        + weights[2] * rank_loss_val)
+            else:
+                reg_loss_val = None
+                loss = (fusion_loss
+                        + weights[0] * img_loss
+                        + weights[1] * gene_loss
+                        + weights[2] * rank_loss_val)
 
             if not torch.isfinite(loss):
                 raise RuntimeError(f"Non-finite loss at epoch {epoch}")
+
+            # Per-objective gradient norms for gradnorm_ema controller
+            if gnorm_controller is not None:
+                shared_params = [p for p in model.shared.parameters()
+                                 if p.requires_grad]
+                batch_gnorms = []
+                for obj_loss in [img_loss, gene_loss, rank_loss_val]:
+                    grads = torch.autograd.grad(
+                        obj_loss, shared_params,
+                        retain_graph=True, allow_unused=True)
+                    norm = sum(g.flatten().norm() ** 2
+                               for g in grads if g is not None) ** 0.5
+                    batch_gnorms.append(float(norm))
+                gnorm_sums += np.array(batch_gnorms)
 
             # RA-SAMO gradient preparation
             prepared = None
@@ -350,6 +582,8 @@ def run_one(args, fold, method):
             sums += np.array([float(z.detach()) for z in
                               [fusion_loss, img_loss, gene_loss,
                                rank_loss_val]])
+            if reg_loss_val is not None:
+                reg_loss_sum += float(reg_loss_val.detach())
             n_batches += 1
 
         if n_batches == 0:
@@ -358,7 +592,10 @@ def run_one(args, fold, method):
         means = (sums / n_batches).tolist()
 
         # Update adaptive weights
-        if cfg["adaptive"]:
+        if cfg["adaptive"] == "gradnorm_ema":
+            gnorm_means = (gnorm_sums / n_batches).tolist()
+            weights = list(gnorm_controller.update(epoch, gnorm_means))
+        elif cfg["adaptive"]:
             weights = list(controller.update(epoch, means))
 
         # --- Validate ---
@@ -382,6 +619,7 @@ def run_one(args, fold, method):
             "attention_entropy": (entropy_sum / entropy_n
                                   if entropy_n > 0 else ""),
             "elapsed_s": time.perf_counter() - start,
+            "train_reg_loss": reg_loss_sum / n_batches if cfg.get("regularizer") else "",
         }
         if diag_n > 0:
             for k, v in diag_sums.items():
