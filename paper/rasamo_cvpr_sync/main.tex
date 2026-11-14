@@ -42,8 +42,7 @@ We propose AMO (Adaptive Multi-Objective Training), a
 novel multi-objective training framework for multimodal cancer survival prediction
 that dynamically balances fusion-level Cox supervision,
 modality-specific auxiliary survival objectives, and a
-censoring-aware pairwise ranking loss. AMO employs an exponential
-moving average (EMA)-based controller to monitor objective-specific
+censoring-aware pairwise ranking loss. AMO employs a moving average (EMA)-based controller to monitor objective-specific
 training dynamics and adaptively regulate their contributions,
 enabling more effective and stable optimization of attention-based
 multimodal representations.
@@ -105,8 +104,7 @@ primary Cox loss on the fused prediction plus per-modality
 auxiliary Cox heads that provide each encoder with direct survival
 feedback, and a censoring-aware pairwise ranking loss that captures
 ordinal patient relationships beyond the risk-set formulation
-(Fig.~\ref{fig:pipeline}). An exponential moving average
-(EMA)-based weight controller monitors per-objective training
+(Fig.~\ref{fig:pipeline}). A moving average (EMA)-based weight controller monitors per-objective training
 dynamics---using either loss ratios or gradient norms as the
 driving signal---and adaptively regulates their
 contributions, upweighting
@@ -313,12 +311,13 @@ $\mathbf{v} \in \mathbb{R}^h$, and $\sigma$ is the sigmoid
 function. The slide-level representation is
 $\mathbf{z} = \sum_k a_k \mathbf{p}_k \in
 \mathbb{R}^{d_{\text{img}}}$.
-Crucially, the attention weights $\{a_k\}$ are
-\textit{trainable}---they are shaped by the gradient signal that
-flows through them. Under single-objective Cox training, this signal
-is limited to the fused survival gradient. AMO provides
-additional per-modality gradient paths that help the attention
-mechanism identify prognostically relevant patches.
+Since $\{a_k\}$ depend on learnable parameters
+$\mathbf{W}_1, \mathbf{W}_2, \mathbf{v}$, the quality of the
+attention ranking is determined by the training signal. Under
+single-objective Cox training, only the fused survival gradient
+shapes these weights. AMO provides additional per-modality gradient
+paths that help the attention mechanism identify prognostically
+relevant patches.
 
 \subsection{Multimodal Architecture}
 
@@ -332,7 +331,7 @@ The slide representation $\mathbf{z}$ is projected:
 \label{eq:img_enc}
 \end{equation}
 
-\textbf{Gene encoder.}
+\noindent\textbf{Gene encoder.}
 A three-layer MLP encodes gene expression:
 \begin{equation}
 \mathbf{h}^{\text{gene}} = \text{MLP}_{512 \to 256 \to 128}(
@@ -343,50 +342,28 @@ A three-layer MLP encodes gene expression:
 with batch normalization, ReLU, and dropout ($p\!=\!0.3$) after
 each layer.
 
-\textbf{Cross-modal attention fusion.}
-Both representations are projected to a shared $d\!=\!256$ space,
-and a learned attention network computes per-patient modality
-weights:
-\begin{equation}
-\alpha_m = \frac{
-  \exp\!\bigl(\mathbf{u}^\top \tanh(\mathbf{W}_a
-  \tilde{\mathbf{h}}^m)\bigr)
-}{
-  \sum_{m'} \exp\!\bigl(\mathbf{u}^\top \tanh(\mathbf{W}_a
-  \tilde{\mathbf{h}}^{m'})\bigr)
-}
-\label{eq:attn}
-\end{equation}
-where $m \in \{\text{img}, \text{gene}\}$ indexes the two modalities,
-$\tilde{\mathbf{h}}^m = \mathbf{W}_m \mathbf{h}^m \in \mathbb{R}^{256}$
-denotes the projected representation of modality $m$,
-$\mathbf{W}_a \in \mathbb{R}^{h \times 256}$ and
-$\mathbf{u} \in \mathbb{R}^h$ are learnable attention parameters,
-and $\sum_{m'}$ sums over both modalities.
-The fused representation is:
-\begin{equation}
-\mathbf{h} = \sum_{m \in \{\text{img}, \text{gene}\}} \alpha_m \tilde{\mathbf{h}}^m \in \mathbb{R}^{256}
-\label{eq:fused}
-\end{equation}
+\noindent\textbf{Cross-modal attention fusion.}
+Both representations are projected to a shared $d\!=\!256$ space
+via $\tilde{\mathbf{h}}^m = \mathbf{W}_m \mathbf{h}^m \in
+\mathbb{R}^{256}$, and a learned attention network computes
+per-patient modality weights $\alpha_m$ using the same
+softmax-over-scores mechanism as Eq.~\ref{eq:clam_attn},
+but over the two modalities $m \in \{\text{img}, \text{gene}\}$.The fused representation is
+$\mathbf{h} = \sum_m \alpha_m \tilde{\mathbf{h}}^m \in
+\mathbb{R}^{256}$.
 
-\textbf{Survival head.}
-A shared layer ($256 \to 256$, ReLU, dropout) followed by a linear
+\noindent\textbf{Survival head.}A shared layer ($256 \to 256$, ReLU, dropout) followed by a linear
 projection yields risk score $r_i$.
 
-\textbf{Auxiliary heads.}
-Each modality has a lightweight auxiliary survival head that maps
-its encoder output to a scalar risk prediction. The image auxiliary
-head is a two-layer MLP
-($512 \to 64 \to 1$) applied to $\mathbf{h}^{\text{img}}$;
-the gene auxiliary head is analogous
-($128 \to 64 \to 1$) applied to $\mathbf{h}^{\text{gene}}$.
-These heads produce per-modality risk scores
-$r^{\text{img}}_i$ and $r^{\text{gene}}_i$ used as auxiliary
-Cox objectives (Section~\ref{sec:loss}).
+\noindent\textbf{Auxiliary heads.}
+Lightweight two-layer MLPs map each encoder output to scalar
+risk scores $r^{\text{img}}_i$ and $r^{\text{gene}}_i$, used
+as auxiliary Cox objectives (Section~\ref{sec:loss}).
 
 \subsection{Multi-Objective Survival Loss}
 \label{sec:loss}
 
+The core of AMO is its multi-objective loss decomposition.
 The total loss combines the primary Cox objective with three
 auxiliary components:
 \begin{equation}
@@ -398,11 +375,11 @@ auxiliary components:
 \end{equation}
 where $e$ denotes the current epoch.
 
-\textbf{Primary Cox loss.}
+\noindent\textbf{Primary Cox loss.}
 $\mathcal{L}_{\text{cox}}^{\text{fuse}}$ applies the Cox partial
 log-likelihood (Eq.~\ref{eq:cox}) to the fused risk score $r_i$.
 
-\textbf{Per-modality auxiliary Cox losses.}
+\noindent\textbf{Per-modality auxiliary Cox losses.}
 $\mathcal{L}_{\text{cox}}^{\text{img}}$ and
 $\mathcal{L}_{\text{cox}}^{\text{gene}}$ apply Eq.~\ref{eq:cox}
 to per-modality risk scores from auxiliary heads. These provide each
@@ -413,7 +390,7 @@ attention-based aggregation, this signal propagates through the
 attention weights $\{a_k\}$, teaching the MIL mechanism which
 patches carry prognostic information.
 
-\textbf{Pairwise survival ranking loss.}
+\noindent\textbf{Pairwise survival ranking loss.}
 For comparable pairs where patient $i$ has an observed event before
 patient $j$'s follow-up ends:
 \begin{equation}
@@ -433,43 +410,49 @@ comparable pairs are abundant.
 \subsection{Adaptive EMA Weight Control}
 \label{sec:adaptive}
 
-The weights $\boldsymbol{\lambda} = (\lambda_{\text{img}}, \lambda_{\text{gene}},
-\lambda_{\text{rank}})$ are updated per epoch using an EMA-based
-controller. Let $\ell_k^{(e)}$ denote the epoch-mean training loss
-for component $k \in \{\text{img}, \text{gene}, \text{rank}\}$ at
-epoch $e$, and let $\bar{\ell}_k^{(e)}$ be its EMA-smoothed value:
+The second key component of AMO is its adaptive weight controller.
+The auxiliary weights $\boldsymbol{\lambda} = (\lambda_{\text{img}},
+\lambda_{\text{gene}}, \lambda_{\text{rank}})$ from
+Eq.~\ref{eq:total_loss} are updated once per epoch based on how
+each auxiliary loss evolves relative to its initial value. Let
+$\mathcal{L}_k^{(e)}$ denote the epoch-mean training loss for
+auxiliary component $k \in \{\text{img}, \text{gene}, \text{rank}\}$
+at epoch $e$, corresponding to $\mathcal{L}_{\text{cox}}^{\text{img}}$,
+$\mathcal{L}_{\text{cox}}^{\text{gene}}$, and
+$\mathcal{L}_{\text{rank}}$ respectively. The controller first
+smooths each loss with a moving average:
 \begin{equation}
-\bar{\ell}_k^{(e)} = \beta \cdot \bar{\ell}_k^{(e-1)} +
-(1 - \beta) \cdot \ell_k^{(e)}
+\bar{\mathcal{L}}_k^{(e)} = \beta \cdot \bar{\mathcal{L}}_k^{(e-1)} +
+(1 - \beta) \cdot \mathcal{L}_k^{(e)}
 \end{equation}
-where $\beta \in (0, 1)$ is the smoothing factor.
-
-The controller computes normalized ratios against first-epoch
-baselines and adjusts weights toward components whose losses
-are lagging:
+where $\beta \in (0, 1)$ is a smoothing factor. The controller
+then computes a normalized ratio that measures how much each
+component's loss has changed relative to its first-epoch baseline:
 \begin{equation}
-\hat{\lambda}_k^{(e)} = \frac{\bar{\ell}_k^{(e)} \,/\, \bar{\ell}_k^{(0)}}
-{\frac{1}{3}\textstyle\sum_{j=1}^{3} \bar{\ell}_j^{(e)} \,/\, \bar{\ell}_j^{(0)}}
+\hat{\lambda}_k^{(e)} = \frac{\bar{\mathcal{L}}_k^{(e)} \,/\,
+\bar{\mathcal{L}}_k^{(0)}}
+{\frac{1}{3}\sum_{k'=1}^{3} \bar{\mathcal{L}}_{k'}^{(e)} \,/\,
+\bar{\mathcal{L}}_{k'}^{(0)}}
 \label{eq:weight_ratio}
 \end{equation}
+Components whose losses are lagging (decreasing more slowly than
+average) receive $\hat{\lambda}_k > 1$, increasing their weight.
+The weight update applies bounded changes:
 \begin{equation}
-\delta_k = \text{clip}\!\big(0.1\,\hat{\lambda}_k^{(e)} - \lambda_k^{(e)},\;
-\pm\Delta_{\max}\big)
+\delta_k = \mathrm{clip}\!\big(\lambda_0\,\hat{\lambda}_k^{(e)} -
+\lambda_k^{(e)},\; -\Delta_{\max},\; \Delta_{\max}\big)
 \label{eq:weight_delta}
 \end{equation}
 \begin{equation}
-\lambda_k^{(e+1)} = \text{clip}\!\big(\lambda_k^{(e)} + \delta_k,\;
-[\lambda_{\min},\, \lambda_{\max}]\big)
+\lambda_k^{(e+1)} = \mathrm{clip}\!\big(\lambda_k^{(e)} + \delta_k,\;
+\lambda_{\min},\; \lambda_{\max}\big)
 \label{eq:weight_update}
 \end{equation}
-where $\text{clip}(x, a, b) = \max(a, \min(b, x))$ clamps $x$ to
-the interval $[a, b]$. Hyperparameter values
-($\beta$, $\lambda_{\min}$, $\lambda_{\max}$, $\Delta_{\max}$,
-warmup period) are specified in Section~\ref{sec:clam_exp}. This bounded
-controller adapts all three objective weights per-cancer: increasing
-auxiliary pressure on heavily censored cancers (BRCA, where the
-primary Cox signal is sparse) and reducing it where the primary loss
-suffices (KIRC).
+where $\mathrm{clip}(x, a, b) = \max(a, \min(b, x))$ clamps $x$ to
+$[a, b]$, and $\lambda_0$ is the initial weight value that anchors
+the target scale. All hyperparameters ($\beta$, $\lambda_0$,
+$\lambda_{\min}$, $\lambda_{\max}$, $\Delta_{\max}$, warmup period)
+are specified in Section~\ref{sec:clam_exp}.
 
 \subsection{Training Pipeline}
 
@@ -479,8 +462,7 @@ changes beyond the lightweight auxiliary heads
 foundation model are aggregated via CLAM's gated attention
 (Eq.~\ref{eq:clam_attn}) to produce a slide-level representation;
 (2)~the image and gene encoders produce modality-specific
-embeddings, which are fused via cross-modal attention
-(Eq.~\ref{eq:attn}); (3)~the fused representation and per-modality
+embeddings, which are fused via cross-modal attention; (3)~the fused representation and per-modality
 embeddings are passed through the survival head and auxiliary heads
 to compute all four losses (Eq.~\ref{eq:total_loss}); (4)~the
 combined loss is backpropagated and the base optimizer updates the
@@ -559,15 +541,17 @@ The learning rate follows a cosine annealing schedule:
 \end{equation}
 where $\eta_{\max} = 10^{-3}$, $\eta_{\min} = 0$, and $T = 50$ epochs.
 
-\textbf{AMO hyperparameters.}
+\noindent\textbf{AMO hyperparameters.}
 EMA smoothing factor $\beta = 0.9$, warmup period of 2 epochs
 (during which weights are held at their initial values),
 weight bounds $[\lambda_{\min}, \lambda_{\max}] = [0.02, 0.3]$,
 maximum per-epoch weight change $\Delta_{\max} = 0.02$,
 initial auxiliary weight $\lambda_0 = 0.1$, and ranking
-temperature $\tau = 1.0$.
+temperature $\tau = 1.0$. All values were selected via
+preliminary experiments on BRCA fold~0 and held fixed across
+all cancers and folds.
 
-\textbf{Regularization baseline hyperparameters.}
+\noindent\textbf{Regularization baseline hyperparameters.}
 Elastic Net: $\lambda_1 = \lambda_2 = 10^{-4}$ (additional to
 AdamW weight decay). Contrastive (InfoNCE): $\lambda = 0.1$,
 $\tau = 0.1$. Consistency (MSE): $\lambda = 0.1$.

@@ -432,7 +432,7 @@ def run_one(args, fold, method):
     controller = LossWeightController(
         initial=(args.aux_weight, args.aux_weight, args.rank_weight),
         min_weight=args.min_weight, max_weight=args.max_weight,
-        warmup=args.warmup)
+        ema=args.ema_beta, warmup=args.warmup)
     gnorm_controller = None
     if cfg["adaptive"] == "gradnorm_ema":
         gnorm_controller = GradNormEMAController(
@@ -735,6 +735,7 @@ def main():
     args.max_weight = cfg.get("max_weight", 0.3)
     args.warmup = cfg.get("warmup", 2)
     args.temperature = cfg.get("temperature", 1.0)
+    args.ema_beta = cfg.get("ema_beta", 0.9)
 
     # n_folds = total CV splits (always from config); folds = how many to run
     args.n_folds = cfg.get("folds", 5)
