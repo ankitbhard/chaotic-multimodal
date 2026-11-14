@@ -100,14 +100,16 @@ overshadow weaker but potentially complementary survival
 information.
 
 To address this, we introduce AMO (Adaptive
-Multi-Objective Optimization), which decomposes training into a
+Multi-Objective Training), which decomposes training into a
 primary Cox loss on the fused prediction plus per-modality
 auxiliary Cox heads that provide each encoder with direct survival
 feedback, and a censoring-aware pairwise ranking loss that captures
 ordinal patient relationships beyond the risk-set formulation
 (Fig.~\ref{fig:pipeline}). An exponential moving average
 (EMA)-based weight controller monitors per-objective training
-dynamics and adaptively regulates their contributions---upweighting
+dynamics---using either loss ratios or gradient norms as the
+driving signal---and adaptively regulates their
+contributions, upweighting
 auxiliary supervision on heavily censored cancers where the primary
 Cox signal is sparse, and reducing it where the baseline already
 performs well---eliminating the need for manual per-cancer tuning.
@@ -115,7 +117,7 @@ performs well---eliminating the need for manual per-cancer tuning.
 Our contributions are:
 
 \begin{itemize}
-\item \textbf{A multi-objective optimization framework for
+\item \textbf{A multi-objective training framework for
 multimodal survival prediction.} Unlike standard approaches that
 rely on a single fused Cox loss, AMO decomposes training into four
 complementary survival objectives: (i)~the primary fused Cox loss,
@@ -128,10 +130,11 @@ patient relationships beyond the risk-set formulation.
 
 \item \textbf{An EMA-based adaptive controller for dynamic loss
 balancing.} An EMA controller
-monitors the real-time training progress of each objective and
-automatically adjusts their relative contributions during
-training. This eliminates manual per-cancer weight tuning: the
-controller increases auxiliary pressure on heavily censored
+monitors the real-time training progress of each objective---using
+either per-objective loss ratios or gradient norms as the driving
+signal---and automatically adjusts their relative contributions
+during training. This eliminates manual per-cancer weight tuning:
+the controller increases auxiliary pressure on heavily censored
 cancers where the primary Cox signal is sparse, and reduces it
 where the baseline already performs well.
 %(Section~\ref{sec:adaptive}).
@@ -141,9 +144,9 @@ We evaluate AMO on
 five TCGA cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under stratified
 5-fold cross-validation using gated attention MIL
 (CLAM~\cite{lu2021abmil}), comparing against four regularization
-baselines (Elastic Net, Contrastive, Consistency, GradNorm). AMO improves over the best per-cancer baseline
-on four of five cancers, with comparable performance on the fifth
-(STAD), yielding cohort-dependent gains in convergence speed
+baselines (Elastic Net, Contrastive, Consistency, GradNorm). AMO achieves the best test C-index on three of five cancers
+and ranks second on a fourth, yielding cohort-dependent gains
+in convergence speed
 and training stability. Component ablations confirm that the full
 four-objective formulation outperforms both the auxiliary-only and
 rank-only variants on every cancer, and gradient projection analysis
