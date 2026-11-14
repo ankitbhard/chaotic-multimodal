@@ -1,0 +1,19 @@
+{
+  "completed": true,
+  "method": "clam_gradnorm_ema",
+  "fold": 1,
+  "epochs": 50,
+  "best_epoch": 7,
+  "best_val_ci": 0.6863354037267081,
+  "test_ci": 0.5855327468230694,
+  "test_loss": 2.3717127641042075,
+  "wall_seconds": 205.31648057501297,
+  "parameter_count": 2542086,
+  "trainable_count": 2542086,
+  "seed": 43,
+  "batch_size": 32,
+  "max_patches": 4096,
+  "image_dim": 1536,
+  "n_genes": 1000,
+  "peak_gpu_mb": 1957.22900390625
+}
