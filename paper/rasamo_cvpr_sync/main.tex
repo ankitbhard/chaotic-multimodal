@@ -39,7 +39,7 @@ overshadow weaker but potentially complementary survival
 information.
 
 We propose AMO (Adaptive Multi-Objective Training), a
-novel optimization method for multimodal cancer survival prediction
+novel multi-objective training framework for multimodal cancer survival prediction
 that dynamically balances fusion-level Cox supervision,
 modality-specific auxiliary survival objectives, and a
 censoring-aware pairwise ranking loss. AMO employs an exponential
@@ -48,17 +48,13 @@ training dynamics and adaptively regulate their contributions,
 enabling more effective and stable optimization of attention-based
 multimodal representations.
 
-We evaluate AMO on the survival prediction task using attention-based multiple-instance learning
-across five TCGA cancer cohorts against established optimization
-baselines. Experimental results demonstrate improved overall
-survival discrimination across diverse cancer types, highlighting
-the benefits of adaptive multi-objective supervision. Further
-analyses reveal cohort-dependent improvements in convergence
-efficiency and generalization, while examining how adaptive loss
-balancing and gradient interactions contribute to learning
-stability. These findings highlight the potential of adaptive
-multi-objective optimization for robust and effective multimodal
-cancer survival prediction.
+We evaluate AMO on a multimodal survival pipeline that combines
+whole-slide histopathology images with gene expression profiles
+across five TCGA cancer cohorts. AMO achieves the best test C-index on three of five cancer types
+and ranks second on a fourth---no baseline wins on more than two.
+Further analyses show faster convergence on select cohorts and
+improved generalization, with test C-index exceeding validation
+on three cancers.
 Code and experimental results are publicly available.\footnote{\url{https://anonymous.4open.science/r/AMO/}}
 \end{abstract}
 
