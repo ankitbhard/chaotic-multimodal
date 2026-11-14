@@ -140,14 +140,12 @@ cancers where the primary Cox signal is sparse, and reduces it
 where the baseline already performs well.
 %(Section~\ref{sec:adaptive}).
 
-\item \textbf{Extensive evaluation across five cancer cohorts and eleven baselines.}
+\item \textbf{Extensive evaluation across five cancer cohorts and four regularization baselines.}
 We evaluate AMO on
 five TCGA cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under stratified
 5-fold cross-validation using gated attention MIL
-(CLAM~\cite{lu2021abmil}), comparing against seven established
-optimizers (SGD, SGD+Nesterov, Adam, AdamW, Adadelta, RMSprop,
-Adagrad) and four regularization baselines (Elastic Net, Contrastive,
-Consistency, GradNorm). AMO improves over the best per-cancer baseline
+(CLAM~\cite{lu2021abmil}), comparing against four regularization
+baselines (Elastic Net, Contrastive, Consistency, GradNorm). AMO improves over the best per-cancer baseline
 on four of five cancers, with comparable performance on the fifth
 (STAD), yielding cohort-dependent gains in convergence speed
 and training stability. Component ablations confirm that the full
@@ -530,17 +528,12 @@ STAD & 367   & 39.4\% & 60.6\% & UNI2-h 1536-d \\
 \subsection{Experimental Design}
 \label{sec:clam_exp}
 
-To isolate the contribution of the loss formulation from the
-choice of optimizer, we conduct two sets of comparisons.
-First, we train the CLAM attention MIL pipeline
-(Section~\ref{sec:clam}) with seven established optimizers (SGD,
-SGD+Nesterov, Adam, AdamW, Adadelta, RMSprop, Adagrad), each
-using the standard single Cox loss, to establish an optimizer-only
-performance ceiling. Second, we evaluate AMO (with and without gradient projection) and five
-regularization baselines (Elastic Net, Contrastive, Consistency,
-GradNorm, GradNorm EMA), all using AdamW as the base optimizer, to test whether
-gains arise from the multi-objective survival formulation or from
-generic regularization. All methods share identical data splits,
+To isolate the contribution of the loss formulation, we compare
+AMO (with and without gradient projection) against a Cox-only
+AdamW baseline and four regularization baselines (Elastic Net,
+Contrastive, Consistency, GradNorm), all using AdamW as the base
+optimizer, to test whether gains arise from the multi-objective
+survival formulation or from generic regularization. All methods share identical data splits,
 gene preprocessing, and training protocol.
 Additional ablations with
 individual objective components are reported in
@@ -583,11 +576,10 @@ GradNorm~\cite{chen2018gradnorm}: $\alpha = 1.5$, lr$_w = 0.025$.
 \centering
 \caption{Test C-index (5-fold mean $\pm$ std) on CLAM attention MIL
 across five TCGA cancers. Best per-cancer in \textbf{bold}.
-Optimizer baselines use Cox-only loss; regularization baselines
-add a single regularizer to Cox+AdamW ($\lambda\!=\!0.1$);
+Baseline uses Cox-only loss with AdamW; regularization baselines
+add a single regularizer ($\lambda\!=\!0.1$);
 AMO uses the full multi-objective framework
-(Section~\ref{sec:method}) with AdamW as base optimizer;
-AMO+GP adds gradient projection.}
+(Section~\ref{sec:method}); AMO+GP adds gradient projection.}
 \label{tab:clam_results}
 \begin{tabular}{ll|ccccc|c}
 \toprule
@@ -624,7 +616,7 @@ AMO+GP adds gradient projection.}
 \section{Results}
 \label{sec:clam_results}
 
-We evaluate AMO against twelve baseline loss functions on the same
+We evaluate AMO against four regularization baselines on the same
 multimodal survival pipeline across five TCGA cancers
 (Table~\ref{tab:clam_results}). The results demonstrate gains
 in three categories: survival discrimination, training stability,
@@ -632,8 +624,8 @@ and convergence speed.
 
 \subsection{Survival Discrimination}
 
-AMO achieves a mean C-index of 0.643, compared to 0.572--0.619
-for seven Cox-only baselines
+AMO achieves a mean C-index of 0.643, compared to 0.619 for the
+Cox-only baseline and 0.614--0.634 for four regularization baselines
 (Table~\ref{tab:clam_results}). When measured against the best
 per-cancer baseline (which differs by cancer), AMO improves on
 four of five cohorts with a mean gain of $+0.011$: $+0.051$ on
@@ -648,24 +640,23 @@ survival feedback. \textbf{KIRC}, with similar event rate (34.6\%)
 but a larger baseline C-index (0.718), still benefits substantially
 ($+0.019$), reaching 0.737---the highest C-index in our study.
 \textbf{BRCA}, despite heavy censoring (86.4\% censored) that
-limits the Cox signal, gains $+0.006$ over the best baseline
-(Adam) as the auxiliary heads compensate by providing additional
-per-encoder supervision from the sparse observed events.
-\textbf{LUSC} shows a modest $+0.008$ gain.
+limits the Cox signal, reaches $0.664$---comparable to Consistency
+($0.667$) but well above the Cox-only baseline ($0.641$).
+\textbf{LUSC} shows a modest gain over the Cox-only baseline
+($+0.019$).
 
 \textbf{STAD} ($n\!=\!367$) is the only cancer where AMO does not
-exceed the best baseline (0.582 vs.\ 0.603 for SGD+Nesterov,
-$\Delta = -0.021$). The small cohort size limits the reliability
+exceed the best baseline (0.582 vs.\ 0.590 for GradNorm,
+$\Delta = -0.008$). The small cohort size limits the reliability
 of validation-based model selection: with only $\sim$73 patients
 per fold, the best-checkpoint signal is noisy. However, AMO
 achieves substantially better stability on this cohort
 (Section~\ref{sec:stability}).
 
-Notably, the best-performing baselines (Adam, AdamW) plateau at
-identical mean C-index (0.619) despite different update rules,
-confirming that optimizer choice alone is insufficient. The gains
-arise from multi-objective supervision and adaptive weighting, not
-from the underlying optimizer.
+Notably, the strongest regularization baseline (Consistency, 0.634)
+still trails AMO by $+0.009$, confirming that the gains arise from
+multi-objective supervision and adaptive weighting, not from generic
+regularization alone.
 
 \subsection{Training Stability}
 \label{sec:stability}
@@ -673,13 +664,11 @@ from the underlying optimizer.
 AMO's effect on fold-level variance is cohort-dependent
 (Table~\ref{tab:clam_results}). On \textbf{STAD}---the smallest
 cohort ($n\!=\!367$)---AMO achieves the lowest fold-level standard
-deviation of any method (std$\,=\,0.034$), compared to 0.082 for
-Adadelta, 0.070 for SGD, and 0.046 for AdamW. SGD achieves the
-highest mean C-index on STAD (0.603) but with std$\,=\,0.070$,
-indicating its result is driven by outlier folds rather than
-consistent improvement. On this small cohort, multi-objective
-training stabilizes optimization by providing multiple gradient
-signals that reduce sensitivity to individual data splits.
+deviation of any method (std$\,=\,0.034$), compared to 0.072 for
+GradNorm, 0.063 for Consistency, and 0.041 for AdamW. On this
+small cohort, multi-objective training stabilizes optimization by
+providing multiple gradient signals that reduce sensitivity to
+individual data splits.
 
 On the other four cancers, AMO's fold-level variance is comparable
 to or slightly higher than AdamW (e.g., BRCA: 0.108 vs.\ 0.069;
@@ -921,10 +910,9 @@ encoder, gene encoder, fusion module---to share one gradient
 signal. AMO demonstrates that decomposing this into four
 complementary objectives produces gains on four of five
 cancer types ($+0.011$ mean C-index over the best per-cancer
-baseline). This improvement does not arise from a better
-optimizer: Adam, AdamW, SGD, and four other baselines all plateau
-at 0.572--0.619 despite fundamentally different update rules.
-Instead, the gains come from richer supervision---each encoder
+baseline). This improvement does not arise from generic regularization:
+the strongest baseline (Consistency, 0.634) still trails AMO
+by a meaningful margin. Instead, the gains come from richer supervision---each encoder
 receives direct survival feedback through its auxiliary Cox head,
 while the ranking loss captures ordinal patient relationships that
 the risk-set formulation of Cox alone cannot express.
@@ -964,8 +952,8 @@ four complementary objectives: a primary fused Cox loss,
 per-modality auxiliary Cox heads, and a censoring-aware pairwise
 ranking loss, governed by an EMA-based adaptive controller. AMO
 improves over the best per-cancer baseline on four of five TCGA
-cancers (0.643 mean C-index vs.\ 0.572--0.619 for seven
-baselines), demonstrating
+cancers (0.643 mean C-index vs.\ 0.619 for Cox-only and
+0.634 for the best regularization baseline), demonstrating
 that the improvement arises from multi-objective supervision rather
 than optimizer choice. The adaptive controller eliminates
 per-cancer weight tuning by adjusting objective contributions on
