@@ -140,11 +140,12 @@ where the baseline already performs well.
 %(Section~\ref{sec:adaptive}).
 
 \item \textbf{Extensive evaluation across five cancer cohorts and four regularization baselines.}
-We evaluate AMO on
-five TCGA cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under stratified
-5-fold cross-validation using gated attention MIL
-(CLAM~\cite{lu2021abmil}), comparing against four regularization
-baselines (Elastic Net, Contrastive, Consistency, GradNorm). AMO achieves the best test C-index on three of five cancers
+We evaluate AMO on a multimodal survival pipeline combining
+whole-slide histopathology images with gene expression profiles
+across five TCGA cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under
+stratified 5-fold cross-validation, comparing against four
+regularization baselines (Elastic Net, Contrastive, Consistency,
+GradNorm). AMO achieves the best test C-index on three of five cancers
 and ranks second on a fourth, yielding cohort-dependent gains
 in convergence speed
 and training stability. Component ablations confirm that the full
