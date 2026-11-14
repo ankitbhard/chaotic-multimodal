@@ -211,16 +211,20 @@ multimodal settings. Elastic net
 regularization~\cite{simon2011elastic} extends $\ell_1 + \ell_2$
 penalties to Cox models, encouraging sparsity and shrinkage in
 high-dimensional covariates. Cross-modal contrastive
-learning~\cite{oord2018cpc} aligns representations across
-modalities via InfoNCE, maximizing agreement between matched pairs
-to promote shared feature spaces without task-specific
-supervision. Consistency regularization encourages agreement
+learning~\cite{oord2018cpc, li2025cpathomic} aligns representations
+across modalities via InfoNCE, maximizing agreement between matched
+pairs to promote shared feature spaces without task-specific
+supervision. Consistency
+regularization~\cite{ma2023calibrating} encourages agreement
 between per-modality predictions by penalizing divergence in their
-risk outputs. While each strategy addresses a different aspect of
+risk outputs.
+GradNorm~\cite{chen2018gradnorm} dynamically balances task weights
+by normalizing per-objective gradient magnitudes with respect to a
+shared layer. While each strategy addresses a different aspect of
 the learning problem---weight complexity, representation
-alignment, and prediction agreement---none provides
-modality-specific survival supervision. In
-Table~\ref{tab:clam_results}, we evaluate all three as
+alignment, prediction agreement, and gradient balancing---none
+provides modality-specific survival supervision. In
+Table~\ref{tab:clam_results}, we evaluate all four as
 controlled baselines to determine whether AMO's gains arise from
 its multi-objective survival formulation or from generic
 regularization.
