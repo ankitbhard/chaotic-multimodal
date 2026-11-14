@@ -575,7 +575,8 @@ GradNorm~\cite{chen2018gradnorm}: $\alpha = 1.5$, lr$_w = 0.025$.
 \begin{table*}[t]
 \centering
 \caption{Test C-index (5-fold mean $\pm$ std) on CLAM attention MIL
-across five TCGA cancers. Best per-cancer in \textbf{bold}.
+across five TCGA cancers. Best per-cancer in \textbf{bold},
+second-best \underline{underlined}.
 Baseline uses Cox-only loss with AdamW; regularization baselines
 add a single regularizer ($\lambda\!=\!0.1$);
 AMO uses the full multi-objective framework
@@ -592,12 +593,12 @@ AMO uses the full multi-objective framework
 \multicolumn{8}{l}{\textit{Regularization Baselines (Cox + AdamW + regularizer)}} \\
 & +Elastic Net & $.632 \pm .056$ & $.702 \pm .038$ &
   $.605 \pm .039$ & $.545 \pm .057$ & $.587 \pm .056$ & .614 \\
-& +Contrastive & $.665 \pm .087$ & $.720 \pm .022$ &
+& +Contrastive & $\underline{.665} \pm .087$ & $.720 \pm .022$ &
   $.638 \pm .049$ & $.554 \pm .070$ & $.566 \pm .049$ & .629 \\
 & +Consistency & $\mathbf{.667} \pm .081$ & $.717 \pm .032$ &
-  $.658 \pm .078$ & $.566 \pm .065$ & $.563 \pm .063$ & .634 \\
+  $\underline{.658} \pm .078$ & $\underline{.566} \pm .065$ & $.563 \pm .063$ & \underline{.634} \\
 & +GradNorm & $.634 \pm .087$ & $.712 \pm .042$ &
-  $.646 \pm .061$ & $\mathbf{.578} \pm .072$ & $.590 \pm .023$ & .632 \\
+  $.646 \pm .061$ & $\mathbf{.578} \pm .072$ & $\underline{.590} \pm .023$ & .632 \\
 \midrule
 \multicolumn{8}{l}{\textit{AMO (Ours)}} \\
 & AMO     & $.664 \pm .108$ &
@@ -605,8 +606,8 @@ AMO uses the full multi-objective framework
   $.563 \pm .069$ & $.582 \pm .034$ &
   \textbf{.643} \\
 & AMO+GP  & $.598 \pm .098$ &
-  $.733 \pm .044$ & $.650 \pm .038$ &
-  $.563 \pm .040$ & $.592 \pm .045$ &
+  $\underline{.733} \pm .044$ & $.650 \pm .038$ &
+  $.563 \pm .040$ & $\mathbf{.592} \pm .045$ &
   .627 \\
 \bottomrule
 \end{tabular}
