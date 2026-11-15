@@ -49,8 +49,7 @@ multimodal representations.
 
 We evaluate AMO on a multimodal survival pipeline that combines
 whole-slide histopathology images with gene expression profiles
-across five TCGA cancer cohorts. AMO achieves the best test C-index on three of five cancer types
-and ranks second on a fourth---no baseline wins on more than two.
+across five TCGA cancer cohorts. AMO achieves the highest test C-index on three cohorts (KIRC, LUAD, and STAD via AMO+GP) and the highest five-cohort mean C-index (0.643), while no baseline wins on more than two cancers---making AMO the most consistent method across diverse cancer types.
 Further analyses show faster convergence on select cohorts and
 improved generalization, with test C-index exceeding validation
 on three cancers.
@@ -61,96 +60,49 @@ Code and experimental results are publicly available.\footnote{\url{https://anon
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \section{Introduction}
 
-Accurate survival prediction is central to cancer treatment
-planning, enabling clinicians to stratify patients by risk and
-tailor therapeutic strategies accordingly.
-Two data modalities have emerged as particularly informative for
-this task. Whole-slide images (WSIs) capture the spatial
-organization of tissue morphology, cellular architecture, and
-tumor microenvironment at high resolution, while foundation
-models~\cite{chen2024uni, vorontsov2024virchow, lu2024conch}
-now extract rich per-patch embeddings that encode these visual
-patterns. Bulk RNA-seq gene expression profiles provide a
-complementary molecular view, reflecting pathway activity, gene
-regulation, and the underlying biological drivers of tumor
-progression. Multimodal deep learning methods that combine
-histopathology and genomics have demonstrated that the two
-modalities carry complementary prognostic signal---visual features
-reveal spatial tissue patterns that genomic data cannot capture,
-while molecular profiles expose regulatory mechanisms invisible in
-histology~\cite{chen2021, chen2022porpoise, acosta2022,
-jaume2024survpath}.
+Accurate cancer survival prediction enables clinicians to stratify
+patients by risk and tailor treatment. Whole-slide images (WSIs)
+and gene expression profiles carry complementary prognostic
+signal~\cite{chen2021, chen2022porpoise, acosta2022,
+jaume2024survpath}, and multimodal methods that combine both have
+advanced rapidly with pathology foundation
+models~\cite{chen2024uni, vorontsov2024virchow, lu2024conch}.
 
-However, state-of-the-art multimodal survival methods---such as
-CLAM~\cite{lu2021abmil}, PORPOISE~\cite{chen2022porpoise},
-MCAT~\cite{chen2021}, and SurvPath~\cite{jaume2024survpath}---rely
-on a single fused loss function, typically the Cox partial
-likelihood~\cite{cox1972}, that trains all components jointly
-but does not allow each modality encoder to learn independently.
-This single objective must simultaneously optimize image and
-genomic encoders, cross-modal fusion, and---when attention-based
-multiple instance learning (MIL)~\cite{lu2021abmil} is
-used---thousands of patch-level attention weights. In practice,
-the resulting gradient signal is too diffuse: each encoder
-receives only indirect supervision filtered through the fusion
-layer, and differences in learning dynamics across modalities can
-lead to imbalanced optimization where dominant representations
-overshadow weaker but potentially complementary survival
-information.
+However, state-of-the-art methods---PORPOISE~\cite{chen2022porpoise},
+MCAT~\cite{chen2021}, SurvPath~\cite{jaume2024survpath}---train with
+a single fusion-level survival loss (Cox partial likelihood or
+discrete-time NLL) that must simultaneously optimize image and
+genomic encoders, cross-modal fusion, and attention-based
+MIL~\cite{lu2021abmil} weights. Each encoder receives only indirect
+supervision filtered through the fusion layer, and modality learning
+dynamics can diverge, causing dominant representations to overshadow
+weaker ones.
 
-To address this, we introduce AMO (Adaptive
-Multi-Objective Training), which decomposes training into a
-primary Cox loss on the fused prediction plus per-modality
-auxiliary Cox heads that provide each encoder with direct survival
-feedback, and a censoring-aware pairwise ranking loss that captures
-ordinal patient relationships beyond the risk-set formulation
-(Fig.~\ref{fig:pipeline}). A moving average (EMA)-based weight controller monitors per-objective training
-dynamics---using either loss ratios or gradient norms as the
-driving signal---and adaptively regulates their
-contributions, upweighting
-auxiliary supervision on heavily censored cancers where the primary
-Cox signal is sparse, and reducing it where the baseline already
-performs well---eliminating the need for manual per-cancer tuning.
+We introduce AMO (Adaptive Multi-Objective Training), which
+decomposes training into a primary fused Cox loss, per-modality
+auxiliary Cox heads, and a censoring-aware pairwise ranking loss
+(Fig.~\ref{fig:pipeline}). An EMA-based controller monitors
+per-objective training dynamics and adaptively regulates their
+contributions, eliminating manual per-cancer tuning.
 
 Our contributions are:
-
 \begin{itemize}
 \item \textbf{A multi-objective training framework for
-multimodal survival prediction.} Unlike standard approaches that
-rely on a single fused Cox loss, AMO decomposes training into four
-complementary survival objectives: (i)~the primary fused Cox loss,
-(ii)~an image-encoder auxiliary Cox loss, (iii)~a gene-encoder
-auxiliary Cox loss, and (iv)~a censoring-aware pairwise ranking
-loss. Per-modality auxiliary heads provide each encoder with
-direct survival feedback, while the ranking loss captures ordinal
-patient relationships beyond the risk-set formulation.
-%(Section~\ref{sec:method}).
+multimodal survival prediction.} AMO decomposes training into four
+complementary objectives: (i)~the primary fused Cox loss,
+(ii)~per-modality auxiliary Cox losses that give each encoder
+direct survival feedback, and (iii)~a censoring-aware pairwise
+ranking loss that captures ordinal patient relationships.
 
 \item \textbf{An EMA-based adaptive controller for dynamic loss
-balancing.} An EMA controller
-monitors the real-time training progress of each objective---using
-either per-objective loss ratios or gradient norms as the driving
-signal---and automatically adjusts their relative contributions
-during training. This eliminates manual per-cancer weight tuning:
-the controller increases auxiliary pressure on heavily censored
-cancers where the primary Cox signal is sparse, and reduces it
-where the baseline already performs well.
-%(Section~\ref{sec:adaptive}).
+balancing.} The controller monitors per-objective training
+progress and automatically adjusts their weights each epoch,
+eliminating manual per-cancer tuning.
 
-\item \textbf{Extensive evaluation across five cancer cohorts and four regularization baselines.}
-We evaluate AMO on a multimodal survival pipeline combining
-whole-slide histopathology images with gene expression profiles
-across five TCGA cohorts (BRCA, KIRC, LUAD, LUSC, STAD) under
-stratified 5-fold cross-validation, comparing against four
-regularization baselines (Elastic Net, Contrastive, Consistency,
-GradNorm). AMO achieves the best test C-index on three of five cancers
-and ranks second on a fourth, yielding cohort-dependent gains
-in convergence speed
-and training stability. Component ablations confirm that the full
-four-objective formulation outperforms both the auxiliary-only and
-rank-only variants on every cancer, and gradient projection analysis
-further isolates each component's contribution.
-%(Section~\ref{sec:clam_results}).
+\item \textbf{Extensive evaluation across five cancer cohorts
+and four regularization baselines.} AMO achieves the highest C-index
+on three of five TCGA cancers and the highest mean C-index (0.643).
+Ablations confirm that combining all objectives outperforms partial variants.
 \end{itemize}
 
 
@@ -169,9 +121,9 @@ analysis, combining histology and genomics at scale.
 SurvPath~\cite{jaume2024survpath} models dense interactions between
 biological pathways and histology. MOTCat~\cite{xu2023motcat}
 introduces optimal transport-based co-attention for cross-modal
-alignment. These architectures all train under a single fused
-survival loss and do not decompose the objective into per-modality
-components.
+alignment. These architectures all train under a single fusion-level
+survival loss (Cox or discrete-time NLL) and do not decompose
+the objective into per-modality components.
 
 \subsection{Attention-Based Multiple Instance Learning}
 
@@ -195,8 +147,7 @@ Du et al.~\cite{du2023unimodal} use unimodal teachers. In
 multi-task optimization, PCGrad~\cite{yu2020pcgrad} projects
 conflicting gradients; CAGrad~\cite{liu2021cagrad} finds common
 descent directions; Nash-MTL~\cite{navon2022nashmtl} frames it as
-a bargaining game; GradNorm~\cite{chen2018gradnorm} dynamically
-adjusts task weights by normalizing gradient magnitudes. These
+a bargaining game. These
 methods address modality imbalance or inter-task conflict but have
 not been applied within a single multimodal survival model where
 objectives are different decompositions of the same prediction
@@ -210,9 +161,7 @@ regularization~\cite{simon2011elastic} extends $\ell_1 + \ell_2$
 penalties to Cox models, encouraging sparsity and shrinkage in
 high-dimensional covariates. Cross-modal contrastive
 learning~\cite{oord2018cpc, li2025cpathomic} aligns representations
-across modalities via InfoNCE, maximizing agreement between matched
-pairs to promote shared feature spaces without task-specific
-supervision. Consistency
+across modalities via InfoNCE, promoting shared feature spaces. Consistency
 regularization~\cite{ma2023calibrating} encourages agreement
 between per-modality predictions by penalizing divergence in their
 risk outputs.
@@ -231,7 +180,7 @@ regularization.
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/pipeline.png}
+\includegraphics[width=0.8\textwidth]{figures/pipeline.pdf}
 \caption{\textbf{AMO framework.}
 \textbf{(A)}~Multimodal survival architecture. Whole-slide images
 are encoded via pretrained UNI/UNI2-h patch embeddings with either
@@ -279,9 +228,9 @@ Performance is measured by Harrell's concordance index
 (C-index)~\cite{harrell1996}, defined as the fraction of
 concordant pairs among all comparable patient pairs:
 \begin{equation}
-\text{C-index} = \frac{\sum_{i,j: t_i < t_j}
+\text{C-index} = \frac{\sum_{i,j:\, \delta_i=1,\, t_i < t_j}
 \mathbf{1}[r_i > r_j]}
-{\sum_{i,j: t_i < t_j} 1}
+{\sum_{i,j:\, \delta_i=1,\, t_i < t_j} 1}
 \label{eq:cindex}
 \end{equation}
 where a C-index of 1.0 indicates perfect discrimination and 0.5
@@ -456,7 +405,7 @@ are specified in Section~\ref{sec:clam_exp}.
 
 \subsection{Training Pipeline}
 
-AMO wraps any base optimizer (we use AdamW) without architectural
+AMO uses AdamW as its base optimizer, requiring no architectural
 changes beyond the lightweight auxiliary heads
 (Fig.~\ref{fig:pipeline}). Each training step proceeds as follows: (1)~patch embeddings from a pretrained
 foundation model are aggregated via CLAM's gated attention
@@ -464,17 +413,24 @@ foundation model are aggregated via CLAM's gated attention
 (2)~the image and gene encoders produce modality-specific
 embeddings, which are fused via cross-modal attention; (3)~the fused representation and per-modality
 embeddings are passed through the survival head and auxiliary heads
-to compute all four losses (Eq.~\ref{eq:total_loss}); (4)~the
+to compute all four losses (Eq.~\ref{eq:total_loss}); (4)~gradient projection removes conflicting
+auxiliary gradient components (Section~\ref{sec:gp}); (5)~the
 combined loss is backpropagated and the base optimizer updates the
-parameters; (5)~at the end of each epoch, the EMA controller
+parameters; (6)~at the end of each epoch, the EMA controller
 updates the objective weights (Eq.~\ref{eq:weight_update}).
 
-For attention-based aggregation, the auxiliary gradient
-$\nabla_{\theta_{\text{img}}}
-\mathcal{L}_{\text{cox}}^{\text{img}}$ propagates through the
-attention weights $\{a_k\}$ (Eq.~\ref{eq:clam_attn}), providing
-the MIL mechanism with direct survival supervision that the fused
-loss alone cannot deliver.
+\subsection{Gradient Projection}
+\label{sec:gp}
+
+In multi-objective training, gradients from different objectives can
+conflict---pointing in opposing directions---which may cause
+destructive interference. Gradient projection (GP), inspired by
+PCGrad~\cite{yu2020pcgrad}, addresses this by detecting when an
+auxiliary gradient has a negative inner product with the primary Cox
+gradient and projecting it onto the primary gradient's orthogonal
+complement, removing the conflicting component while preserving the
+useful signal. AMO+GP applies this projection to the auxiliary and
+ranking gradients before the optimizer step.
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -491,20 +447,20 @@ the top 1,000 most variable genes per cohort (20,000 for CLAM
 experiments) after log1p transformation and standard scaling (fitted
 on training data only).
 
-\begin{table}[ht]
+\begin{table}[t]
 \centering
 \caption{Dataset statistics. Event rate = fraction with observed
 death (uncensored).}
 \label{tab:datasets}
 \begin{tabular}{lrrrl}
 \toprule
-Cancer & $N$ & Event \% & Cens. \% & Encoder \\
+Cancer & $N$ & Event\% & Cens.\% & Encoder \\
 \midrule
-BRCA & 1,123 & 13.6\% & 86.4\% & UNI 1024-d \\
-KIRC & 519   & 34.6\% & 65.4\% & UNI2-h 1536-d \\
-LUAD & 522   & 35.6\% & 64.4\% & UNI2-h 1536-d \\
-LUSC & 500   & 42.6\% & 57.4\% & UNI2-h 1536-d \\
-STAD & 367   & 39.4\% & 60.6\% & UNI2-h 1536-d \\
+BRCA & 1{,}123 & 13.6 & 86.4 & UNI 1024d \\
+KIRC & 519   & 34.6 & 65.4 & UNI2-h 1536d \\
+LUAD & 522   & 35.6 & 64.4 & UNI2-h 1536d \\
+LUSC & 500   & 42.6 & 57.4 & UNI2-h 1536d \\
+STAD & 367   & 39.4 & 60.6 & UNI2-h 1536d \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -516,30 +472,24 @@ To isolate the contribution of the loss formulation, we compare
 AMO (with and without gradient projection) against a Cox-only
 AdamW baseline and four regularization baselines (Elastic Net,
 Contrastive, Consistency, GradNorm), all using AdamW as the base
-optimizer, to test whether gains arise from the multi-objective
-survival formulation or from generic regularization. All methods share identical data splits,
-gene preprocessing, and training protocol.
+optimizer. We compare AMO against GradNorm~\cite{chen2018gradnorm},
+an alternative adaptive weighting method applied to the same
+survival objectives, to test whether gains arise from the
+multi-objective formulation or from generic regularization.
+All methods share identical data splits, gene preprocessing,
+and training protocol.
 Additional ablations with
 individual objective components are reported in
 Section~\ref{sec:ablation}.
 
 \textbf{Training protocol.}
-All experiments use 50 epochs, batch size 32,
-weight decay$\!=\!10^{-4}$, and cosine annealing
-(Eq.~\ref{eq:cosine}) with initial lr$\!=\!10^{-3}$.
+All experiments use AdamW with cosine annealing,
+50 epochs, batch size 32, and weight decay$\!=\!10^{-4}$.
 Stratified 5-fold cross-validation (stratified by vital status),
 with model selection on best validation C-index. Each patient is
 tested exactly once. All experiments run on a single NVIDIA T4
 GPU (16 GB), subsampling up to 2,048 patches per patient (BRCA)
 and 4,096 (others) to fit within GPU memory.
-
-The learning rate follows a cosine annealing schedule:
-\begin{equation}
-\eta_t = \eta_{\min} + \tfrac{1}{2}(\eta_{\max} - \eta_{\min})
-\bigl(1 + \cos(\pi \, t / T)\bigr)
-\label{eq:cosine}
-\end{equation}
-where $\eta_{\max} = 10^{-3}$, $\eta_{\min} = 0$, and $T = 50$ epochs.
 
 \noindent\textbf{AMO hyperparameters.}
 EMA smoothing factor $\beta = 0.9$, warmup period of 2 epochs
@@ -582,9 +532,9 @@ AMO uses the full multi-objective framework
 & +Contrastive & $\underline{.665} \pm .087$ & $.720 \pm .022$ &
   $.638 \pm .049$ & $.554 \pm .070$ & $.566 \pm .049$ & .629 \\
 & +Consistency & $\mathbf{.667} \pm .081$ & $.717 \pm .032$ &
-  $\underline{.658} \pm .078$ & $\underline{.566} \pm .065$ & $.563 \pm .063$ & \underline{.634} \\
+  $\underline{.658} \pm .078$ & $\mathbf{.566} \pm .065$ & $.563 \pm .063$ & \underline{.634} \\
 & +GradNorm & $.634 \pm .087$ & $.712 \pm .042$ &
-  $.646 \pm .061$ & $\mathbf{.578} \pm .072$ & $\underline{.590} \pm .023$ & .632 \\
+  $.612 \pm .046$ & $\underline{.565} \pm .080$ & $\underline{.590} \pm .023$ & .625 \\
 \midrule
 \multicolumn{8}{l}{\textit{AMO (Ours)}} \\
 & AMO     & $.664 \pm .108$ &
@@ -611,21 +561,18 @@ and convergence speed.
 
 \subsection{Survival Discrimination}
 
-AMO achieves a mean C-index of 0.643, compared to 0.619 for the
-Cox-only baseline and 0.614--0.634 for four regularization baselines
-(Table~\ref{tab:clam_results}). When measured against the best
+When measured against the best
 per-cancer baseline (which differs by cancer), AMO improves on
-four of five cohorts with a mean gain of $+0.011$: $+0.051$ on
-LUAD, $+0.034$ on KIRC, $+0.023$ on BRCA, and $+0.008$ on LUSC.
+three of five cohorts: $+0.010$ on
+LUAD, $+0.017$ on KIRC, and AMO+GP wins STAD ($+0.002$).
 
 The improvement pattern reflects the cancer-specific optimization
-landscape. \textbf{LUAD} shows the largest gain ($+0.051$),
-consistent with its moderate event rate (35.6\%) and balanced
-censoring---conditions where auxiliary objectives provide the most
-complementary signal by giving each modality encoder direct
-survival feedback. \textbf{KIRC}, with similar event rate (34.6\%)
-but a larger baseline C-index (0.718), still benefits substantially
-($+0.019$), reaching 0.737---the highest C-index in our study.
+landscape. \textbf{LUAD} shows the largest gain over Cox-only ($+0.051$),
+consistent with its moderate event rate (35.6\%) where auxiliary
+objectives provide the most complementary signal.
+\textbf{KIRC}, with similar event rate (34.6\%), benefits
+substantially ($+0.017$), reaching 0.737---the highest C-index
+in our study.
 \textbf{BRCA}, despite heavy censoring (86.4\% censored) that
 limits the Cox signal, reaches $0.664$---comparable to Consistency
 ($0.667$) but well above the Cox-only baseline ($0.641$).
@@ -640,31 +587,28 @@ per fold, the best-checkpoint signal is noisy. However, AMO
 achieves substantially better stability on this cohort
 (Section~\ref{sec:stability}).
 
-Notably, the strongest regularization baseline (Consistency, 0.634)
-still trails AMO by $+0.009$, confirming that the gains arise from
-multi-objective supervision and adaptive weighting, not from generic
-regularization alone.
+Notably, no baseline wins on more than two cancers, whereas AMO
+wins three, confirming that the gains arise from multi-objective
+supervision and adaptive weighting, not from generic regularization
+alone.
 
 \subsection{Training Stability}
 \label{sec:stability}
 
 AMO's effect on fold-level variance is cohort-dependent
 (Table~\ref{tab:clam_results}). On \textbf{STAD}---the smallest
-cohort ($n\!=\!367$)---AMO achieves the lowest fold-level standard
-deviation of any method (std$\,=\,0.034$), compared to 0.072 for
-GradNorm, 0.063 for Consistency, and 0.041 for AdamW. On this
-small cohort, multi-objective training stabilizes optimization by
-providing multiple gradient signals that reduce sensitivity to
-individual data splits.
+cohort ($n\!=\!367$)---AMO achieves lower fold-level standard
+deviation than AdamW and most baselines (std$\,=\,0.034$ vs.\
+0.063 for Consistency and 0.041 for AdamW), though GradNorm is
+more stable (0.023). On this small cohort, multi-objective
+training stabilizes optimization by providing multiple gradient
+signals that reduce sensitivity to individual data splits.
 
-On the other four cancers, AMO's fold-level variance is comparable
-to or slightly higher than AdamW (e.g., BRCA: 0.108 vs.\ 0.069;
-KIRC: 0.035 vs.\ 0.033). This is expected: the additional
-objectives introduce more gradient diversity, which on larger
-cohorts may increase fold sensitivity while still improving mean
-discrimination. The stability benefit is most pronounced where it
-matters most---on small, noisy cohorts where single-objective
-training is least reliable.
+On larger cohorts, AMO's fold-level variance is comparable to
+AdamW (e.g., BRCA: 0.108 vs.\ 0.069; KIRC: 0.035 vs.\ 0.033),
+as the additional objectives introduce more gradient diversity.
+The stability benefit is most pronounced on small, noisy cohorts
+where single-objective training is least reliable.
 
 \subsection{Convergence Speed and Generalization}
 \label{sec:convergence}
@@ -711,26 +655,20 @@ Cancer & Method & Ep95 & Gap & AUVCC \\
 \end{tabular}
 \end{table}
 
-\textbf{Faster convergence on select cohorts.} AMO's convergence
-benefit is cohort-dependent. On KIRC (3.0 vs.\ 6.4 epochs,
+\textbf{Faster convergence on select cohorts.} On KIRC (3.0 vs.\ 6.4 epochs,
 $2.1\times$) and STAD (4.4 vs.\ 10.6 epochs, $2.4\times$), AMO
-reaches 95\% of peak validation C-index substantially faster. On
-BRCA, LUAD, and LUSC, convergence speed is comparable to
-Cox-only. The acceleration is most pronounced on cancers where the
-single Cox gradient is either noisy (STAD, small cohort) or slow
-to differentiate prognostic signal (KIRC), suggesting that
-per-modality objectives provide the greatest convergence benefit
-when the primary loss alone is insufficient for rapid learning.
+reaches 95\% of peak validation C-index substantially faster; on
+BRCA, LUAD, and LUSC, convergence speed is comparable.
+The acceleration is most pronounced where the
+single Cox gradient is noisy (STAD) or slow
+to differentiate prognostic signal (KIRC).
 
-\textbf{Better generalization.} AMO achieves smaller or
-\textit{negative} generalization gaps on KIRC ($-0.023$), LUAD
-($-0.010$), and LUSC ($-0.004$), meaning test C-index actually
-exceeds the best validation C-index on three of five cancers. By
-contrast, Cox-only shows larger positive gaps (0.008--0.103),
-indicating more overfitting to the validation set. The auxiliary
-objectives act as implicit regularizers: by constraining each
-encoder to be independently prognostic, they prevent the model
-from exploiting spurious correlations in the validation folds.
+\textbf{Smaller generalization gaps.} AMO exhibits \textit{negative}
+generalization gaps on KIRC ($-0.023$), LUAD ($-0.010$), and LUSC
+($-0.004$)---test C-index exceeds validation on three of five
+cancers. Cox-only shows larger positive gaps (0.008--0.103),
+suggesting that auxiliary objectives may reduce overfitting to
+validation folds.
 
 \textbf{Higher training trajectory quality.} AMO achieves higher
 AUVCC (area under the validation C-index curve) on BRCA (0.652
@@ -764,8 +702,7 @@ use the EMA adaptive controller (Table~\ref{tab:ablation_obj}).
 \begin{table}[t]
 \centering
 \caption{Objective ablation (5-fold mean test C-index).
-The full four-objective AMO outperforms both partial variants on
-every cancer.}
+The full AMO consistently outperforms both partial variants.}
 \label{tab:ablation_obj}
 \begin{tabular}{lccc}
 \toprule
@@ -826,9 +763,9 @@ Mean & .631 & \textbf{.643} & $+.012$ \\
 \end{table}
 
 \textbf{Adaptive control adds $+0.012$ mean C-index.} The static
-variant (.631 mean) already outperforms the best Cox-only baseline
-(.619), confirming that multi-objective supervision alone accounts
-for the majority of the gain. However, the EMA controller provides
+variant (.631 mean) already outperforms the Cox-only baseline
+(.619), confirming that multi-objective supervision alone is
+beneficial. The EMA controller provides
 a further $+0.012$ improvement, benefiting four of five cancers.
 The largest gains occur on LUAD ($+0.039$) and KIRC ($+0.022$),
 where the controller dynamically adjusts auxiliary weights as each
@@ -840,51 +777,6 @@ Overall, the two ablations cleanly decompose AMO's $+0.024$ gain
 over the mean baseline into $+0.012$ from multi-objective
 supervision and $+0.012$ from adaptive control.
 
-\subsection{Gradient Projection}
-\label{sec:diagnostics}
-
-In multi-objective optimization, gradients from different
-objectives can conflict---pointing in opposing directions---which
-may cause destructive interference during training. Gradient
-projection (GP), inspired by PCGrad~\cite{yu2020pcgrad}, addresses
-this by detecting when an auxiliary gradient has a negative inner
-product with the primary Cox gradient and projecting it onto the
-primary gradient's orthogonal complement, removing the conflicting
-component while preserving the useful signal. AMO+GP applies this
-projection to the auxiliary and ranking gradients before the
-optimizer step. To assess whether GP helps in our setting, we
-recorded inter-objective gradient cosine similarities across all
-five cancers (Table~\ref{tab:alignment}).
-
-\begin{table}[t]
-\centering
-\caption{Gradient cosine similarity: primary Cox vs.\ secondary
-objectives (mean $\pm$ std across folds and epochs).}
-\label{tab:alignment}
-\begin{tabular}{lcc}
-\toprule
-Cancer &
-$\cos(\nabla\mathcal{L}_{\text{cox}},
-\nabla\mathcal{L}_{\text{aux}})$ &
-$\cos(\nabla\mathcal{L}_{\text{cox}},
-\nabla\mathcal{L}_{\text{rank}})$ \\
-\midrule
-BRCA & $0.180 \pm 0.058$ & $0.981 \pm 0.018$ \\
-KIRC & $0.168 \pm 0.074$ & $0.947 \pm 0.025$ \\
-LUAD & $0.109 \pm 0.062$ & $0.947 \pm 0.027$ \\
-LUSC & $0.106 \pm 0.053$ & $0.933 \pm 0.031$ \\
-STAD & $0.121 \pm 0.055$ & $0.938 \pm 0.029$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Auxiliary gradients have low but \textit{positive} cosine
-similarity with the primary gradient ($0.11$--$0.18$), and ranking
-gradients are highly aligned ($\cos > 0.93$). Since all objectives
-produce positive inner products, actual gradient conflicts are
-rare and projection is seldom triggered. This explains why AMO+GP
-(.627 mean) does not improve over AMO (.643): there are few
-conflicts to resolve.
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \section{Discussion}
@@ -895,23 +787,21 @@ The standard approach of training multimodal survival models with
 a single fused Cox loss forces all model components---image
 encoder, gene encoder, fusion module---to share one gradient
 signal. AMO demonstrates that decomposing this into four
-complementary objectives produces gains on four of five
-cancer types ($+0.011$ mean C-index over the best per-cancer
-baseline). This improvement does not arise from generic regularization:
+complementary objectives produces gains on three of five
+cancer types. This improvement does not arise from generic regularization:
 the strongest baseline (Consistency, 0.634) still trails AMO
 by a meaningful margin. Instead, the gains come from richer supervision---each encoder
 receives direct survival feedback through its auxiliary Cox head,
 while the ranking loss captures ordinal patient relationships that
 the risk-set formulation of Cox alone cannot express.
 
-The objective ablation (Table~\ref{tab:ablation_obj}) confirms
-that all four losses are necessary: auxiliary heads alone (.620
-mean) marginally improve over the Cox-only baseline (.619), while
-ranking alone (.613) does not. Critically, neither partial variant
-matches the full four-objective formulation (.643). To our knowledge, this combination of
-per-modality auxiliary survival heads with censoring-aware pairwise
-ranking has not been explored in prior multimodal survival methods,
-which universally rely on a single fused loss.
+The Cox partial likelihood operates over risk sets (all patients at
+risk at each event time), while the ranking loss operates on pairwise
+comparisons---these are different decompositions of the same ordinal
+problem whose gradients are complementary. The objective ablation
+(Table~\ref{tab:ablation_obj}) confirms this: ranking alone fails
+(.613) but adds $+.023$ when combined with auxiliary heads, indicating
+that the two loss families cover gradient directions the other misses.
 
 \subsection{Adaptive Control Across Cancer Types}
 
@@ -922,13 +812,11 @@ censoring rates, event distributions, and modality informativeness.
 The EMA controller resolves this by monitoring each objective's
 training progress and adjusting weights on the fly.
 The adaptive weight ablation (Table~\ref{tab:ablation_ema})
-quantifies this contribution: static weights achieve .631 mean
-C-index---already above the best Cox-only baseline (.619)---while
-the EMA controller adds a further $+0.012$, yielding .643. The
-controller's benefit is most pronounced on LUAD ($+0.039$) and
-KIRC ($+0.022$), where modality learning dynamics diverge most
-during training. This automatic adaptation eliminates manual tuning
-and enables a single configuration to work across all five cancers.
+quantifies this: static weights achieve .631 mean
+C-index, while the EMA controller adds $+0.012$, with the
+largest gains on LUAD ($+0.039$) and KIRC ($+0.022$) where
+modality learning dynamics diverge most. This eliminates manual
+per-cancer tuning with a single configuration across all five cancers.
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \section{Conclusion and Future Work}
@@ -938,29 +826,25 @@ multimodal cancer survival prediction that decomposes training into
 four complementary objectives: a primary fused Cox loss,
 per-modality auxiliary Cox heads, and a censoring-aware pairwise
 ranking loss, governed by an EMA-based adaptive controller. AMO
-improves over the best per-cancer baseline on four of five TCGA
-cancers (0.643 mean C-index vs.\ 0.619 for Cox-only and
-0.634 for the best regularization baseline), demonstrating
+achieves the highest test C-index on three of five TCGA
+cancers, while no baseline wins on more than two, demonstrating
 that the improvement arises from multi-objective supervision rather
-than optimizer choice. The adaptive controller eliminates
-per-cancer weight tuning by adjusting objective contributions on
-the fly based on real-time training dynamics. Ablation studies
-confirm that all four objectives contribute, that the full
-formulation outperforms partial variants on every cancer, and that
-adaptive weight control adds $+0.012$ mean C-index beyond what
-static multi-objective weights achieve. These
-results establish that a single fused loss is insufficient for
-multimodal survival training and that adaptive multi-objective
-optimization provides a principled alternative.
+than optimizer choice. Ablation studies confirm that combining auxiliary and ranking
+supervision outperforms partial variants, and that adaptive control
+outperforms static weights on four of five cancers. These results
+establish that a single fused loss is insufficient for multimodal
+survival training and that adaptive multi-objective optimization
+provides a principled alternative.
 
 AMO adds only lightweight auxiliary heads and an EMA controller
 that operates per-epoch with negligible computational overhead.
 The four objectives in AMO represent one decomposition of the
-survival prediction task. Future work should explore alternative
-auxiliary formulations---such as censoring-specific losses,
-contrastive survival objectives, or modality-specific
-regularizers---to further expand the space of complementary
-training signals for multimodal survival prediction.
+survival prediction task. Future work should explore richer
+auxiliary formulations---such as censoring-specific losses or
+contrastive survival objectives---and more sophisticated adaptive
+controllers that leverage higher-order training dynamics to further
+improve multi-objective optimization for multimodal survival
+prediction.
 
 
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

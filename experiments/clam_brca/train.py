@@ -183,11 +183,13 @@ def gradnorm_update(model, task_losses, weights, state,
                     alpha=1.5, lr=0.025):
     """GradNorm per-batch weight update (Chen et al., 2018).
 
-    Balances gradient norms of weighted task losses w.r.t. the last
-    shared layer, steering training rates toward parity.
+    Balances gradient norms of weighted task losses w.r.t. the encoder
+    parameters. Uses image_encoder + gene_encoder as the reference
+    since auxiliary heads branch before model.shared.
     """
-    shared_params = [p for p in model.shared.parameters()
-                     if p.requires_grad]
+    shared_params = []
+    for mod in [model.image_encoder, model.gene_encoder]:
+        shared_params.extend(p for p in mod.parameters() if p.requires_grad)
     if not shared_params:
         return weights
 
@@ -195,7 +197,7 @@ def gradnorm_update(model, task_losses, weights, state,
     if "initial_losses" not in state:
         state["initial_losses"] = [l.detach().item() for l in task_losses]
 
-    # Per-task gradient norms w.r.t. shared layer
+    # Per-task gradient norms w.r.t. encoder parameters
     G = []
     for loss in task_losses:
         grads = torch.autograd.grad(loss, shared_params,
@@ -205,6 +207,14 @@ def gradnorm_update(model, task_losses, weights, state,
             if g is not None:
                 sq = sq + g.flatten().norm() ** 2
         G.append(sq.item() ** 0.5)
+
+    # Diagnostics: log gradient norms periodically
+    state.setdefault("_batch_count", 0)
+    state["_batch_count"] += 1
+    if state["_batch_count"] <= 3 or state["_batch_count"] % 50 == 0:
+        names = ["img_cox", "gene_cox", "rank"]
+        norms_str = ", ".join(f"{n}={g:.4f}" for n, g in zip(names, G))
+        print(f"    [GradNorm] batch={state['_batch_count']} gnorms: {norms_str}")
 
     # Weighted gradient norms and mean
     Gw = [w * g for w, g in zip(weights, G)]
@@ -432,7 +442,7 @@ def run_one(args, fold, method):
     controller = LossWeightController(
         initial=(args.aux_weight, args.aux_weight, args.rank_weight),
         min_weight=args.min_weight, max_weight=args.max_weight,
-        ema=args.ema_beta, warmup=args.warmup)
+        ema=args.ema_beta, warmup=args.warmup, lambda0=args.lambda0)
     gnorm_controller = None
     if cfg["adaptive"] == "gradnorm_ema":
         gnorm_controller = GradNormEMAController(
@@ -736,6 +746,7 @@ def main():
     args.warmup = cfg.get("warmup", 2)
     args.temperature = cfg.get("temperature", 1.0)
     args.ema_beta = cfg.get("ema_beta", 0.9)
+    args.lambda0 = cfg.get("lambda0", 0.1)
 
     # n_folds = total CV splits (always from config); folds = how many to run
     args.n_folds = cfg.get("folds", 5)

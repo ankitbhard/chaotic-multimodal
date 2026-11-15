@@ -37,7 +37,7 @@ class LossWeightController:
     This is a heuristic, not a gradient-balancing or curvature controller.
     """
     def __init__(self, initial=(0.1, 0.1, 0.1), min_weight=0.02,
-                 max_weight=0.3, ema=0.9, warmup=2, max_change=0.02):
+                 max_weight=0.3, ema=0.9, warmup=2, max_change=0.02, lambda0=0.1):
         if not (0 <= ema < 1 and 0 < min_weight <= max_weight and max_change > 0):
             raise ValueError("invalid controller configuration")
         self.weights=list(initial)
@@ -46,6 +46,7 @@ class LossWeightController:
         self.ema=ema
         self.warmup=warmup
         self.max_change=max_change
+        self.lambda0=lambda0
         self.baseline=None
         self.smooth=None
     def update(self, epoch, losses):
@@ -64,7 +65,7 @@ class LossWeightController:
         ratios=[self.smooth[i]/self.baseline[i] for i in range(1,4)]
         center=max(sum(ratios)/len(ratios),1e-8)
         for i,ratio in enumerate(ratios):
-            target=max(self.min_weight,min(self.max_weight,0.1*ratio/center))
+            target=max(self.min_weight,min(self.max_weight,self.lambda0*ratio/center))
             delta=max(-self.max_change,min(self.max_change,target-self.weights[i]))
             self.weights[i]=max(self.min_weight,min(self.max_weight,self.weights[i]+delta))
         return self.weights[:]
